@@ -6,7 +6,7 @@ const DOMAIN = 0x0000;
 @Entry
 @Component
 struct Index {
-  @State message: string = 'Hello World';
+  @State message: string = '你好';
 
   build() {
     Row() {
