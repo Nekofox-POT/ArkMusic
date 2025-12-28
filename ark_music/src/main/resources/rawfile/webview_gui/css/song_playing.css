@@ -1,0 +1,32 @@
+#song_playing {
+    width: 80vw;
+    top: calc(85% - 100px);
+    position: absolute;
+    
+    /* 滑块轨道样式 */
+    appearance: none;
+    height: 10px;
+    border-radius: 5px;
+    background: #eaeaea;
+    outline: none;
+}
+
+/* 滑块轨道 */
+#song_playing::-webkit-slider-runnable-track {
+    height: 10px;
+    border-radius: 5px;
+    background: #eaeaea;
+}
+
+/* 滑块手柄 - 胶囊样式 */
+#song_playing::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 30px;
+    height: 15px;
+    border-radius: 10px; /* 胶囊样式 */
+    background: rgba(70, 70, 70, 0.5);
+    filter: blur(2px);
+    cursor: pointer;
+    margin-top: -2.5px;
+}

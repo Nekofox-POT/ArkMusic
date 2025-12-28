@@ -1,0 +1,50 @@
+.page {
+    position: fixed;
+    z-index: 899;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: auto;
+    display: flex;
+    transition: transform 0.3s ease; /* 添加过渡效果 */
+}
+
+.page > div {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+/* 播放页面初始位置 */
+.page.play-active {
+    transform: translateX(0);
+}
+
+/* 个人中心页面位置 */
+.page.owner-active {
+    transform: translateX(-100vw);
+}
+.page.local-active {
+    transform: translateX(-200vw);
+}
+.page.favourite-active {
+    transform: translateX(-300vw);
+}
+
+.play_controller {
+
+    width: 100vw;
+    height: 150px;
+    top: calc(85% - 75px);
+
+    position: relative;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    justify-content: space-around;
+
+}

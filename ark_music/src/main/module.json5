@@ -45,6 +45,22 @@
           }
         ],
       }
+    ],
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET",
+        "reason": "$string:permission_reason"
+      },
+      {
+        "name": "ohos.permission.READ_MEDIA",
+        "reason": "$string:read_muaic_reason",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
+      }
     ]
   }
 }

@@ -1,0 +1,55 @@
+#btn_play {
+
+    width: 100px;
+    height: 100px;
+    background-color: #eaeaea;
+    border-radius: 300px;
+    border: none;
+    cursor: pointer;
+    position: absolute;
+    outline: none;
+
+    transition: transform 0.1s ease;
+
+}
+#btn_play:active {
+    transform: scale(0.9);
+}
+
+#btn_last {
+
+    width: 75px;
+    height: 75px;
+    background-color: #eaeaea;
+    border-radius: 300px;
+    margin-right: 65%;
+    border: none;
+    cursor: pointer;
+    position: absolute;
+    outline: none;
+
+    transition: transform 0.1s ease;
+
+}
+#btn_last:active {
+    transform: scale(0.9);
+}
+
+#btn_next {
+
+    width: 75px;
+    height: 75px;
+    background-color: #eaeaea;
+    border-radius: 300px;
+    margin-left: 65%;
+    border: none;
+    cursor: pointer;
+    position: absolute;
+    outline: none;
+
+    transition: transform 0.1s ease;
+
+}
+#btn_next:active {
+    transform: scale(0.9);
+}

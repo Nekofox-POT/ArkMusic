@@ -1,0 +1,81 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArkMusicLite</title>
+    <link rel="stylesheet" href="css/body.css">
+    <link rel="stylesheet" href="css/page.css">
+    <link rel="stylesheet" href="css/play_button.css">
+    <link rel="stylesheet" href="css/song_playing.css">
+    <link rel="stylesheet" href="css/title.css">
+    <link rel="stylesheet" href="css/time_display.css">
+</head>
+<body>
+
+    <!--页面-->
+    <div class="page">
+
+        <!--主播放页面-->
+        <div>
+            <!--标题-->
+            <div class="title"><p id="title">陌上花开</p></div>
+            <!--副标题-->
+            <div class="sub_title"><p id="sub_title">洛天依</p></div>
+            
+            <!--进度滑块-->
+            <input type="range" id="song_playing" name="song_playing" value="0"/>
+
+            <!--播放器控件-->
+            <div class="play_controller">
+                <button id="btn_play"><img src="img/play_play.svg" style="width: 50%; height: 50%; margin-left: 15%;"></button>
+            </div>
+
+            <!--时间显示-->
+            <div class="time_display" style="left: 25px;"><p id="time_playing">00:00</p></div>
+            <!--时长-->
+            <div class="time_display" style="left: calc(100vw - 75px);"><p id="time_long">00:00</p></div>
+
+        </div>
+
+    </div>
+
+<script src="jts/play_botton.js"></script>
+<script src="jts/range_change.js"></script>
+
+<!-- ArkTS接口脚本 -->
+<script>
+
+    // 绑定元素
+    const time_playing = document.getElementById('time_playing');
+    const time_long = document.getElementById('time_long');
+    const play_range = document.getElementById('song_playing');
+
+    // 改变按钮
+    function set_button_status(status) {
+        console.log('接收到状态：' + status);
+        if (status) {
+            btn_play.innerHTML = '<img src="img/play_stop.svg" style="width: 50%; height: 50%">';
+        } else {
+            btn_play.innerHTML = '<img src="img/play_play.svg" style="width: 50%; height: 50%; margin-left: 15%;">';
+        }
+    }
+    
+    // 改变播放进度
+    function set_song_playing(arr) {
+
+        console.log('接收到播放进度：' + arr);
+       
+        // 更新时间
+        time_playing.innerText = arr[0];;
+        time_long.innerText = arr[1];
+        // 更新播放进度条
+        play_range.max = arr[3];
+        play_range.value = arr[2];
+        arkts.get_playing_times_raw(play_range.value);
+
+    }
+
+</script>
+
+</body>
+</html>
