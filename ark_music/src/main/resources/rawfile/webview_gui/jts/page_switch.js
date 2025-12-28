@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let htmlContent = '';
             for (const i of tmp) {
                 console.log(i);
-                htmlContent += `<div><img src="img/song.svg"><p>${i}</p></div>`;
+                htmlContent += `<button><img src="img/song.svg"><p>${i}</p></button>`;
             }
             local_list.innerHTML = htmlContent;
             // 切换
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // 遍历添加歌单
             let htmlContent = '';
             for (const i of tmp) {
-                htmlContent += `<div><img src="img/song.svg"><p>${i}</p></div>`;
+                htmlContent += `<button><img src="img/song.svg"><p>${i}</p></button>`;
             }
             favourite_list.innerHTML = htmlContent;
             // 切换

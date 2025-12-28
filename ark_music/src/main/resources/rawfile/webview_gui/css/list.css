@@ -12,13 +12,14 @@
     width: 100%;
     height: auto;
 }
-.list div {
+.list button {
     
     width: 100%;
     height: 50px;
     margin-top: 10px;
     margin-bottom: 10px;
     background-color: #eaeaea;
+    border: none;
     border-radius: 15px;
     display: flex;
     align-items: center;
@@ -29,17 +30,17 @@
     transition: transform 0.1s ease;
 
 }
-.list div:active {
+.list button:active {
     transform: scale(0.9);
 
 }
-.list div img {
+.list button img {
     width: 35px;
     height: 35px;
     margin-left: 15px;
     margin-right: 15px;
 }
-.list div p {
+.list button p {
     font-weight: 450;
     font-size: 15px;
     color: #fff;

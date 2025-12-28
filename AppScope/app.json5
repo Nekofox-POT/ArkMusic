@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "com.nekofoxpot.arkmusic",
     "vendor": "$string:app_maker",
-    "versionCode": 20,
-    "versionName": "0.2",
+    "versionCode": 21,
+    "versionName": "0.2.1",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }

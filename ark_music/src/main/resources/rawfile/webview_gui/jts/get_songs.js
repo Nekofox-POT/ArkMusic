@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 绑定按钮
     document.getElementById('favourite_list').addEventListener('click', function(event) {
         
-        const targetDiv = event.target.tagName === 'DIV' ? event.target : event.target.closest('#favourite_list > div');
+        const targetDiv = event.target.tagName === 'BUTTON' ? event.target : event.target.closest('#favourite_list > button');
         
         if (targetDiv) {
             const pTag = targetDiv.querySelector('p');
@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('local_list').addEventListener('click', function(event) {
         
-        const targetDiv = event.target.tagName === 'DIV' ? event.target : event.target.closest('#favourite_list > div');
+        const targetDiv = event.target.tagName === 'BUTTON' ? event.target : event.target.closest('#local_list > button');
         
         if (targetDiv) {
             const pTag = targetDiv.querySelector('p');

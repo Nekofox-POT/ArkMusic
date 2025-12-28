@@ -10,11 +10,13 @@ import { AVVolumePanel } from '@kit.AudioKit';
 import { BusinessError} from '@kit.BasicServicesKit';
 import picker from '@ohos.file.picker';
 import util from '@ohos.util';
+import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
+import { wantAgent } from '@kit.AbilityKit';
+import { avSession } from '@kit.AVSessionKit';
 
 const PROPORTION = 0.99; // 占屏幕比例
 const SURFACE_W = 0.9; // 表面宽比例
 const SURFACE_H = 1.78; // 表面高比例
-const SET_INTERVAL = 100; // interval间隔时间
 const TIME_ONE = 60000;
 const TIME_TWO = 1000;
 let innerEventFalse: emitter.InnerEvent = {
@@ -46,6 +48,10 @@ struct WebComponent {
   @State audio_volume: number = 0
   @State audio_volume_change: boolean = false // 如果是true的话隐藏音量条
   @State volume_panel_location: number = 1;
+  @State song_title: string = '未知歌曲'
+  @State song_artist: string = '未知艺术家'
+  @State session: avSession.AVSession | null = null;
+  private context = getContext(this) as common.UIAbilityContext;
 
   // 这一坨不知道什么变量不要动
   tag: string = 'AVPlayManager';
@@ -53,7 +59,6 @@ struct WebComponent {
   private avPlayer: media.AVPlayer | null = null;
   private surfaceId: string = '';
   private intervalID: number = -1;
-  private context: common.UIAbilityContext | undefined = undefined;
   private count: number = 0;
   @State title: Resource = $r('app.string.Ark_musicAbility_label');
   @State fileName: string = ''; // 播放的文件名
@@ -70,8 +75,93 @@ struct WebComponent {
   @State controller: webview.WebviewController = new webview.WebviewController();
   @State pixelMap: image.PixelMap | undefined = undefined;
 
+  // AV Session创建 / 设置 / 获取状态
+  async avs_reg_session() {
+    try {
+      if (!this.session) {
+        let context = this.getUIContext().getHostContext() as Context;
+        // 创建session。
+        console.log('创建session');
+        this.session = await avSession.createAVSession(context, 'SESSION_NAME', 'audio');
+        await this.session.activate();
+        console.log(`创建完成！id：${this.session.sessionId}`)
+
+        // 注册播放器行为
+        console.log('注册行为');
+        this.session.on("play", async () => {this.isPaused = true; this.avPlay()})
+        this.session.on("pause", async () => {this.isPaused = false; this.avPause()})
+        this.session.on("playPrevious", async () => {await this.last_song()})
+        this.session.on("playNext", async () => {await this.next_song()})
+        this.session.on("seek", async (position) => {this.avSeek(position);})
+        this.session.on("answer", async () => {this.isPaused = false; this.avPause()})
+        this.session.on("hangUp", async () => {this.isPaused = true; this.avPlay()})
+        console.log('注册完成！');
+
+      } else {
+        console.log('已经有一个了！')
+      }
+
+    } catch (e) {
+      console.error(`未知错误：${e}`)
+    }
+  }
+  async avs_get_metadata() {
+    console.log('设置元数据');
+    let metadata: avSession.AVMetadata = {
+      assetId: '712', // 由应用指定，用于标识应用媒体库里的媒体。
+      title: this.song_title,
+      mediaImage: this.pixelMap ?? "",
+      artist: this.song_artist,
+      duration: this.durationTime,  // 资源的时长，以ms为单位。
+    };
+    await this.session?.setAVMetadata(metadata);
+    console.log('元数据设置成功！');
+  }
+  async avs_get_playing() {
+    let tmp: avSession.PlaybackState
+    if (this.isPaused) {
+      tmp = avSession.PlaybackState.PLAYBACK_STATE_PLAY
+    } else {
+      tmp = avSession.PlaybackState.PLAYBACK_STATE_PAUSE
+    }
+    let playbackState: avSession.AVPlaybackState = {
+      state: tmp,
+      position: {
+        elapsedTime: this.currentTime, // 已经播放的位置，以ms为单位。
+        updateTime: new Date().getTime(), // 应用更新当前位置时的时间戳，以ms为单位。
+      },
+      isFavorite: false
+    };
+    await this.session?.setAVPlaybackState(playbackState);
+  }
+
+  // 申请长时任务
+  async reg_bg_audio() {
+    let wantAgentInfo: wantAgent.WantAgentInfo = {
+      wants: [
+        {
+          bundleName: "com.nekofoxpot.arkmusic",
+          abilityName: "MainAbility"
+        }
+      ],
+      actionType: wantAgent.OperationType.START_ABILITY,
+      // 使用者自定义的一个私有值
+      requestCode: 712,
+      // 点击通知后，动作执行属性
+      actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG],
+    };
+
+    try {
+      let tmpWantAgent = await wantAgent.getWantAgent(wantAgentInfo);
+      await backgroundTaskManager.startBackgroundRunning(this.context, backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK, tmpWantAgent);
+    } catch (error) {
+      console.error(`Failed to Operation getWantAgent. Code is ${(error as BusinessError).code}, message is ${(error as BusinessError).message}`);
+    }
+  }
+
   // 监听系统音频
   listen_system_volume() {
+    console.log('监听音频启动！')
     // 构建监听函数
     let audioManager = audio.getAudioManager();
     let audioVolumeManager = audioManager.getVolumeManager();
@@ -124,6 +214,22 @@ struct WebComponent {
     return `${min}:${second}`;
   }
 
+  // 加载内置图片
+  async loadDefaultImage() {
+    try {
+      const context = getContext(this) as common.Context;
+      const resourceManager = context.resourceManager;
+
+      // 获取媒体资源内容
+      const mediaData = await resourceManager.getMediaContent($r('app.media.CD'));
+
+      // 创建图像源并生成 PixelMap
+      const imageSource = image.createImageSource(mediaData.buffer);
+      this.pixelMap = await imageSource.createPixelMap();
+    } catch (error) {
+      console.error("默认图片加载失败: " + JSON.stringify(error));
+    }
+  }
   // 获取元数据（外部音频）
   async get_storage_metadata() {
     if (canIUse('SystemCapability.Multimedia.Media.AVMetadataExtractor')) {
@@ -141,12 +247,16 @@ struct WebComponent {
         console.log(`专辑名：“${metadata.title}”，作者：“${metadata.artist}”\n文件名称：${file_name}}`)
         // 如果为空
         if (metadata.title == "" || metadata.artist == "") {
-          // 返回普通名称
-          this.controller.runJavaScript(`set_song_title(['${this.fileName}', '未知艺术家'])`)
+          // 加载默认名称
+          this.song_title = this.fileName
+          this.song_artist = '未知艺术家'
         } else {
-          // 返回完整名称
-          this.controller.runJavaScript(`set_song_title(['${metadata.title}', '${metadata.artist}'])`)
+          // 加载完成名称
+          this.song_title = metadata.title ?? '未知歌曲'
+          this.song_artist = metadata.artist ?? '未知艺术家'
         }
+        // 返回
+        this.controller.runJavaScript(`set_song_title(['${this.song_title}', '${this.song_artist}'])`)
 
         try {
           // 获取专辑封面（promise模式）。
@@ -164,6 +274,7 @@ struct WebComponent {
           // JS 调用
           this.controller.runJavaScript(`set_song_image('${encodedData}')`);
         } catch {
+          await this.loadDefaultImage()
           // 获取失败，返回空
           this.controller.runJavaScript(`set_song_image('')`);
         }
@@ -194,16 +305,21 @@ struct WebComponent {
         console.log(`专辑名：“${metadata.title}”，作者：“${metadata.artist}”`)
         // 如果为空
         if (metadata.title == "" || metadata.artist == "") {
-          // 返回普通名称
-          this.controller.runJavaScript(`set_song_title(['${this.fileName}', '未知艺术家'])`)
+          // 加载默认名称
+          this.song_title = this.fileName
+          this.song_artist = '未知艺术家'
         } else {
-          // 返回完整名称
-          this.controller.runJavaScript(`set_song_title(['${metadata.title}', '${metadata.artist}'])`)
+          // 加载完成名称
+          this.song_title = metadata.title ?? '未知歌曲'
+          this.song_artist = metadata.artist ?? '未知艺术家'
         }
+        // 返回
+        this.controller.runJavaScript(`set_song_title(['${this.song_title}', '${this.song_artist}'])`)
 
         try {
           // 获取专辑封面（promise模式）。
           this.pixelMap = await avMetadataExtractor.fetchAlbumCover();
+
           // 转换为 ArrayBuffer
           let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 };
           let arrayBuffer = await image.createImagePacker().packing(this.pixelMap, packOpts);
@@ -217,6 +333,7 @@ struct WebComponent {
           // JS 调用
           this.controller.runJavaScript(`set_song_image('${encodedData}')`);
         } catch {
+          await this.loadDefaultImage()
           // 获取失败，返回空
           this.controller.runJavaScript(`set_song_image('')`);
         }
@@ -233,7 +350,7 @@ struct WebComponent {
     }
   }
 
-  // audio注册
+  // audio注册 / 注销
   async avSetupAudio() {
     // 通过UIAbilityContext的resourceManager成员的getRawFd接口获取媒体资源播放地址。
     // 返回类型为{fd,offset,length},fd为HAP包fd地址，offset为媒体资源偏移量，length为播放长度。
@@ -261,10 +378,10 @@ struct WebComponent {
     // 创建avPlayer实例对象
     this.avPlayer = await media.createAVPlayer();
 
+    // 更新元数据
     if (this.playing_mode) {
       await this.get_storage_metadata();
     } else {
-      // 更新元数据
       await this.get_example_metadata();
     }
 
@@ -277,6 +394,26 @@ struct WebComponent {
 
     // 为fdSrc赋值触发initialized状态机上报
     this.avPlayer.fdSrc = avFileDescriptor;
+
+    // 创建av_session
+    this.avs_reg_session();
+
+  }
+  async reset_all_setting() {
+    if (this.avPlayer) {
+      console.log('暂停')
+      // 暂停
+      try {
+        await this.avPlayer.pause();
+      } catch {}
+      console.log('重置进度条')
+      // 重置进度条
+      await this.avPlayer.reset();
+      console.log('完成！');
+    }
+    // 重设进度条
+    this.durationTime = 0;
+    this.currentTime = 0;
   }
 
   // 播放 / 暂停 / 跳转 / 上一首 / 下一首
@@ -416,24 +553,6 @@ struct WebComponent {
     }
   }
 
-  // 重置播放器
-  async reset_all_setting() {
-    if (this.avPlayer) {
-      console.log('暂停')
-      // 暂停
-      try {
-        await this.avPlayer.pause();
-      } catch {}
-      console.log('重置进度条')
-      // 重置进度条
-      await this.avPlayer.reset();
-      console.log('完成！');
-    }
-    // 重设进度条
-    this.durationTime = 0;
-    this.currentTime = 0;
-  }
-
   // 注册avplayer回调函数
   async setAVPlayerCallback(callback: (avPlayer: media.AVPlayer) => void, vType?: number): Promise<void> {
     // seek操作结果回调函数
@@ -486,6 +605,8 @@ struct WebComponent {
           break;
         case 'playing': // play成功调用后触发该状态机上报
           console.info(`${this.tag}: setAVPlayerCallback AVPlayer state playing called.`);
+          // 更新一次avs元数据
+          this.avs_get_metadata();
           if (this.count !== 0) {
             if (this.intervalID != -1) {
               clearInterval(this.intervalID)
@@ -565,6 +686,48 @@ struct WebComponent {
     });
   }
 
+  // 界面类 进后台，进前台，被kill
+  onPageHide() {
+    console.log('进入后台了')
+  }
+  onPageShow() {
+    console.log('进前台了！')
+    emitter.on(innerEventTrue, (res: emitter.EventData) => {
+      if (res.data) {
+        this.isPaused = res.data.flag;
+        this.controller.runJavaScript(`set_button_status(${this.isPaused})`)
+        this.XComponentFlag = res.data.flag;
+      }
+    });
+    emitter.on(innerEventFalse, (res: emitter.EventData) => {
+      if (res.data) {
+        this.isPaused = res.data.flag;
+        this.controller.runJavaScript(`set_button_status(${this.isPaused})`)
+      }
+    });
+    emitter.on(innerEventWH, (res: emitter.EventData) => {
+      if (res.data) {
+        this.windowWidth = res.data.width;
+        this.windowHeight = res.data.height;
+        this.setVideoWH();
+      }
+    });
+  }
+  aboutToDisappear() {
+    if (this.avPlayer == null) {
+      console.info(`${this.tag}: avPlayer has not init aboutToDisappear`);
+      return;
+    }
+    this.avPlayer.release((err) => {
+      if (err == null) {
+        console.info(`${this.tag}: videoRelease release success`);
+      } else {
+        console.error(`${this.tag}: videoRelease release failed, error message is = ${JSON.stringify(err.message)}`);
+      }
+    });
+    emitter.off(innerEventFalse.eventId);
+  }
+
   // 音量面板UI组件
   @Builder
   CreateAVVolumePanel() {
@@ -586,48 +749,6 @@ struct WebComponent {
     this.surfaceW = this.windowWidth * SURFACE_W;
     this.surfaceH = this.surfaceW / SURFACE_H;
     this.context = getContext(this) as common.UIAbilityContext;
-  }
-  aboutToDisappear() {
-    if (this.avPlayer == null) {
-      console.info(`${this.tag}: avPlayer has not init aboutToDisappear`);
-      return;
-    }
-    this.avPlayer.release((err) => {
-      if (err == null) {
-        console.info(`${this.tag}: videoRelease release success`);
-      } else {
-        console.error(`${this.tag}: videoRelease release failed, error message is = ${JSON.stringify(err.message)}`);
-      }
-    });
-    emitter.off(innerEventFalse.eventId);
-  }
-  onPageHide() {
-    console.log('进入后台了')
-    this.avPause();
-    this.isPaused = false;
-    this.controller.runJavaScript(`set_button_status(${this.isPaused})`)
-  }
-  onPageShow() {
-    emitter.on(innerEventTrue, (res: emitter.EventData) => {
-      if (res.data) {
-        this.isPaused = res.data.flag;
-        this.controller.runJavaScript(`set_button_status(${this.isPaused})`)
-        this.XComponentFlag = res.data.flag;
-      }
-    });
-    emitter.on(innerEventFalse, (res: emitter.EventData) => {
-      if (res.data) {
-        this.isPaused = res.data.flag;
-        this.controller.runJavaScript(`set_button_status(${this.isPaused})`)
-      }
-    });
-    emitter.on(innerEventWH, (res: emitter.EventData) => {
-      if (res.data) {
-        this.windowWidth = res.data.width;
-        this.windowHeight = res.data.height;
-        this.setVideoWH();
-      }
-    });
   }
   setVideoWH(): void {
     if (this.percent >= 1) { // 横向视频
@@ -668,7 +789,9 @@ struct WebComponent {
       // 在这里添加构建
         .onControllerAttached(() => {
 
-          // 扫描歌曲
+          // 注册长时任务
+          this.reg_bg_audio();
+          // 扫描示例歌曲
           this.scan_example_audio();
 
           // 注册框架
@@ -747,11 +870,17 @@ struct WebComponent {
                 },
                 // 获取外部音乐列表
                 get_storage_audio: () => {
+                  console.log('获取数据。')
+                  console.log(`${this.storage_list}`)
                   try {
                     // 处理音频（获取音频名）
                     let tmp: string[] = [];
                     for (const i of this.storage_list) {
-                      tmp.push(fs.openSync(i).name)
+                      try {
+                        tmp.push(fs.openSync(i).name)
+                      } catch (e) {
+                        console.log(`读取失败：${e}`)
+                      }
                     }
                     // 列表存一份
                     this.storage_list_name = tmp;
@@ -826,7 +955,11 @@ struct WebComponent {
             // 控制js函数
             setInterval(() => {
               this.controller.runJavaScript(`set_song_playing(['${this.timeConvert(this.currentTime)}', '${this.timeConvert(this.durationTime)}', ${this.currentTime}, ${this.durationTime}])`)
-            }, SET_INTERVAL);
+            }, 50);
+            // 更新avs
+            setInterval(() => {
+              this.avs_get_playing()
+            }, 500)
 
           } catch (error) {
             console.error(`Error Code: ${error}.`)

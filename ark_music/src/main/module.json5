@@ -29,6 +29,9 @@
               "ohos.want.action.home"
             ]
           }
+        ],
+        "backgroundModes": [
+          "audioPlayback"
         ]
       }
     ],
@@ -54,6 +57,16 @@
       {
         "name": "ohos.permission.READ_MEDIA",
         "reason": "$string:read_muaic_reason",
+        "usedScene": {
+          "abilities": [
+            "EntryAbility"
+          ],
+          "when": "always"
+        }
+      },
+      {
+        "name": "ohos.permission.KEEP_BACKGROUND_RUNNING",
+        "reason": "$string:get_bg_running",
         "usedScene": {
           "abilities": [
             "EntryAbility"
