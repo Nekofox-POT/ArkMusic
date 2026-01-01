@@ -4,9 +4,9 @@ function files_get_all_songs() {
     let htmltext = ''
 
     let tmp = arkts.get_songs("get_all_songs");
-        if (tmp[0].length !== 0) {
+        if (tmp.length !== 0) {
             for (const row of tmp) {
-                htmltext += `<button class="list_button" id="${row[0]}" onclick="arkts.play_songs(this.id, 'all_songs'); switch_page();"><img src="file/song.svg"><div><p>${row[1]}</p></div></button>`
+                htmltext += `<button class="list_button" id="${row[0]}" onclick="arkts.play_songs(this.id, 'all_songs'); page_switch();"><img src="file/song.svg"><div><p>${row[1]}</p></div></button>`
             }
         }
     // 修改元素

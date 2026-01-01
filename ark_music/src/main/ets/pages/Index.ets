@@ -13,9 +13,10 @@ import { wantAgent } from '@kit.AbilityKit';
 import { avSession } from '@kit.AVSessionKit';
 import promptAction from '@ohos.promptAction';
 
+
 // 导入其他ets
 import {
-  getDownloadPathFromPicker, get_download, scan_all_files, all_music
+  getDownloadPathFromPicker, get_download, scan_all_files, all_music, scan_dir_songs
 } from './files_manager'
 
 // 变量池
@@ -27,7 +28,7 @@ struct ArkMusic_Component {
 
   // 变量/类池
   private context = getContext(this) as common.UIAbilityContext;
-  @State ark_music_ui: webview.WebviewController = new webview.WebviewController();
+  ark_music_ui: webview.WebviewController = new webview.WebviewController();
   @State allow_create_make_files: boolean = false;
   @State ark_create_download_ui: webview.WebviewController = new webview.WebviewController();
   ark_create_download_ui_delegate: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();
@@ -49,7 +50,7 @@ struct ArkMusic_Component {
     this.allow_create_make_files = get_download();
     // 如果没创建好那先退出
     if (this.allow_create_make_files) {return;}
-    // 扫描歌曲
+    promptAction.showToast({ message: '歌曲扫描完成！', duration: 3000 });
   }
 
   // 监听系统音频
@@ -83,8 +84,13 @@ struct ArkMusic_Component {
         let metadata = await avMetadataExtractor.fetchMetadata();
         console.log(`专辑名：“${metadata.title}”，作者：“${metadata.artist}” 文件名称：${file_name}`)
         // 加载名称
-        this.song_title = metadata.title ?? file_name
-        this.song_artist = metadata.artist ?? '未知艺术家'
+        if (metadata.title == "" || metadata.artist == "") {
+          this.song_title = file_name;
+          this.song_artist = '未知艺术家'
+        } else {
+          this.song_title = metadata.title ?? file_name
+          this.song_artist = metadata.artist ?? '未知艺术家'
+        }
         // 输出前端
         this.ark_music_ui.runJavaScript(`set_meta(['${file_name}', '${this.song_title}', '${this.song_artist}'])`)
         this.session?.setAVMetadata({ assetId: `${this.play_list_index}`, title: this.song_title, artist: this.song_artist })
@@ -109,17 +115,20 @@ struct ArkMusic_Component {
           // JS 调用
           this.ark_music_ui.runJavaScript(`set_meta_img('${encodedData}')`);
         } catch {
-          await this.loadDefaultImage();
           // 获取失败，返回空
+          await this.loadDefaultImage();
           this.ark_music_ui.runJavaScript(`set_meta_img('')`);
+          this.session?.setAVMetadata({ assetId: `${this.play_list_index}`, mediaImage: this.song_img })
         }
         // 释放
         avMetadataExtractor.release();
       } catch (e) {
         console.error(`专辑信息获取失败：${e}}`);
         // 返回空信息
+        await this.loadDefaultImage();
         this.ark_music_ui.runJavaScript(`set_meta(['${file_name}', '${file_name}', '未知艺术家'])`)
         this.ark_music_ui.runJavaScript(`set_meta_img('')`);
+        this.session?.setAVMetadata({ assetId: `${this.play_list_index}`, mediaImage: this.song_img })
       }
     }
   }
@@ -190,130 +199,6 @@ struct ArkMusic_Component {
       await backgroundTaskManager.startBackgroundRunning(this.context, backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK, tmpWantAgent);
     } catch (e) {
       console.error(`后台注册失败：${e}}`);
-    }
-  }
-
-  // 注册webview函数
-  reg_webview_js() {
-    try {this.ark_music_ui.registerJavaScriptProxy(
-      {
-
-        // 扫描歌曲
-        scan_songs: () => {
-          console.log('准备扫描。')
-          scan_all_files();
-          promptAction.showToast({ message: '扫描完成！', duration: 3000 });
-      },
-        // 加载歌曲
-        get_songs: (model: string, path: string = ''): string[][] => {
-          // 判断是获取什么
-          if (model == "get_all_songs") {
-            // 返回数组表
-            return all_music;
-          } else {
-            return [[]];
-          }
-        },
-        // 点歌
-        play_songs: (path: string, id: string, arg: string = '') => {
-          console.log('点歌！');
-          // 判断模式
-          if (id == 'all_songs') {
-            // 模式：所有歌曲
-            // 导入列表
-            this.play_list = []
-            for (let i = 0; i < all_music.length; i++) {
-              this.play_list.push(all_music[i][0]);
-            }
-            // 序号设置
-            try {
-              let tmp = this.play_list.indexOf(path);
-              // 测试文件可用性
-              fs.statSync(this.play_list[tmp])
-              // 通过
-              this.play_list_index = tmp;
-              console.log('准备初始化audio');
-              // 注册audio
-              // 读取验证文件有效性
-              try {
-                fs.statSync(this.play_list[this.play_list_index])
-                // 通过，重置audio
-                this.audio_set(this.play_list[this.play_list_index]);
-              } catch {
-                // 无效 歌序归位
-                this.play_list_index = -1;
-              }
-            } catch {
-              promptAction.showToast({ message: '文件读取失败，请重试', duration: 3000 });
-              this.play_list_index = -1;
-            }
-          }
-        },
-        // 播放 / 暂停
-        play_change: () => {
-          if (this.play_status) { this.avPlayer?.pause() } else { this.avPlayer?.play() }
-        },
-        // 上一首
-        last_song: () => {
-          // 非0判断
-          console.log('上一首')
-          if (this.play_list_index <= 0 ) {
-            // 如果为0，则倒退到最后一首
-            this.play_list_index = this.play_list.length - 1;
-          } else {
-            this.play_list_index -= 1
-          }
-          // 读取验证文件有效性
-          try {
-            fs.statSync(this.play_list[this.play_list_index])
-            // 通过，重置audio
-            this.audio_set(this.play_list[this.play_list_index]);
-          } catch {
-            // 无效 歌序归位
-            this.play_list_index = -1;
-          }
-        },
-        // 下一首
-        next_song: () => {
-          // 如果是最后一首，则从头开始
-          if (this.play_list_index >= this.play_list.length - 1) {
-            this.play_list_index = 0;
-          } else {
-            this.play_list_index += 1;
-          }
-          // 读取验证文件有效性
-          try {
-            fs.statSync(this.play_list[this.play_list_index])
-            // 通过，重置audio
-            this.audio_set(this.play_list[this.play_list_index]);
-          } catch {
-            // 无效 歌序归位
-            this.play_list_index = -1;
-          }
-        },
-        // 拖动进度条
-        play_seek: (seek: string) => {
-          this.avPlayer?.seek(parseInt(seek))
-        },
-        // 调节音量
-        change_volume: (level: string) => {
-          // level -1 = 打开面板，level -2 = 关闭面板
-          if (level == '-1') {
-            this.show_volume = true
-          } else if (level == '-2') {
-            this.show_volume = false
-          } else {
-            this.volume_level = parseInt(level)
-          }
-        },
-      },
-      "arkts",
-      [
-        "scan_songs", "get_songs", "play_songs", "play_change", "last_song", "next_song", "play_seek",
-        "open_volume", "change_volume"
-      ]
-    )} catch (e) {
-      console.error(`注册webview时出现了错误: ${e}.`)
     }
   }
 
@@ -444,12 +329,146 @@ struct ArkMusic_Component {
     });
   }
 
+  // 注册webview函数
+  reg_webview_js() {
+    try {this.ark_music_ui.registerJavaScriptProxy(
+      {
+
+        // 扫描歌曲
+        scan_songs: () => {
+          console.log('准备扫描。')
+          scan_all_files();
+          promptAction.showToast({ message: '扫描完成！', duration: 3000 });
+        },
+        // 加载歌曲
+        get_songs: (model: string, path: string = ''): string[][] => {
+          // 判断是获取什么
+          if (model == "get_all_songs") {
+            // 返回数组表
+            return all_music;
+          } else {
+            return [[]];
+          }
+        },
+        // 点歌
+        play_songs: (path: string, id: string, arg: string = '') => {
+          console.log('点歌！');
+          // 判断模式
+          if (id == 'all_songs') {
+            // 模式：所有歌曲
+            // 导入列表
+            this.play_list = []
+            for (let i = 0; i < all_music.length; i++) {
+              this.play_list.push(all_music[i][0]);
+            }
+            // 序号设置
+            try {
+              let tmp = this.play_list.indexOf(path);
+              // 测试文件可用性
+              fs.statSync(this.play_list[tmp])
+              // 通过
+              this.play_list_index = tmp;
+              console.log('准备初始化audio');
+              // 注册audio
+              // 读取验证文件有效性
+              try {
+                fs.statSync(this.play_list[this.play_list_index])
+                // 通过，重置audio
+                this.audio_set(this.play_list[this.play_list_index]);
+              } catch {
+                // 无效 歌序归位
+                this.play_list_index = -1;
+              }
+            } catch {
+              promptAction.showToast({ message: '文件读取失败，请重试', duration: 3000 });
+              this.play_list_index = -1;
+            }
+          }
+        },
+        // 播放 / 暂停
+        play_change: () => {
+          if (this.play_status) { this.avPlayer?.pause() } else { this.avPlayer?.play() }
+        },
+        // 上一首
+        last_song: () => {
+          // 非0判断
+          console.log('上一首')
+          if (this.play_list_index <= 0 ) {
+            // 如果为0，则倒退到最后一首
+            this.play_list_index = this.play_list.length - 1;
+          } else {
+            this.play_list_index -= 1
+          }
+          // 读取验证文件有效性
+          try {
+            fs.statSync(this.play_list[this.play_list_index])
+            // 通过，重置audio
+            this.audio_set(this.play_list[this.play_list_index]);
+          } catch {
+            // 无效 歌序归位
+            this.play_list_index = -1;
+          }
+        },
+        // 下一首
+        next_song: () => {
+          // 如果是最后一首，则从头开始
+          if (this.play_list_index >= this.play_list.length - 1) {
+            this.play_list_index = 0;
+          } else {
+            this.play_list_index += 1;
+          }
+          // 读取验证文件有效性
+          try {
+            fs.statSync(this.play_list[this.play_list_index])
+            // 通过，重置audio
+            this.audio_set(this.play_list[this.play_list_index]);
+          } catch {
+            // 无效 歌序归位
+            this.play_list_index = -1;
+          }
+        },
+        // 拖动进度条
+        play_seek: (seek: string) => {
+          try { this.avPlayer?.seek(parseInt(seek)) } catch {}
+        },
+        // 调节音量
+        change_volume: (level: string) => {
+          // level -1 = 打开面板，level -2 = 关闭面板
+          if (level == '-1') {
+            this.show_volume = true
+          } else if (level == '-2') {
+            this.show_volume = false
+          } else {
+            this.volume_level = parseInt(level)
+          }
+        },
+
+        // 扫描文件夹（结构模式）
+        scan_songs_dir: (path: string = '') => {
+          // 根据传入的值扫描
+          let tmp = scan_dir_songs(path)
+          console.log('#0')
+          console.log(`${tmp}`)
+        },
+
+      },
+      "arkts",
+      [
+        "scan_songs", "get_songs", "play_songs", "play_change", "last_song", "next_song", "play_seek",
+        "open_volume", "change_volume",
+        "scan_songs_dir"
+      ]
+    )} catch (e) {
+      console.error(`注册webview时出现了错误: ${e}.`)
+    }
+  }
+
   // UI界面构建 //
   build() {
     Row() {
 
       // ArkMusic主界面 //
-      Web({src: $rawfile("webview_gui/index.html"), controller: this.ark_music_ui})
+      Web({ src: $rawfile("webview_gui/index.html"), controller: this.ark_music_ui, renderMode: RenderMode.ASYNC_RENDER })
         .width('100vw')
         .height('100vh')
         .position({ x: 0, y: 0})
@@ -460,8 +479,6 @@ struct ArkMusic_Component {
 
           // 初始化 //
           this.app_start();
-          // 监听音量
-          this.listen_system_volume();
           // 注册avs
           this.reg_bg_audio();
           this.avs_reg_session();
@@ -470,7 +487,10 @@ struct ArkMusic_Component {
 
         })
         // 加载后
-        .onPageEnd(() => {})
+        .onPageEnd(() => {
+          // 监听音量
+          this.listen_system_volume();
+        })
 
       // 下载目录创建 //
       if (this.allow_create_make_files) {
