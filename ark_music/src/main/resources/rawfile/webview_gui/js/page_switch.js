@@ -1,26 +1,26 @@
 // 页面切换函数
 function page_switch(page = 1) {
     if (page === 1) {
-        main_gui.style.transform = 'translateX(0)';
-        taskbar_selector.className = 'taskbar_selector main';
         taskbar.className = 'taskbar';
         music_bar.className = 'music_bar';
         music_bar_frame.className = 'music_bar_frame';
-        music_bar_playback_screen.className = 'music_bar_playback_screen sink'
-    } else if (page === 2) {
-        main_gui.style.transform = 'translateX(-100%)';
-        taskbar_selector.className = 'taskbar_selector files';
+        music_bar_playback_screen.classList.remove('high');
+        music_bar_playback_screen.classList.add('sink');
+    } else if ( page === 0 || page === 2 || page === 3 ) {
         taskbar.className = 'taskbar';
         music_bar.className = 'music_bar show';
         music_bar_frame.className = 'music_bar_frame show';
-        music_bar_playback_screen.className = 'music_bar_playback_screen high'
+        music_bar_playback_screen.classList.remove('sink');
+        music_bar_playback_screen.classList.add('high');
     } else {
-        main_gui.style.transform = `translateX(-${(page - 1) * 100}%)`
         taskbar.className = 'taskbar hide';
         music_bar_frame.className = 'music_bar_frame show';
         music_bar.className = 'music_bar';
-        music_bar_playback_screen.className = 'music_bar_playback_screen sink'
+        music_bar_playback_screen.classList.remove('high');
+        music_bar_playback_screen.classList.add('sink');
     }
+    taskbar_selector.style.transform = `translateX(${(page * 100) - 400}%)`
+    main_gui.style.transform = `translateX(-${(page) * 100}%)`
 }
 
 // 页面切换外部接口

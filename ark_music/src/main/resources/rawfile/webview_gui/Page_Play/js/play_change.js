@@ -24,10 +24,9 @@ function post_next_song() {
 function play_page_change_play_status(status) {
     // 如果为播放
     if (status === 'play') {
-        play_page_play_change.innerHTML = '<img src="file/play_pause.svg" style="width: 50%; height: 50%;">'
+        play_page_play_change.style.transform = 'translateX(-25%)'
     } else if (status === 'pause') {
-        // 修改图标 
-        play_page_play_change.innerHTML = '<img src="file/play_play.svg" style="width: 50%; height: 50%; margin-left: 15%;">'
+        play_page_play_change.style.transform = 'translateX(27%)'
     }
 }
 

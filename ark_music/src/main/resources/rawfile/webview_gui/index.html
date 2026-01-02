@@ -6,21 +6,39 @@
     <style>
         body {
             -webkit-tap-highlight-color: transparent;
-            transition: all 0.3s ease;;
+            transition: all 0.3s ease;
+        }
+        #ark_music_background {
+            position: fixed; z-index: 10;
+            top: -37.5vh; left: -37.5vh;
+            width: 150vh; height: 150vh;
+            transform-origin: center center; /* 设置旋转中心为div中心 */
+        }
+        #ark_music_background.rotating {
+            animation: backgroundRotate 10s linear infinite;
+        }
+        @keyframes backgroundRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
+    <link rel="stylesheet" href="css/icon.css">
     <link rel="stylesheet" href="css/taskbar.css">
     <link rel="stylesheet" href="css/main_gui.css">
     <link rel="stylesheet" href="css/music_bar.css">
 </head>
 <body>
     
+    <!-- 背景 -->
+    <div id="ark_music_background"></div>
+    
     <!-- 主界面框架（可滑动） -->
     <div id="main_gui">
 
+        <!-- 播放列表页 -->
+         <iframe src="Page_List/index.html" frameborder="0"></iframe>
         <!-- 播放页 -->
         <iframe src="Page_Play/index.html" id="page_play"></iframe>
-
         <!-- 文件页 -->
         <iframe src="Page_Files/index.html" id="'page_files"></iframe>
         <!-- 文件页（所有文件） -->
@@ -34,17 +52,17 @@
          <div id="music_bar_frame">
             <!-- 音频控制器 -->
             <div id=meta_img class="music_bar_meta_img"><img src="file/CD.png"></div>
-            <div id="music_bar_title"><div id="music_bar_title_scroll"><p id="title">未知音频</p></div></div>
+            <div id="music_bar_title"><div id="music_bar_title_scroll"><p id="title" class="icon_p" >未知音频</p></div></div>
             <!-- 播放三大金刚 -->
-            <button onclick="post_last_song()" class="play_button" style="right: 80px;"><img src="file/play_last.svg" style="margin-right: 5px;"></button>
-            <button onclick="post_play_change()" id="play_change" class="play_button" style="right: 45px;"><img src="file/play_change.svg" style="margin-left: 5px;"></button>
-            <button onclick="post_next_song()" id="play_next" class="play_button" style="right: 10px;"><img src="file/play_next.svg" style="margin-left: 5px;"></button>
+            <button onclick="post_last_song()" class="play_button" style="right: 75px;"><div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 45 35"><path class="icon" d="M13.181,7.4a5,5,0,0,1,8.638,0l8.795,15.077A5,5,0,0,1,26.295,30H8.705a5,5,0,0,1-4.319-7.519Z" transform="translate(15 35) rotate(-90)"/><path class="icon" d="M13.181,7.4a5,5,0,0,1,8.638,0l8.795,15.077A5,5,0,0,1,26.295,30H8.705a5,5,0,0,1-4.319-7.519Z" transform="translate(0 35) rotate(-90)"/></svg></div></button>
+            <button onclick="post_play_change()" id="play_change" class="play_button" style="right: 40px;"><div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 40 40"><path class="icon" d="M19.164,7.9a4.93,4.93,0,0,1,8.957,0L42.955,36.461a6.254,6.254,0,0,1-.007,5.715,5.1,5.1,0,0,1-4.472,2.855H8.809a5.1,5.1,0,0,1-4.472-2.855,6.254,6.254,0,0,1-.007-5.715Z" transform="translate(45.03 -3.643) rotate(90)"/></svg></div></button>
+            <button onclick="post_next_song()" class="play_button" style="right: 5px;"><div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 45 35"><path class="icon" d="M13.181,7.4a5,5,0,0,1,8.638,0l8.795,15.077A5,5,0,0,1,26.295,30H8.705a5,5,0,0,1-4.319-7.519Z" transform="translate(30) rotate(90)" /><path class="icon" d="M13.181,7.4a5,5,0,0,1,8.638,0l8.795,15.077A5,5,0,0,1,26.295,30H8.705a5,5,0,0,1-4.319-7.519Z" transform="translate(45) rotate(90)"/></svg></div></button>
             <!-- 进度滑块框架 -->
             <div class="music_bar_playback_frame">
                 <!-- 进度滑块 -->
                 <input type="range" id="music_bar_playback_control" min="0" max="60000" value="30000"/>
                 <!-- 进度展示条 -->
-                <div id="music_bar_playback_screen" class="music_bar_playback_screen"></div>
+                <div id="music_bar_playback_screen" class="music_bar_playback_screen icon_div"></div>
             </div>
             
          </div>
@@ -53,10 +71,12 @@
     <!-- 底部状态栏 -->
     <div id="taskbar">
         <!--播放主页图标-->
-        <img src="file/main.svg" style="width: 35px; height: 35px;">
-        <img src="file/files.svg" style="width: 40px; height: 40px;">
+        <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="35px" height="35px" viewBox="0 0 1024 1024"><path class="icon" d="M187.392 70.656q28.672 0 48.64 19.456t19.968 48.128l0 52.224q0 28.672-19.968 48.64t-48.64 19.968l-54.272 0q-27.648 0-47.616-19.968t-19.968-48.64l0-52.224q0-28.672 19.968-48.128t47.616-19.456l54.272 0zM889.856 70.656q27.648 0 47.616 19.456t19.968 48.128l0 52.224q0 28.672-19.968 48.64t-47.616 19.968l-437.248 0q-28.672 0-48.64-19.968t-19.968-48.64l0-52.224q0-28.672 19.968-48.128t48.64-19.456l437.248 0zM187.392 389.12q28.672 0 48.64 19.968t19.968 48.64l0 52.224q0 27.648-19.968 47.616t-48.64 19.968l-54.272 0q-27.648 0-47.616-19.968t-19.968-47.616l0-52.224q0-28.672 19.968-48.64t47.616-19.968l54.272 0zM889.856 389.12q27.648 0 47.616 19.968t19.968 48.64l0 52.224q0 27.648-19.968 47.616t-47.616 19.968l-437.248 0q-28.672 0-48.64-19.968t-19.968-47.616l0-52.224q0-28.672 19.968-48.64t48.64-19.968l437.248 0zM187.392 708.608q28.672 0 48.64 19.968t19.968 47.616l0 52.224q0 28.672-19.968 48.64t-48.64 19.968l-54.272 0q-27.648 0-47.616-19.968t-19.968-48.64l0-52.224q0-27.648 19.968-47.616t47.616-19.968l54.272 0zM889.856 708.608q27.648 0 47.616 19.968t19.968 47.616l0 52.224q0 28.672-19.968 48.64t-47.616 19.968l-437.248 0q-28.672 0-48.64-19.968t-19.968-48.64l0-52.224q0-27.648 19.968-47.616t48.64-19.968l437.248 0z"></path></svg></div>
+        <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="35px" height="30px" viewBox="0 0 40 40"><path class="icon" d="M19.164,7.9a4.93,4.93,0,0,1,8.957,0L42.955,36.461a6.254,6.254,0,0,1-.007,5.715,5.1,5.1,0,0,1-4.472,2.855H8.809a5.1,5.1,0,0,1-4.472-2.855,6.254,6.254,0,0,1-.007-5.715Z" transform="translate(45.03 -3.643) rotate(90)"/></svg></div>
+        <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="40px" height="40px" viewBox="0 0 1024 1024"><path class="icon" d="M512 102.4C286.378667 102.4 102.4 286.378667 102.4 512.341333 102.4 737.962667 286.378667 921.6 512 921.6c225.962667 0 409.6-183.637333 409.6-409.258667C921.6 286.378667 737.962667 102.4 512 102.4zM296.277333 512.341333c0 18.773333-15.018667 34.133333-34.133333 34.133334-18.773333 0-34.133333-15.36-34.133333-34.133334 0-156.672 127.317333-284.330667 283.989333-284.330666 18.773333 0 34.133333 15.36 34.133333 34.133333s-15.36 34.133333-34.133333 34.133333c-118.784 0-215.722667 96.938667-215.722667 216.064z m107.52-0.341333A108.202667 108.202667 0 0 1 512 403.797333c60.074667 0 108.544 48.469333 108.544 108.202667s-48.469333 108.544-108.544 108.544A108.544 108.544 0 0 1 403.797333 512zM512 795.989333c-18.773333 0-34.133333-15.36-34.133333-34.133333s15.36-34.133333 34.133333-34.133333c119.125333 0 216.064-96.597333 216.064-215.381334 0-19.114667 15.018667-34.133333 34.133333-34.133333 18.773333 0 34.133333 15.018667 34.133334 34.133333 0 156.330667-127.658667 283.648-284.330667 283.648z"></path></svg></div>
+        <div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="35px" height="35px" viewBox="0 0 1024 1024" ><path class="icon" d="M293.12 64a64 64 0 0 0-55.552 32.256l-219.392 384a64 64 0 0 0 0 63.488l219.392 384A64 64 0 0 0 293.12 960h437.76a64 64 0 0 0 55.552-32.256l219.456-384a64 64 0 0 0 0-63.488l-219.456-384A64 64 0 0 0 730.88 64H293.12z m321.152 620.544A192 192 0 1 1 420.096 353.28a192 192 0 0 1 194.176 331.264z"></path></svg></div>
         <!-- 选择滑块 -->
-        <div id="taskbar_selector"></div>
+        <div id="taskbar_selector" class="icon_div"></div>
     </div>
     
     <!-- js -->
@@ -69,5 +89,7 @@
     <script src="js/child_queue.js"></script>
     <script src="js/set_meta.js"></script>
     <script src="js/song_seek.js"></script>
+    <script src="js/icon_color_change.js"></script>
+    <script src="js/start.js"></script>
 </body>
 </html>

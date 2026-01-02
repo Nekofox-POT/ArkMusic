@@ -2,18 +2,19 @@
 
     position: fixed;
     z-index: 900;
-    bottom: 25px;
+    bottom: 50px;
     left: 5vw;
     width: 90vw;
     height: 50px;
-    background-color: rgba(234, 234, 234, 0.5);
-    backdrop-filter: blur(2.5px);
+    background-color: rgba(238, 238, 238, 0.2);
     border-radius: 100px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
 
     display: flex;
     align-items: center;
     justify-content: space-around;
+    overflow: hidden;
 
     transition: all 0.3s ease;
 
@@ -38,19 +39,12 @@
 
     position: absolute;
     z-index: 905;
-    width: 50%;
+    width: 25%;
     height: 100%;
-    background-color: rgba(71, 71, 71, 0.5);
     border-radius: 100px;
     box-shadow: 0 0px 8px rgba(0, 0, 0, 0.2);
-    left: 25%;
-    
-    transition: transform 0.2s ease;
+    left: 100%;
 
-}
-#taskbar_selector.main {
-    transform: translateX(-50%);
-}
-#taskbar_selector.files {
-    transform: translateX(50%);
+    transition: transform 0.2s ease, background-color 1s ease;
+
 }

@@ -14,7 +14,6 @@ const observer = new MutationObserver(checkAndSetupScrolling);
 observer.observe(titleElement, { characterData: true, subtree: true });
 
 function checkAndSetupScrolling() {
-    console.log('字体改变了！')
     // 获取容器和内容的宽度
     const containerWidth = titleContainer.clientWidth;
     const contentWidth = titleScroll.scrollWidth;

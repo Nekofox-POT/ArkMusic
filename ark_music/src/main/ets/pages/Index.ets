@@ -14,12 +14,15 @@ import { avSession } from '@kit.AVSessionKit';
 import promptAction from '@ohos.promptAction';
 import { vibrator } from '@kit.SensorServiceKit';
 
+
 // 导入其他ets
 import {
   getDownloadPathFromPicker, get_download, scan_all_files, all_music, scan_dir_songs
 } from './files_manager'
 
 // 变量池
+
+
 
 // 主程序 //
 @Entry
@@ -255,7 +258,7 @@ struct ArkMusic_Component {
     this.avPlayer.on('stateChange', async (state: string, reason: media.StateChangeReason) => {
       // 添加保险
       if (!this.avPlayer) { return; }
-      // 状态分类
+      // 状态分类edwed
       switch (state) {
         case 'idle': // audio闲置
           console.log('audio闲置了');

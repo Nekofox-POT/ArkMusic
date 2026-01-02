@@ -4,7 +4,7 @@
     z-index: 700;
     width: 90vw;
     height: 100px;
-    top: calc(100% - 260px);
+    top: calc(100% - 285px);
     left: 5vw;
 
     display: flex;
@@ -17,16 +17,38 @@
 
     width: 75px;
     height: 75px;
-    background-color: #eaeaea;
+    background-color: rgba(238, 238, 238, 0.2);
     border-radius: 300px;
     border: none;
     cursor: pointer;
     outline: none;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
 
     transition: transform 0.1s ease;
 
 }
 .play_button:active {
     transform: scale(0.9);
+}
+
+#play_page_play_change {
+    
+    width: 200%;
+    height: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    transition: transform 0.3s ease;
+    transform: translateX(27%);
+    
+
 }

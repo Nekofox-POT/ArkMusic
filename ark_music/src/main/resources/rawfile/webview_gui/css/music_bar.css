@@ -3,12 +3,11 @@
 
     position: fixed;
     z-index: 800;
-    bottom: 25px;
+    bottom: 50px;
     left: 5vw;
     width: 90vw;
     height: 50px;
-    background-color: rgba(218, 218, 218, 0.5);
-    backdrop-filter: blur(2.5px);
+    background-color: rgba(238, 238, 238, 0.2);
     border-radius: 25px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
@@ -69,11 +68,10 @@
 }
 
 #music_bar_title {
-    
 
     position: absolute;
     z-index: 810;
-    width: 110px;
+    width: calc(90vw - 160px);
     height: 30px;
     border-radius: 5px;
     top: 10px;
@@ -107,7 +105,6 @@
 #music_bar_title p {
     font-weight: 450;
     font-size: 10px;
-    color: rgb(100, 100, 100);
     white-space: nowrap;
     margin: 0;
     padding: 0;
@@ -188,9 +185,9 @@
     height: 200%;
     top: 0;
     left: 0;
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.5);
     border-radius: 25px;
-    transition: width 0.05s ease, height 0.1s ease;
+    transition: width 0.05s ease, height 0.1s ease, background-color 1s ease;
     pointer-events: none; /* 确保不会阻挡滑块的点击 */
 }
 .music_bar_playback_screen.high {

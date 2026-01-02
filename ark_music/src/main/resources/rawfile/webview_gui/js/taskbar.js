@@ -1,22 +1,20 @@
 // 滑动允许指示
 let able_move = true;
 
-// 初始化selector
-taskbar_selector.className = 'taskbar_selector main';
-
 // 监听taskbar按下
 taskbar.addEventListener('touchstart', function(e) {
     able_move = true;
     taskbar.className = 'taskbar active';
     music_bar.className = 'music_bar active';
-    music_bar_playback_screen.className = 'music_bar_playback_screen active'
+    music_bar_playback_screen.classList.remove('high');
+    music_bar_playback_screen.classList.add('sink');
 });
 
 // 监听taskbar松开（取消）
 taskbar.addEventListener('toucancel', function(e) {
     taskbar.className = 'taskbar';
     music_bar.className = 'music_bar';
-    music_bar_playback_screen.className = 'music_bar_playback_screen'
+    music_bar_playback_screen.classList.remove('sink');
 });
 
 // 监听taskbar移动
@@ -32,7 +30,7 @@ taskbar.addEventListener('touchmove', function(e) {
             // 滑出边界，复位
             taskbar.className = 'taskbar';
             music_bar.className = 'music_bar';
-            music_bar_playback_screen.className = 'music_bar_playback_screen'
+            music_bar_playback_screen.classList.remove('sink');
             able_move = false;
         }
     }
@@ -49,15 +47,15 @@ taskbar.addEventListener('touchend', function(e) {
     
     // 复位
     taskbar.className = 'taskbar';
-    
-    // 如果点击在左半边
-    if (clickX < taskbarWidth / 2) {
-        // 滑块移动到播放页图标位置（左半边）
+
+    // 判断点击位置
+    if (clickX < taskbarWidth * (1 / 4)) {
+        page_switch(0);
+    } else if (clickX < taskbarWidth * (2 / 4)) {
         page_switch(1);
-        
-    } else {
-        // 否则点击在右半边
-        // 滑块移动到文件页图标位置（右半边）
+    } else if (clickX < taskbarWidth * (3 / 4)) {
         page_switch(2);
+    } else if (clickX < taskbarWidth * (4 / 4)) {
+        page_switch(3);
     }
 });

@@ -4,8 +4,9 @@
     height: 40px;
     border-radius: 150px;
     position: absolute;
-    background: #eaeaea;
-    top: calc(100% - 315px);
+    background-color: rgba(238, 238, 238, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    top: calc(100% - 340px);
     left: calc(100% - 65px);
 
     display: flex;
@@ -31,7 +32,7 @@
     transform: translateX(-167px);
 
 }
-.vol_control img {
+.vol_control_icon {
     width: 25px;
     height: 25px;
     margin-left: 20px;
@@ -67,7 +68,6 @@
     height: 100%;
     top: 0;
     left: 0;
-    background-color: #fff;
     border-radius: 50px;
     transition: width 0.05s ease; /* 添加过渡效果 */
 }

@@ -2,10 +2,10 @@
     
     width: 90vw;
     height: 90vw;;
-    background-color: #eaeaea;
+    background-color: rgba(238, 238, 238, 0.6);
     border-radius: 15px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    margin-top: 25px;
+    margin-top: 50px;
 
     overflow: hidden;
     
@@ -15,4 +15,5 @@
     height: 100%;
     object-fit: cover;
     border-radius: 15px;
+    opacity: 0.8;
 }

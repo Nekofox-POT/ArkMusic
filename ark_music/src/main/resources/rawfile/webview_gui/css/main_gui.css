@@ -13,7 +13,7 @@
     transition: transform 0.3s ease;
 
     /* 这个记得删掉，控制当前页码 */
-    /* transform: translateX(-200%); */
+    transform: translateX(-100%);
 
 }
 #main_gui iframe {

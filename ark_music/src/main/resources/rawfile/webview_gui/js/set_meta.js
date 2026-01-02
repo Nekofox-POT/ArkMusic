@@ -67,10 +67,10 @@ function set_song_image(byteString) {
             // 加载成功，清空div并添加新图片
             meta_img.innerHTML = '';
             meta_img.appendChild(img);
-            
-            // 获取图片平均色并设置为body背景色
-            getAverageColorAndSetBackground(img);
-            
+
+            // 分析图片并设置模糊背景
+            ark_music_set_background(img, blobUrl);
+
             // 使用完成后释放blob URL以节省内存
             img.onload = null; // 清除事件处理器
         };
@@ -83,6 +83,10 @@ function set_song_image(byteString) {
             meta_img.appendChild(defaultImg);
             // 释放失败的blob URL
             URL.revokeObjectURL(blobUrl);
+
+            // 同时设置默认背景
+            setBlurBackground('file/CD.png', 1.0, 1.2); // 使用默认的清新效果
+            set_icon_color_white(255);
         };
 
         // 设置src
@@ -94,64 +98,184 @@ function set_song_image(byteString) {
         const defaultImg = new Image();
         defaultImg.src = 'file/CD.png';
         meta_img.appendChild(defaultImg);
+
+        // 同时设置默认背景
+        setBlurBackground('file/CD.png', 1.0, 1.2); // 使用默认的清新效果
+        set_icon_color_white(255);
     }
 }
 
-// 新增函数：获取图片平均色值并设置为body背景色
-function getAverageColorAndSetBackground(img) {
+// 分析图片并设置背景
+function ark_music_set_background(img, blobUrl) {
     try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
-        // 设置canvas尺寸为图片尺寸（可以缩小处理以提高性能）
-        const width = img.width;
-        const height = img.height;
-        
-        canvas.width = width;
-        canvas.height = height;
-        
-        // 绘制图片到canvas
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // 获取图片像素数据
-        const imageData = ctx.getImageData(0, 0, width, height);
+
+        const sampleSize = img.width;
+
+        canvas.width = img.width;
+        canvas.height = img.height;
+
+        // 绘制缩放后的图片
+        ctx.drawImage(img, 0, 0, sampleSize, sampleSize);
+
+        // 获取像素数据
+        const imageData = ctx.getImageData(0, 0, sampleSize, sampleSize);
         const data = imageData.data;
-        
-        let r = 0, g = 0, b = 0;
-        let count = 0;
-        
-        // 计算所有像素的平均颜色
+
+        let totalBrightness = 0;
+        let pixelCount = 0;
+
+        // 计算平均亮度
         for (let i = 0; i < data.length; i += 4) {
-            // 跳过完全透明的像素
-            if (data[i + 3] !== 0) {
-                r += data[i];
-                g += data[i + 1];
-                b += data[i + 2];
-                count++;
-            }
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+
+            // 使用加权平均计算亮度 (ITU-R BT.709)
+            const brightness = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            totalBrightness += brightness;
+            pixelCount++;
         }
-        
-        if (count > 0) {
-            r = Math.floor(r / count);
-            g = Math.floor(g / count);
-            b = Math.floor(b / count);
+
+        const avgBrightness = totalBrightness / pixelCount;
+
+        // 根据平均亮度计算调整参数
+        let brightnessAdjust = 1.0; // 默认亮度
+        let saturationAdjust = 1.2; // 默认饱和度
+
+        // 如果图片较暗，增加亮度
+        if (avgBrightness < 80) {
+            brightnessAdjust = 2;
+            saturationAdjust = 1.3;
+        } else if (avgBrightness < 120) {
+            brightnessAdjust = 1.7;
+            saturationAdjust = 1.2;
+        } else if (avgBrightness > 180) {
+            // 如果图片很亮，稍微降低亮度，增加饱和度
+            brightnessAdjust = 1;
+            saturationAdjust = 1.4;
         } else {
-            // 如果没有有效像素，使用默认颜色
-            r = 128;
-            g = 128;
-            b = 128;
+            // 中等亮度，使用适中的调整
+            brightnessAdjust = 1.2;
+            saturationAdjust = 1.3;
         }
-        
-        // 设置body背景色
-        document.body.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-        
+
+        // 切换主题
+        set_icon_color_white(avgBrightness);
+
+        // 设置背景
+        setBlurBackground(blobUrl, brightnessAdjust, saturationAdjust);
+
         // 清理canvas
         canvas.width = 0;
         canvas.height = 0;
-        
+
     } catch (error) {
-        console.error('获取图片平均色时出错:', error);
-        // 出错时使用默认颜色
-        document.body.style.backgroundColor = '#808080'; // 灰色
+        console.error('分析图片时出错:', error);
+        // 如果分析失败，使用默认设置
+        setBlurBackground(blobUrl, 1.0, 1.2);
+        set_icon_color_white(255);
     }
+}
+
+// 设置模糊背景（带渐变动画和色彩调整）
+function setBlurBackground(imageSrc, brightness, saturation) {
+    // 创建新背景图片元素
+    const newBackgroundImg = document.createElement('img');
+    newBackgroundImg.src = imageSrc;
+
+    // 设置样式，包括动态的亮度和饱和度调整
+    newBackgroundImg.style.position = 'absolute';
+    newBackgroundImg.style.top = '0';
+    newBackgroundImg.style.left = '0';
+    newBackgroundImg.style.width = '100%';
+    newBackgroundImg.style.height = '100%';
+    newBackgroundImg.style.objectFit = 'cover';
+    newBackgroundImg.style.filter = `blur(120px) brightness(${brightness}) saturate(${saturation})`;
+    newBackgroundImg.style.opacity = '0'; // 初始透明
+    newBackgroundImg.style.transition = 'opacity 1s ease-in-out'; // 渐变过渡
+
+    // 当新图片加载完成后
+    newBackgroundImg.onload = function() {
+        // 如果容器中已有图片，先将它们透明度设为0
+        const existingImgs = ark_music_background.querySelectorAll('img');
+        existingImgs.forEach(img => {
+            img.style.opacity = '0';
+            // 在过渡结束后移除旧图片
+            setTimeout(() => {
+                if (img.parentNode === ark_music_background) {
+                    ark_music_background.removeChild(img);
+                }
+            }, 1000); // 与过渡时间匹配
+        });
+
+        // 如果之前有旋转状态，保持这个状态
+        const wasRotating = ark_music_background.classList.contains('rotating');
+
+        // 将新图片添加到容器
+        ark_music_background.appendChild(newBackgroundImg);
+
+        // 如果之前在旋转，重新添加旋转类
+        if (wasRotating) {
+            ark_music_background.classList.add('rotating');
+        }
+
+        // 触发渐入动画
+        setTimeout(() => {
+            newBackgroundImg.style.opacity = '1';
+        }, 10); // 短暂延迟确保样式应用
+
+        newBackgroundImg.onload = null;
+    };
+
+    // 添加错误处理
+    newBackgroundImg.onerror = function() {
+        console.error('背景图片加载失败');
+        newBackgroundImg.onerror = null;
+    };
+}
+
+// 背景旋转
+let ark_music_background_rotating = false;
+let ark_music_background_rotation = 0;
+let ark_music_background_rotation_start_time = 0;
+let ark_music_background_rotation_accumulated = 0;
+function startBackgroundRotation() {
+    if (ark_music_background_rotating) return; // 如果已经在旋转，直接返回
+
+    ark_music_background_rotating = true;
+
+    // 移除暂停时的transform样式，应用CSS动画
+    ark_music_background.style.animation = 'backgroundRotate 10s linear infinite';
+    ark_music_background.style.animationPlayState = 'running';
+
+    // 添加旋转类
+    ark_music_background.classList.add('rotating');
+
+    // 记录开始时间
+    ark_music_background_rotation_start_time = Date.now();
+}
+function stopBackgroundRotation() {
+    if (!ark_music_background_rotating) return; // 如果没有在旋转，直接返回
+
+    ark_music_background_rotating = false;
+
+    // 获取当前的旋转角度（通过计算时间差）
+    const now = Date.now();
+    const elapsed = (now - ark_music_background_rotation_start_time) / 1000; // 秒
+    const rotationSinceStart = (elapsed / 10) * 360; // 10s是动画持续时间
+    ark_music_background_rotation = ark_music_background_rotation_accumulated + rotationSinceStart;
+
+    // 停止CSS动画
+    ark_music_background.style.animationPlayState = 'paused';
+
+    // 移除旋转类
+    ark_music_background.classList.remove('rotating');
+
+    // 应用当前的旋转角度（通过JavaScript设置transform）
+    ark_music_background.style.transform = `rotate(${ark_music_background_rotation % 360}deg)`;
+
+    // 记录累积的旋转角度
+    ark_music_background_rotation_accumulated = ark_music_background_rotation;
 }

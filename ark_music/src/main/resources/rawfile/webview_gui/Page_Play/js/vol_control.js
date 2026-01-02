@@ -23,7 +23,6 @@ document.addEventListener('click', function(e) {
     if (!vol_control_button.contains(e.target)) {
         vol_control_button.style.width = '40px';
         vol_control_button.style.transform = 'translateX(0px) scale(1)';
-        vol_control_button.style.boxShadow = 'none';
         vol_control_flex_frame.style.transform = 'translateX(-167px)';
         arkts.change_volume(-2);
     }

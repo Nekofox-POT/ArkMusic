@@ -1,0 +1,24 @@
+.icon {
+    fill: #fff;
+    transition: all 1s ease;
+}
+.icon.gray{
+    transition: all 1s ease;
+    fill: #646464;
+}
+
+.icon_p {
+    transition: all 1s ease;
+    color: #fff;
+}
+.icon_p.gray {
+    color: #646464;
+}
+
+.icon_div {
+    transition: all 1s ease;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+.icon_div.gray {
+    background-color: rgba(71, 71, 71, 0.5);
+}

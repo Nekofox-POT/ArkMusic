@@ -29,6 +29,24 @@ export default class Ark_musicAbility extends UIAbility {
       }
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
     });
+
+    windowStage.loadContent('pages/Index', (err, data) => {
+      if (err.code) {
+        console.log('有错误！')
+        return;
+      }
+
+      let windowClass: window.Window = windowStage.getMainWindowSync(); // 获取应用主窗口
+      // 1. 设置窗口全屏
+      let isLayoutFullScreen = true;
+      windowClass.setWindowLayoutFullScreen(isLayoutFullScreen).then(() => {
+        console.info('设置沉浸');
+      }).catch((err: BusinessError) => {
+        console.error('设置沉浸失败：' + JSON.stringify(err));
+      });
+      // 进行后续步骤2-3中的操作
+    });
+
   }
 
   onWindowStageDestroy(): void {
@@ -45,4 +63,5 @@ export default class Ark_musicAbility extends UIAbility {
     // Ability has back to background
     hilog.info(DOMAIN, 'testTag', '%{public}s', 'Ability onBackground');
   }
+
 }

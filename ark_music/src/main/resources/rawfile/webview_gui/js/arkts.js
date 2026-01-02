@@ -5,10 +5,20 @@ function change_play_status(status) {
     change_page_play_status(status)
     // 如果为播放
     if (status === 'play') {
-        play_change.innerHTML = '<img src="file/play_pause.svg">'
+        if (screen_white_black_mode) {
+            play_change.innerHTML = '<div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 40 44"><rect class="icon gray" width="15" height="44" rx="7.5"/><rect class="icon gray" width="15" height="44" rx="7.5" transform="translate(25)"/></svg></div>'
+        } else {
+            play_change.innerHTML = '<div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 40 44"><rect class="icon" width="15" height="44" rx="7.5"/><rect class="icon" width="15" height="44" rx="7.5" transform="translate(25)"/></svg></div>'
+        }
+        startBackgroundRotation();
     } else if (status === 'pause') {
         // 修改图标
-        play_change.innerHTML = '<img src="file/play_change.svg" style="margin-left: 5px;">'
+        if (screen_white_black_mode) {
+            play_change.innerHTML = '<div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 40 40"><path class="icon gray" d="M19.164,7.9a4.93,4.93,0,0,1,8.957,0L42.955,36.461a6.254,6.254,0,0,1-.007,5.715,5.1,5.1,0,0,1-4.472,2.855H8.809a5.1,5.1,0,0,1-4.472-2.855,6.254,6.254,0,0,1-.007-5.715Z" transform="translate(45.03 -3.643) rotate(90)"/></svg></div>'
+        } else {
+            play_change.innerHTML = '<div style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;"><svg style="z-index: 910;" xmlns="http://www.w3.org/2000/svg" width="25px" height="25px" viewBox="0 0 40 40"><path class="icon" d="M19.164,7.9a4.93,4.93,0,0,1,8.957,0L42.955,36.461a6.254,6.254,0,0,1-.007,5.715,5.1,5.1,0,0,1-4.472,2.855H8.809a5.1,5.1,0,0,1-4.472-2.855,6.254,6.254,0,0,1-.007-5.715Z" transform="translate(45.03 -3.643) rotate(90)"/></svg></div>'
+        }
+        stopBackgroundRotation();
     }
 
 }

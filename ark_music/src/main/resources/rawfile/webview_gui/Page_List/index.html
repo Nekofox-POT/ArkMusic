@@ -1,0 +1,45 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArkMusic</title>
+    <style>
+        body {
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+    </style>
+    <link rel="stylesheet" href="css/back.css">
+    <link rel="stylesheet" href="css/list.css">
+    <link rel="stylesheet" href="css/head_photo.css">
+    <link rel="stylesheet" href="css/list_button.css">
+    <link rel="stylesheet" href="css/scan.css">
+</head>
+<body>
+    
+    <!--返回按钮-->
+    <button id="back" onclick="switch_page()"><img src="file/back.svg"></button>
+
+    <!--扫描按钮-->
+    <button id="scan" onclick="arkts.scan_songs(1);"><img src="file/scan.svg"></button>
+
+    <!-- 滑动列表 -->
+    <div class="list_frame">
+        
+        <!-- 个人头像 -->
+        <button id="head"><img src="file/head.svg" style="width: 70%; height: 70%;"></button>
+
+        <!-- 选项列表 -->
+        <div class="options_list">
+            <button class="list_button" onclick="switch_page(3)"><img src="file/song.svg"><div><p>所有歌曲</p></div></button>
+        </div>
+
+    </div>
+
+    <!-- js区块 -->
+    <script src="js/switch_page.js"></script>
+
+</body>
+</html>

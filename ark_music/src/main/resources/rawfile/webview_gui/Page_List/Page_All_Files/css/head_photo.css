@@ -1,0 +1,28 @@
+.head {
+
+    width: 75px;
+    height: 75px;
+    border: none;
+    border-radius: 75px;
+    background-color: #fff;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 50px;
+
+}
+body p {
+    font-weight: 450;
+    font-size: 15px;
+    color: rgb(171, 171, 171);
+    white-space: nowrap;
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+    position: relative;
+    transition: transform 0.3s ease;
+    margin-bottom: 30px;
+}

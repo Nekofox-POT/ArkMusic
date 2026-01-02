@@ -5,7 +5,6 @@ window.addEventListener('message', function(event) {
         page_play_sub_title.innerText = event.data.arg1;
         title_and_sub_title_update_check();
     } else if (event.data.type === 'play_page_update_img') {
-        console.log('收到图片')
         page_play_set_song_image(event.data.arg1)
     }
 }, false);

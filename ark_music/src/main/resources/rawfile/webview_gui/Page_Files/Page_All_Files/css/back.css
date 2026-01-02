@@ -8,7 +8,6 @@
     border-radius: 50px;
     cursor: pointer;
     padding: 0;
-    backdrop-filter: blur(2.5px);
 
     position: fixed;
     z-index: 750;

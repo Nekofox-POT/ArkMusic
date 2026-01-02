@@ -1,10 +1,11 @@
 .play_page_title {
-    top: calc(100% - 350px);
+    top: calc(100% - 375px);
     left: 25px;
     height: 30px;
     width: auto;
     position: absolute;
-    background: #eaeaea;
+    background-color: rgba(238, 238, 238, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     border-radius: 150px;
     display: flex;
     align-items: center;
@@ -13,6 +14,8 @@
     padding-right: 10px;
     overflow: hidden; /* 隐藏超出部分 */
     max-width: 70vw; /* 你可以根据需要调整这个值 */
+    transition: width 0.3s ease;
+
 }
 .play_page_title.scrolling {
     mask-composite: exclude;
@@ -28,30 +31,31 @@
 .play_page_title p {
     font-weight: 450;
     font-size: 15px;
-    color: rgb(100, 100, 100);
     white-space: nowrap;
     margin: 0;
     padding: 0;
     display: inline-block;
     position: relative;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, color 1s ease;
 }
 
 .play_page_sub_title {
-    top: calc(100% - 310px);
+    top: calc(100% - 335px);
     left: 25px;
     height: 25px;
     width: auto;
     position: absolute;
-    background: #eaeaea;
+    background-color: rgba(238, 238, 238, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     border-radius: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
     padding-left: 10px; /* 左侧间距 */
     padding-right: 10px; /* 右侧间距 */
-     overflow: hidden; /* 隐藏超出部分 */
+    overflow: hidden; /* 隐藏超出部分 */
     max-width: calc(75vw - 150px); /* 你可以根据需要调整这个值 */
+    transition: width 0.3s ease;
 }
 .play_page_sub_title.scrolling {
     mask-composite: exclude;
@@ -67,13 +71,12 @@
 .play_page_sub_title p {
     font-weight: 450;
     font-size: 10px;
-    color: rgb(100, 100, 100);
     white-space: nowrap;
     margin: 0;
     padding: 0;
     display: inline-block;
     position: relative;
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, color 1s ease;
 }
 
 /* 标题滚动动画 */
