@@ -1,0 +1,13 @@
+.target_show {
+
+    width: 15%;
+    height: 5px;
+    border-radius: 5px;
+    background-color: rgb(244, 198, 206);
+    box-shadow: none;
+
+    position: absolute;
+    top: 0;
+    will-change: transform, width, height, left, top, background, box-shadow;
+
+}
