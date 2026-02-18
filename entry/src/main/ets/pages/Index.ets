@@ -38,15 +38,16 @@ struct Index {
   build() {
     Row() {
 
-    ///////////
-    // 导航栏 //
-    //////////
-    Web({ src: $rawfile("webview_gui/taskbar/index.html"), controller: this.taskbar_ui })
-      .width('100vw')
-      .height('100vh')
-      .zIndex(900)
-      .zoomAccess(false)
-    }
 
+      ///////////
+      // 导航栏 //
+      //////////
+      Web({ src: $rawfile("webview_gui/taskbar/index.html"), controller: this.taskbar_ui })
+        .width('100vw')
+        .height('100vh')
+        .zIndex(900)
+        .zoomAccess(false)
+
+    }
   }
 }
