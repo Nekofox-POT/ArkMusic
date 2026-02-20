@@ -1,5 +1,6 @@
 .svg_color {
     fill: rgba(0,0,0,0.4);
+    transition: fill 1s ease;
 }
 
 .box_color {

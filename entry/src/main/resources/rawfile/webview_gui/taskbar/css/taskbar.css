@@ -1,7 +1,8 @@
 .taskbar {
+
     width: 90%;
     height: 50px;
-    border-radius: 500px;
+    border-radius: 25px;
 
     position: fixed;
     top: calc(100vh - 70px);
@@ -12,57 +13,70 @@
     touch-action: none; /* 防止默认触摸行为 */
     cursor: pointer;
 
+    /* 移除触摸高亮 */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+    outline: none;
+
     /* 过渡动画 */
-    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: 
+        transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1),
+        height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.taskbar.active {
+    /* 点击时的缩放效果 */
+    transform: scale(0.95);
+}
+.taskbar.double {
+    /* 音乐播放器，双层栏 */
+    height: 100px;
+    top: calc(100vh - 70px - 50px);
 }
 
-/* 内部容器，用于 flex 布局和定位上下文 */
-.taskbar-inner {
-    position: relative;
+.taskbar_page {
+    height: 50px;
     width: 100%;
-    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transition: top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.taskbar_page.double {
+    top: 50px;
+}
+
+.taskbar_page_icon {
+
+    height: 50px;
+    width: 100%;
+
     display: flex;
-    align-items: center;
     justify-content: space-evenly;
-    box-sizing: border-box;
-    padding: 0 15px;
+    align-items: center;
+
+    position: relative;
+
 }
 
 /* SVG 图标样式 */
-.taskbar svg {
+.taskbar_page_icon svg {
     height: 50%;
-    width: auto;
+    aspect-ratio: 1/1;
     flex-shrink: 0;
 }
 
-/* 按压状态 */
-.taskbar.pressed {
-    transform: scale(0.95);
-}
+.taskbar_target {
+    
+    /* 尺寸覆盖整个 taskbar */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 
-/* 点击回弹状态 */
-.taskbar.click-bounce {
-    animation: clickBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
+    z-index: 999;
 
-@keyframes clickBounce {
-    0% {
-        transform: scale(0.95);
-    }
-    50% {
-        transform: scale(1.02);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
-/* 长按缩小状态 */
-.taskbar.shrunk {
-    transform: scale(0.92);
-}
-
-/* 胶囊展开时恢复正常大小 */
-.taskbar.expanded {
-    transform: scale(1);
 }
