@@ -27,6 +27,7 @@ struct Index {
   // 变量池 //
   //////////
   taskbar_ui: webview.WebviewController = new webview.WebviewController();
+  status: Boolean = false
 
   ///////////
   // 更新池 //
@@ -41,7 +42,6 @@ struct Index {
   ///////////
   build() {
     Row() {
-
 
       /////////////
       // web界面 //
@@ -60,7 +60,13 @@ struct Index {
         .width('200vp')
         .height('100vp')
         .onClick(() => {
-          this.taskbar_ui.runJavaScript('test()')
+          if (this.status) {
+            this.status = false
+            this.taskbar_ui.runJavaScript('taskbar_double(false)')
+          } else {
+            this.status = true
+            this.taskbar_ui.runJavaScript('taskbar_double(true)')
+          }
         })
         .zIndex(999)
         .position({ x: 0, y: 0 })
