@@ -1,4 +1,5 @@
 target_color = 'rgb(244, 198, 206)'
+target_bgcolor = 'rgba(0,0,0,0.4)'
 
 // 更新SVG 颜色的函数
 function updateSvgColors() {
@@ -9,7 +10,7 @@ function updateSvgColors() {
   elements.forEach(element => {
     // 3. 修改 fill 样式
     // 方式 A: 直接修改 style 属性 (优先级最高)
-    element.style.fill = target_color;
+    element.style.fill = target_bgcolor;
 
   });
 }
@@ -19,8 +20,16 @@ function change_color(newColor) {
   target_color = newColor;
   updateSvgColors();
 }
-
 // 获取颜色的函数
 function get_color() {
   return target_color;
+}
+
+// 这是底色的
+function change_bgcolor(newColor) {
+  target_bgcolor = newColor;
+  updateSvgColors();
+}
+function get_bgcolor() {
+  return target_bgcolor;
 }
