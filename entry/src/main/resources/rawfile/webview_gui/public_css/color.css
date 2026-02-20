@@ -1,5 +1,5 @@
 .svg_color {
-    fill: rgba(0,0,0,0.4);
+    fill: rgba(0, 0, 0, 0.4);
     transition: fill 1s ease;
 }
 
@@ -15,4 +15,7 @@
         inset 0 -1px 2px rgba(0, 0, 0, 0.1),
         inset 0 0 15px rgba(255, 255, 255, 0.3);
 
+}
+.font_color {
+    color: rgba(0, 0, 0, 0.4);
 }

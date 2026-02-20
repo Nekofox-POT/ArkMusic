@@ -19,13 +19,21 @@
 </head>
 <body>
     
-    <iframe src="taskbar/index.html" id="taskbar"></iframe>
+    <iframe src="taskbar/index.html" id="taskbar" style="z-index: 900; position: fixed; top: 0; left: 0;"></iframe>
 
     <!-- 函数 -->
     <script>
 
         // 绑定
         const taskbar = document.getElementById('taskbar');
+
+        // 切换taskbar显示状态
+        function taskbar_double(status) {
+            taskbar.contentWindow.postMessage({action: 'double_load', arg1: status}, '*');
+        }
+        
+        // 调试用。
+        // setTimeout(() => {taskbar_double(true);}, 100);
 
     </script>
 

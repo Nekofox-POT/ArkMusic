@@ -35,14 +35,13 @@ function target_show_follow(x) {
         }
     }
 
-    // arkts接口
+    // 改图标颜色
     if (index_backup != closestIndex) {
         // 恢复上一个图标的颜色为默认
-        const targetbgColor = get_bgcolor();
         const prevIconPaths = icons[index_backup].querySelectorAll('.svg_color');
         prevIconPaths.forEach(path => {
-            path.style.fill = targetbgColor;
             path.style.transition = 'fill 0.3s ease';
+            path.style.fill = get_bgcolor();
             setTimeout(() => {
                 path.style.transition = 'fill 1s ease';
             }, 300);
@@ -52,11 +51,10 @@ function target_show_follow(x) {
         console.log(closestIndex)
 
         // 获取目标颜色并设置给当前锁定图标
-        const targetColor = get_color();
         const currentIconPaths = icons[closestIndex].querySelectorAll('.svg_color');
         currentIconPaths.forEach(path => {
-            path.style.fill = targetColor;
             path.style.transition = 'fill 0.3s ease';
+            path.style.fill = get_color();
             setTimeout(() => {
                 path.style.transition = 'fill 1s ease';
             }, 300);

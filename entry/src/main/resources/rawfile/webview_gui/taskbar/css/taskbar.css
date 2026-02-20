@@ -32,8 +32,8 @@
 }
 .taskbar.double {
     /* 音乐播放器，双层栏 */
-    height: 100px;
-    top: calc(100vh - 70px - 50px);
+    height: 105px;
+    top: calc(100vh - 70px - 55px);
 }
 
 .taskbar_page {
@@ -45,7 +45,7 @@
     transition: top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .taskbar_page.double {
-    top: 50px;
+    top: 55px;
 }
 
 .taskbar_page_icon {
@@ -77,6 +77,96 @@
     width: 100%;
     height: 100%;
 
-    z-index: 999;
+    z-index: 900;
 
+}
+
+.taskbar_music_hidden {
+    /* 尺寸覆盖整个 taskbar */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 25px;
+}
+.taskbar_music {
+
+    /* 尺寸 */
+    height: 50px;
+    width: calc(100% - 25px);
+    border-radius: 25px;
+
+    /* 定位 */
+    position: absolute;
+    top: -55px;
+    left: 0;
+
+    /* 布局 */
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+
+    /* 内边距限位 */
+    padding: 0 12.5px; /* 左右添加内边距，让子元素不紧贴圆角 */
+
+    transition: top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.taskbar_music.double {
+    transition: top 0.3s ease;
+    top: 0;
+}
+.taskbar_music img {
+    height: 50%;
+    aspect-ratio: 1/1;
+    border-radius: 5px;
+    z-index: 100;
+}
+
+.taskbar_music_touch {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% - 50px);
+    height: 50px;
+    z-index: 900;
+}
+
+.taskbar_music_song_name {
+    
+    margin-left: 12.5px;
+    width: calc(100% - 50px);
+    height: 50px;
+    
+    display: flex;
+    flex-wrap: nowrap;
+    flex-shrink: 0;
+    white-space: nowrap;
+    align-items: center;
+
+    /* 滑动容器相关样式 */
+    transform: translateX(0);
+    transform-origin: left center;
+    will-change: transform;
+
+}
+.taskbar_music_song_name p {
+    /* 每个p标签占100%宽度，实现翻页效果 */
+    width: 100%;
+    height: 50%;
+    flex-shrink: 0;
+    
+    /* 添加50%的右边距，使其他标签屏幕外排队 */
+    margin-right: 50%;
+    
+    overflow: hidden;
+    display: flex;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    font-size: 0.8rem;
+    font-weight: 500;
+    align-items: center;
+    text-overflow: ellipsis;
 }
