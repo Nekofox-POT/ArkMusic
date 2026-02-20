@@ -43,12 +43,12 @@ struct Index {
     Row() {
 
 
-      ///////////
-      // 导航栏 //
-      //////////
-      Web({ src: $rawfile("webview_gui/taskbar/index.html"), controller: this.taskbar_ui })
-        .width('100vw')
-        .height('100vh')
+      /////////////
+      // web界面 //
+      ////////////
+      Web({ src: $rawfile("webview_gui/index.html"), controller: this.taskbar_ui })
+        .width('100%')
+        .height('100%')
         .zIndex(900)
         .zoomAccess(false)
         .position({ x: 0, y: 0 })

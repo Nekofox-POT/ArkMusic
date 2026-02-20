@@ -38,9 +38,10 @@ function target_show_follow(x) {
     // arkts接口
     if (index_backup != closestIndex) {
         // 恢复上一个图标的颜色为默认
+        const targetbgColor = get_bgcolor();
         const prevIconPaths = icons[index_backup].querySelectorAll('.svg_color');
         prevIconPaths.forEach(path => {
-            path.style.fill = 'rgba(0,0,0,0.4)';
+            path.style.fill = targetbgColor;
             path.style.transition = 'fill 0.3s ease';
             setTimeout(() => {
                 path.style.transition = 'fill 1s ease';
