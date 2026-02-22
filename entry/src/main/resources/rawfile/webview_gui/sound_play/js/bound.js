@@ -1,0 +1,1 @@
+const last_next_button_switch = document.getElementById("last_next_button_switch");

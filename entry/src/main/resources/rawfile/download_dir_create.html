@@ -1,0 +1,69 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create ArkMusic</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        
+        .loader-container {
+            text-align: center;
+        }
+        
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #f4c6ce;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            font-weight: 450;
+            font-size: 15px;
+            color: rgb(100, 100, 100);
+            white-space: nowrap;
+            margin: 0;
+            padding: 0;
+            display: inline-block;
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .download {
+            position: fixed;
+            left: 100vw;
+            top: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-container">
+        <div class="loader"></div>
+        <div class="loading-text">正在初始化</div>
+        <div class="download"><a id="download" href="data:text/plain;charset=utf-8,不是你怎么还想着打开这个？%0A这只是个空文件啊喂！%0A来都来了要不宝宝去软件给我赞助一下吧 &gt&lt%0A饿饿宝宝饿饿（咕~）" download="在此处放置音频文件 (夹).akm">1</a></div>
+    </div>
+    <script>
+        function download() {
+            console.log('即将推送创建文件...');
+            document.getElementById('download').click();
+        }
+    </script>
+</body>
+</html>

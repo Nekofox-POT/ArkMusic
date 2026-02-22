@@ -1,0 +1,36 @@
+//
+// 系统功能调用
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////
+// 导入第三方库 //
+///////////////
+import promptAction from '@ohos.promptAction';
+import { vibrator } from '@kit.SensorServiceKit';
+
+//////////////////
+// 导入自创建模块 //
+/////////////////
+
+///////////
+// 变量池 //
+//////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 函数库 //
+//////////
+
+//////////
+// 通知 //
+/////////
+export async function notice(msg: string) {
+  try {
+    promptAction.showToast({ message: msg, duration: 3000 });
+  } catch (e) { console.log(`通知失效：${e}`) }
+}
+export async function vib() {
+  vibrator.startVibration({ type: 'preset', effectId: 'haptic.common.click', count: 1 }, { usage: 'touch' })
+    .catch(() => {
+      console.log(`马达震动失败.`)
+    })
+}

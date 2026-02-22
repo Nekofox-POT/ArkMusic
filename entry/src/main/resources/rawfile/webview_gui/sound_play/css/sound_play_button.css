@@ -1,0 +1,55 @@
+.sound_play_button {
+
+    width: 100%;
+    height: 60%;
+    display: flex;
+
+}
+.sound_play_button > div {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    container-type: size;
+}
+
+.last_next_button {
+    width: min(100cqw, 100cqh, 80%);
+    aspect-ratio: 1/1;
+    border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+.last_next_button > svg {
+    width: 50%;
+    height: 50%;
+}
+
+.last_next_button_switch {
+    width: 50%;
+    height: 50%;
+}
+.last_next_button_switch > div {
+    position: relative;
+    top: 0;
+    left: 5%;
+    width: 250%;
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.last_next_button_switch > div > div {
+    height: 100%;
+    aspect-ratio: 1/1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.last_next_button_switch > div > div > svg {
+    width: 100%;
+    height: 100%;
+}

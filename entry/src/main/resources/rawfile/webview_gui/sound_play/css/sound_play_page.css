@@ -1,0 +1,15 @@
+.sound_play_page {
+
+    width: 100vw;
+    height: calc(100% - 75px);
+
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+
+}
+
+/* .sound_play_page div {
+    border: 1px solid palevioletred;
+} */
