@@ -4,6 +4,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArkMusic</title>
     <link rel="stylesheet" href="../public_css/color.css">
+    <link rel="stylesheet" href="css/sound_play_page.css">
+    <link rel="stylesheet" href="css/sound_play_button.css">
+    <link rel="stylesheet" href="css/play_range.css">
     <style>
         body {
 
@@ -15,6 +18,67 @@
 </head>
 <body>
     
+
+    <!-- 播放页 -->
+    <div class="sound_play_page">
+
+        <!-- 专辑封面 -->
+        <div style="height: 50%;"></div>
+
+        <!-- 控制栏 -->
+        <div style="height: 50%;">
+
+            <!-- 标题音量栏 -->
+            <div style="height: 25%;"></div>
+
+            <!-- 三大金刚栏 -->
+            <div class="sound_play_button">
+                <!-- 填充物 -->
+                <div style="width: 5%;"></div>
+
+                <!-- 列表 -->
+                <div style="width: 10%;"></div>
+                <!-- 上一首 -->
+                <div style="width: 20%;">
+                    <div class="last_next_button box_color"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M8.81 10.39Q8.21 10.73 7.98 11.36Q7.75 12 7.98 12.64Q8.21 13.27 8.81 13.61L17.47 18.6Q18.07 18.96 18.73 18.83Q19.39 18.7 19.82 18.18Q20.26 17.66 20.26 16.97L20.26 7.01Q20.26 6.31 19.82 5.81Q19.39 5.3 18.73 5.17Q18.07 5.04 17.47 5.4L8.81 10.39ZM5.26 18.22Q5.88 18.22 6.31 17.78Q6.74 17.35 6.74 16.7L6.74 7.18Q6.74 6.55 6.31 6.11Q5.88 5.66 5.26 5.66Q4.63 5.66 4.19 6.11Q3.74 6.55 3.74 7.18L3.74 16.7Q3.74 17.35 4.19 17.78Q4.63 18.22 5.26 18.22Z"></path></g></svg></div>
+                </div>
+                <!-- 播放/暂停 -->
+                <div style="width: 30%;">
+                    <div class="last_next_button box_color">
+                        <div class="last_next_button_switch">
+                            <div id="last_next_button_switch">
+                                <div>
+                                    <svg id="button_play" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M7.01 1.92Q6.05 1.34 4.98 1.55Q3.91 1.75 3.22 2.57Q2.52 3.38 2.52 4.51L2.52 19.46Q2.52 20.59 3.22 21.42Q3.91 22.25 4.98 22.45Q6.05 22.66 7.01 22.08L19.99 14.59Q20.98 14.04 21.32 13.02Q21.67 12 21.32 10.98Q20.98 9.96 19.99 9.41L7.01 1.92Z"></path></g></svg>
+                                </div>
+                                <div>
+                                    <svg id="button_pause" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M7.52 3.24Q6.78 3.24 6.26 3.76Q5.74 4.28 5.74 4.99L5.74 18.98Q5.74 19.73 6.26 20.23Q6.78 20.74 7.52 20.74Q8.23 20.74 8.75 20.23Q9.26 19.73 9.26 18.98L9.26 4.99Q9.26 4.28 8.75 3.76Q8.23 3.24 7.52 3.24ZM16.52 3.24Q15.78 3.24 15.26 3.76Q14.74 4.28 14.74 4.99L14.74 18.98Q14.74 19.73 15.26 20.23Q15.78 20.74 16.52 20.74Q17.23 20.74 17.75 20.23Q18.26 19.73 18.26 18.98L18.26 4.99Q18.26 4.28 17.75 3.76Q17.23 3.24 16.52 3.24Z"></path></g></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+                <!-- 下一首 -->
+                <div style="width: 20%;">
+                    <div class="last_next_button box_color"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M6.53 5.4Q5.93 5.04 5.27 5.17Q4.61 5.3 4.18 5.81Q3.74 6.31 3.74 7.01L3.74 16.97Q3.74 17.66 4.18 18.18Q4.61 18.7 5.27 18.83Q5.93 18.96 6.53 18.6L15.17 13.61Q15.77 13.27 16 12.64Q16.22 12 16 11.36Q15.77 10.73 15.17 10.39L6.53 5.4ZM18.74 18.22Q19.37 18.22 19.81 17.78Q20.26 17.35 20.26 16.7L20.26 7.18Q20.26 6.55 19.81 6.11Q19.37 5.66 18.74 5.66Q18.12 5.66 17.69 6.11Q17.26 6.55 17.26 7.18L17.26 16.7Q17.26 17.35 17.69 17.78Q18.12 18.22 18.74 18.22Z"></path></g></svg></div>
+                </div>
+                <!-- 喜欢 -->
+                <div style="width: 10%;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M16.27 1.73Q15.12 1.73 14.03 2.11Q12.94 2.5 12 3.19Q11.06 2.5 9.97 2.11Q8.88 1.73 7.73 1.73Q5.74 1.73 4.08 2.74Q2.42 3.74 1.46 5.44Q0.5 7.13 0.5 9.12Q0.5 10.87 1.68 13.01Q2.86 15.14 4.73 17.21Q6.7 19.37 8.74 20.82Q10.78 22.27 11.98 22.27Q13.3 22.27 15.29 20.9Q17.28 19.54 19.2 17.45Q21.1 15.34 22.3 13.13Q23.5 10.92 23.5 9.12Q23.5 7.13 22.54 5.44Q21.58 3.74 19.92 2.74Q18.26 1.73 16.27 1.73Z"></path></g></svg>
+                </div>
+
+                <!-- 填充物 -->
+                <div style="width: 5%;"></div>
+            </div>
+
+            <!-- 进度条栏 -->
+            <div style="height: 15%; display: flex; justify-content: center; align-items: center;">
+                <!-- 遮罩 -->
+                <div class="range_frame box_color" style="width: 90%;"></div>
+            </div>
+
+        </div>
+
+    </div>
 
     <!-- 函数块 -->
     <script src="../public_js/color_update.js"></script>
