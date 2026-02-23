@@ -28,6 +28,10 @@ export async function notice(msg: string) {
     promptAction.showToast({ message: msg, duration: 3000 });
   } catch (e) { console.log(`通知失效：${e}`) }
 }
+
+//////////
+// 震动 //
+/////////
 export async function vib() {
   vibrator.startVibration({ type: 'preset', effectId: 'haptic.common.click', count: 1 }, { usage: 'touch' })
     .catch(() => {

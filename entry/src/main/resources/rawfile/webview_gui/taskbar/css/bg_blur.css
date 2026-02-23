@@ -1,3 +1,4 @@
+/* 背景遮罩 */
 .bg_blur {
     position: fixed;
     top: 0;
@@ -11,4 +12,41 @@
 }
 .bg_blur.blur {
     opacity: 1;
+}
+
+/* 进度控制条 */
+.music_range {
+
+    position: absolute;
+    top: 25%;
+    left: 0;
+    width: 100%;
+    opacity: 0;
+
+}
+
+/* 进度显示框架 */
+.range_bar_frame {
+    position: absolute;
+    top: calc(100vh - 270px);
+    left: 5%;
+    width: 90%;
+    height: 25px;
+    border-radius: 25px;
+    overflow: hidden;
+}
+
+/* 显示条 */
+.range_bar {
+    position: absolute;
+    top: 0;
+    left: -50%;
+    width: 100%;
+    height: 100%;
+    border-radius: 25px;
+    background-color: rgba(0, 0, 0, 0.4);
+    transition: top 0.3s ease;
+}
+.range_bar.active {
+    top: -2.5px;
 }

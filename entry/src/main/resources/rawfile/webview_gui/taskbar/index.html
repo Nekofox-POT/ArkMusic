@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/target_show.css">
     <link rel="stylesheet" href="css/status_button.css">
     <link rel="stylesheet" href="css/bg_blur.css">
-    <link rel="stylesheet" href="css/process_bar.css">
+    <link rel="stylesheet" href="css/range_bar.css">
     <style>
         body {
 
@@ -25,8 +25,8 @@
         <!-- 进度条 -->
         <input type="range" id="music_range" class="music_range" min="0" max="150000" value="50000">
         <!-- 进度展示条 -->
-        <div class="process_bar_frame box_color">
-            <div class="process_bar" id="process_bar"></div>
+        <div class="range_bar_frame box_color">
+            <div class="range_bar" id="range_bar"></div>
         </div>
     </div>
     
@@ -50,7 +50,7 @@
                 <svg id="button_pause" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M7.52 3.24Q6.78 3.24 6.26 3.76Q5.74 4.28 5.74 4.99L5.74 18.98Q5.74 19.73 6.26 20.23Q6.78 20.74 7.52 20.74Q8.23 20.74 8.75 20.23Q9.26 19.73 9.26 18.98L9.26 4.99Q9.26 4.28 8.75 3.76Q8.23 3.24 7.52 3.24ZM16.52 3.24Q15.78 3.24 15.26 3.76Q14.74 4.28 14.74 4.99L14.74 18.98Q14.74 19.73 15.26 20.23Q15.78 20.74 16.52 20.74Q17.23 20.74 17.75 20.23Q18.26 19.73 18.26 18.98L18.26 4.99Q18.26 4.28 17.75 3.76Q17.23 3.24 16.52 3.24Z"></path></g></svg>
 
                 <!-- 进度展示条 -->
-                <div class="process_bar" id="process_bar_two" style="height: 2.5px;"></div>
+                <div class="range_bar" id="range_bar_two" style="height: 2.5px;"></div>
             
             </div>
 
@@ -58,8 +58,6 @@
             <div class="taskbar_music_touch" id="taskbar_music_touch"></div>
 
         </div>
-
-        
         
         <!-- 页面切换栏 -->
         <div class="taskbar_page" id="taskbar_page">
@@ -91,7 +89,7 @@
     <script src="js/target_show.js"></script>
     <script src="js/play_pause_controll.js"></script>
     <script src="js/taskbar_music_touch.js"></script>
-    <script src="js/process_bar.js"></script>
+    <script src="js/range_bar.js"></script>
     <script src="js/interface.js"></script>
 
 </body>
