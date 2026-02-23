@@ -80,7 +80,6 @@ struct Index {
   // 类 //
   ///////
   ark_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
-  dir_create_ui: webview.WebviewController = new webview.WebviewController()    // 目录初始化界面
   dir_create_downloader: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();   // 下载器
   avPlayer: media.AVPlayer | null = null; // audio播放
   session: avSession.AVSession | null = null; // 状态栏
@@ -238,7 +237,7 @@ struct Index {
       // 目录初始化页面 //
       /////////////////
       if (!this.dir_ready) {
-        Web({ src: $rawfile("download_dir_create.html"), controller: this.dir_create_ui })
+        Web({ src: $rawfile("download_dir_create.html"), controller: this.ark_music_ui })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 })
           .onPageEnd(async () => {
@@ -270,11 +269,11 @@ struct Index {
                     notice(`初始化失败：${e}`)
                   }
                 })
-                this.dir_create_ui.setDownloadDelegate(this.dir_create_downloader);
+                this.ark_music_ui.setDownloadDelegate(this.dir_create_downloader);
               } catch (error) {
                 console.error(`创建出错: ${error}`);
               }
-              this.dir_create_ui.runJavaScript('download()')
+              this.ark_music_ui.runJavaScript('download()')
 
             }
           })

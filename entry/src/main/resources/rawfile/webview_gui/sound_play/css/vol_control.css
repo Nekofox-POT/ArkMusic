@@ -1,0 +1,77 @@
+.vol_control_frame {
+    width: 40px;
+    height: 40px;
+    margin-right: 5%;
+    display: flex;
+}
+.vol_control {
+
+    width: 40px;
+    height: 40px;
+    border-radius: 100%;
+
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: hidden;
+
+    transition: all 0.3s ease;
+
+}
+.vol_control:active {
+    width: 200px;
+}
+.vol_control_flex_frame {
+
+    width: 200px;
+    height: 40px;
+    flex-shrink: 0;
+    
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content:flex-start;
+    overflow: hidden;
+
+    transition: transform 0.3s ease;
+    transform: translateX(-167px);
+
+}
+.vol_control_icon {
+    width: 25px;
+    height: 25px;
+    margin-left: 20px;
+}
+.vol_control input {
+    width: 150px;
+    height: 40px;
+    flex-shrink: 0;
+    background: transparent; /* 隐藏背景 */
+    opacity: 0; /* 完全隐藏滑块 */
+    height: 100%; /* 让滑块可以响应点击 */
+    z-index: 10; /* 确保滑块在最上层 */
+}
+.vol_control input::-webkit-slider-runnable-track {
+    /* 隐藏滑块背景 */
+    background: transparent;
+    border: none;
+}
+.vol_control input::-webkit-slider-thumb {
+    /* 隐藏滑块thumb的默认样式 */
+    -webkit-appearance: none;
+    border: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #007bff;
+    cursor: pointer;
+}
+
+#vol_control_screen {
+    position: absolute;
+    width: 60px; /* 初始宽度为0 */
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: 50px;
+    transition: width 0.05s ease; /* 添加过渡效果 */
+}

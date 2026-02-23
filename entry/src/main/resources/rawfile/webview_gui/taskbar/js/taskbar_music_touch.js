@@ -76,8 +76,8 @@ taskbar_music_touch.addEventListener('touchstart', function(e) {
         // 只在进入blur时记录基准
         blurTouchStartX = touch.clientX;
         blurRangeStartValue = Number(music_range.value);
-        // 新增：blur判定生效后，给process_bar_two添加active
-        const processBarTwo = document.getElementById('process_bar_two');
+        // 新增：blur判定生效后，给range_bar_two添加active
+        const processBarTwo = document.getElementById('range_bar_two');
         if (processBarTwo) {
             processBarTwo.classList.add('active');
         }
@@ -140,8 +140,8 @@ taskbar_music_touch.addEventListener('touchend', function(e) {
     if (bg_blur.classList.contains('blur')) {
         bg_blur.classList.remove('blur');
         isMoved = false; // 重置isMoved标志
-        // 新增：松手后移除process_bar_two的active
-        const processBarTwo = document.getElementById('process_bar_two');
+        // 新增：松手后移除range_bar_two的active
+        const processBarTwo = document.getElementById('range_bar_two');
         if (processBarTwo) {
             processBarTwo.classList.remove('active');
         }
