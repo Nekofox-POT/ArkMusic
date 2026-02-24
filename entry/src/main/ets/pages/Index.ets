@@ -224,7 +224,7 @@ struct Index {
       // web界面 //
       ////////////
       if (this.dir_ready) {
-        Web({ src: $rawfile("webview_gui/index.html"), controller: this.ark_music_ui })
+        Web({ src: $rawfile("webview_gui/play_taskbar_index.html"), controller: this.ark_music_ui })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(900)
           .zoomAccess(false)
