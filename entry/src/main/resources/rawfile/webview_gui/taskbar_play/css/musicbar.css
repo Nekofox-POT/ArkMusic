@@ -12,8 +12,6 @@
     top: -55px;
     left: 0;
 
-    display: flex;
-    align-items: center;
     overflow: hidden;
 
     transition: top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -22,4 +20,50 @@
 .music_bar.double {
     transition: top 0.3s ease;
     top: 0;
+}
+
+/* 触控板 */
+.music_bar_touch {
+    
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% - 50px);
+    height: 100%;
+
+    z-index: 980;
+
+}
+
+/* 播放暂停按钮 */
+.music_bar_play_pause_button  {
+    
+    height: 50%;
+    aspect-ratio: 1/1;
+
+    position: absolute;
+    top: 25%;
+    right: 12.5px;
+    
+    transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.music_bar_play_pause_button.active {
+    transform: scale(0.85);
+}
+.music_bar_play_pause_button.hidden {
+    right: -50px;
+}
+
+/* 专辑封面框架 */
+.music_bar_meta_img {
+
+    height: 50%;
+    aspect-ratio: 1/1;
+    border-radius: 25%;
+
+    position: absolute;
+    top: 25%;
+    left: 12.5px;
+
 }

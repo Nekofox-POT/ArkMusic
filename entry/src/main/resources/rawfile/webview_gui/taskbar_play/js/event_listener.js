@@ -14,17 +14,6 @@
 ////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// taskbar_page_choice组件监听 //
-///////////////////////////////
-
-/////////////
-// 监听程序 //
-////////////
-setInterval(() =>{
-
-}, taskbar_page_screen_freq)
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // taskbar_page_touch组件监听 //
 //////////////////////////////
 
@@ -67,3 +56,26 @@ taskbar_page_touch.addEventListener("touchend", () => {
 taskbar_page_touch.addEventListener("touchmove", (e) => {
     touch_switch_page(e.touches[0].clientX)
 });
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// music_bar_play_pause_button组件监听 //
+///////////////////////////////////////
+
+/////////////
+// 监听程序 //
+////////////
+music_bar_button_play.addEventListener("touchstart", () => {
+    music_bar_button_play.classList.add("active")
+    music_bar_button_play.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = active_color})
+})
+music_bar_button_play.addEventListener("touchend", () => {
+    music_bar_button_play.classList.remove("active")
+    music_bar_button_play.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+})
+music_bar_button_pause.addEventListener("touchstart", () => {
+    music_bar_button_pause.classList.add("active")
+    music_bar_button_pause.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = active_color})
+})
+music_bar_button_pause.addEventListener("touchend", () => {
+    music_bar_button_pause.classList.remove("active")
+    music_bar_button_pause.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+})

@@ -62,20 +62,7 @@
     aspect-ratio: 1/1;
     flex-shrink: 0;
 }
-
-/* 触控遮罩 */
-.taskbar_touch {
-    
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-
-    z-index: 980;
-
-}
-/* page页订制触控板 */
+/* page触控板 */
 .taskbar_page_touch {
 
     width: 90%;
