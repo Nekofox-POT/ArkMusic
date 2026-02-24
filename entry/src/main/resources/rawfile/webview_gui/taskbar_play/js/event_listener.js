@@ -45,14 +45,11 @@ taskbar_page_touch.addEventListener("touchstart", (e) => {
     // 0.1秒后激活focus
     taskbar_page_touch_timer = setTimeout(() => {
         taskbar_page_screen.classList.add("focus");
+        taskbar_page_update(page)
         taskbar_page_touch_focus = true
     }, 100)
 });
-let tmp = false
 taskbar_page_touch.addEventListener("touchend", () => {
-
-    // tmp = !tmp
-    // taskbar_double(tmp)
 
     taskbar.classList.remove("active")
     // taskbar_page_screen归位

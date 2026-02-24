@@ -33,30 +33,6 @@
     top: 100vh;
 }
 
-/* 音乐栏 */
-.taskbar_music {
-
-    height: 50px;
-    width: calc(100% - 25px);   /* 减去左右内边距 */
-    border-radius: 25px;
-    padding: 0 12.5px;   /* 内边距限位 */
-
-    position: absolute;
-    top: -55px;
-    left: 0;
-
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-
-    transition: top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-
-}
-.taskbar_music.double {
-    transition: top 0.3s ease;
-    top: 0;
-}
-
 /* 页面栏 */
 .taskbar_page {
     height: 50px;
@@ -111,14 +87,8 @@
 
     z-index: 980;
 }
-
-/* 页面选择信标 */
-.taskbar_page_choice {
-    position: absolute;
-    top: 50%;
-    left: 25%;
-    width: 1px;
-    height: 1px;
+.taskbar_page_touch.hidden {
+    top: 100vh;
 }
 
 /* 页面指示器 - 外层（负责定位） */
@@ -163,4 +133,7 @@
 }
 .taskbar_page_screen.focus {
     transform: scale(1.25);
+}
+.taskbar_page_screen.hidden {
+    top: 100vh;
 }
