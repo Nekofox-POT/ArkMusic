@@ -11,13 +11,17 @@ const taskbar_page_icon = document.getElementById('taskbar_page_icon')
 const taskbar_page_touch = document.getElementById('taskbar_page_touch')
 const music_bar_touch = document.getElementById('music_bar_touch')
 const taskbar_page_screen = document.getElementById('taskbar_page_screen')
+const music_bar_button_play = document.getElementById('music_bar_button_play')
+const music_bar_button_pause = document.getElementById('music_bar_button_pause')
+const music_bar_meta_img = document.getElementById('music_bar_meta_img')
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 变量配置 //
 ////////////
 
 const taskbar_page_screen_rect = taskbar_page_screen.getBoundingClientRect()    // 初始化taskbar_page_screen大小
-const taskbar_page_raw_rect = taskbar_page.getBoundingClientRect()    // 初始化taskbar原位置
+const taskbar_icons = taskbar_page_icon.querySelectorAll('svg')     // icons个数
 
-let taskbar_page_screen_freq = 100  // 指示器同步延迟（默认10hz 100ms）
+let background_color = 'rgba(0, 0, 0, 0.4)'     // 背景颜色
+let active_color = 'rgba(244, 198, 206, 1.0)'   // 主题颜色
 let page = 1    //当前页码
