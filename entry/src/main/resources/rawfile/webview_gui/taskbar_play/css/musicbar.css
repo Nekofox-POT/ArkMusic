@@ -1,0 +1,25 @@
+/* 音乐栏 */
+.music_bar {
+
+    height: 50px;
+    width: calc(100% - 25px);   /* 减去左右内边距 */
+    border-radius: 25px;
+    backdrop-filter: blur(10px);
+    box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.1);
+    padding: 0 12.5px;   /* 内边距限位 */
+
+    position: absolute;
+    top: -55px;
+    left: 0;
+
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+
+    transition: top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.music_bar.double {
+    transition: top 0.3s ease;
+    top: 0;
+}
