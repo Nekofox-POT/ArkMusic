@@ -33,6 +33,12 @@
 
     z-index: 980;
 
+    /* 禁用默认触摸行为，防止滚动 */
+    touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+
 }
 
 /* 播放暂停按钮 */
@@ -44,6 +50,7 @@
     position: absolute;
     top: 25%;
     right: 12.5px;
+    z-index: 910;
     
     transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
@@ -61,9 +68,48 @@
     height: 50%;
     aspect-ratio: 1/1;
     border-radius: 25%;
+    z-index: 910;
 
     position: absolute;
     top: 25%;
     left: 12.5px;
+
+}
+
+/* 标题 */
+.music_bar_song_name {
+    
+    width: calc(100% - 100px);
+    height: 50%;
+    
+    position: absolute;
+    top: 25%;
+    left: 50px;
+
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateX(calc(0% - 0px));
+
+}
+
+/* 滑动时禁用过渡效果 */
+.music_bar_song_name.dragging {
+    transition: none;
+}
+.music_bar_song_name p {
+
+    width: 100%;
+    height: 100%;
+    
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+
+    font-size: 0.8rem;
+    font-weight: 550;
 
 }

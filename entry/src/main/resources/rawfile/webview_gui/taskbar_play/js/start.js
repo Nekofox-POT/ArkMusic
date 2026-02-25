@@ -6,8 +6,11 @@ function init() {
 
     // 颜色更新
     set_background_color()
+    set_active_color()
     // 页面归位
-    taskbar_page_update(0)
+    taskbar_page_update()
+    // 进度条归位
+    change_song_range(0)
     // 暂停
     play_status(false)
 
