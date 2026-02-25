@@ -1,0 +1,89 @@
+/* 音量条 */
+.vol_control {
+
+    width: 40px;
+    height: 40px;
+    border-radius: 40px;
+    
+    position: absolute;
+    top: 40px;
+    right: 0;
+
+    overflow: hidden;
+
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.vol_control.active {
+    transform: scale(0.95);
+}
+.vol_control.focus {
+    width: 150px;
+}
+
+/* 变形框架 */
+.vol_control_frame {
+
+    width: auto;
+    height: 100%;
+
+    position: absolute;
+    top: 0;
+    right: 0;
+    
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+
+    transition: right 0.3s ease;
+
+}
+.vol_control_frame.active {
+    right: -40px;
+}
+.vol_control_frame > div {
+    width: 150px;
+    height: 100%;
+}
+
+/* 图标 */
+.vol_control_frame > svg {
+    height: 20px;
+    width: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+/* 滑块核心 */
+.vol_control input {
+    
+    width: 150px;
+    height: 100%;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+    
+    margin: 0;
+    opacity: 0;
+
+    z-index: 750;
+
+}
+
+/* 展示器 */
+.vol_range_show {
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 150px;
+    height: 100%;
+    border-radius: 40px;
+
+    transform: width 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+

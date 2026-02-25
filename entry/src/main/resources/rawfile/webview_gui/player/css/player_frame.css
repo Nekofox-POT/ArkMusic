@@ -1,0 +1,22 @@
+.player_frame {
+    
+    width: 100%;
+    height: calc(100% - 100px);
+
+    position: relative;
+    top: 0;
+    left: 0;
+
+}
+.player_frame > div {
+
+    width: 100%;
+    height: 50%;
+    
+    container-type: size;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+}

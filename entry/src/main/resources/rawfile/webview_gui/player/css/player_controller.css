@@ -1,0 +1,117 @@
+/* 标题栏 */
+.player_controller_title {
+    width: 90%;
+    height: 120px;
+    position: relative;
+}
+
+/* 按键栏 */
+.player_controller_button {
+    width: 100%;
+    height: calc(100% - 145px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.player_controller_button > div {
+    height: 100%;
+    container-type: size;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.player_controller_button > div > * {
+    width: min(100cqw, 100cqh, 80%);
+    aspect-ratio: 1/1;
+    border-radius: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.player_controller_button > div > div > * {
+    width: 50%;
+    height: 50%;
+}
+
+/* 播放/暂停图标 */
+.player_play_pause_icon {
+
+    width: 250%;
+    height: 100%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: translateX(2.5%);
+}
+.player_play_pause_icon.active {
+    transform: translateX(-60%);
+}
+.player_play_pause_icon > svg {
+    height: 100%;
+    aspect-ratio: 1/1;
+}
+
+/* 进度条栏 */
+.player_controller_range_frame {
+    width: 90%;
+    height: 25px;
+    border-radius: 25px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.player_controller_range_frame.active {
+    transform: scale(1.05);
+}
+/* 文字 */
+.player_controller_range_frame p {
+    
+    width: auto;
+    height: 100%;
+    margin: 0;
+    
+    position: absolute;
+    top: 0;
+    
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 0.6rem;
+    font-weight: 750;
+
+}
+
+/* 进度条展示 */
+.player_controller_range {
+    
+    width: 0;
+    height: 100%;
+    border-radius: 25px;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+}
+
+/* 进度条(真) */
+.song_range {
+
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    z-index: 750;
+
+}
