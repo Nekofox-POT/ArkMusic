@@ -2,7 +2,6 @@
     fill: rgba(0, 0, 0, 0);
     transition: fill 0.3s ease;
 }
-
 .box_color {
 
     /* 模糊 */
@@ -16,7 +15,10 @@
         inset 0 0 15px rgba(255, 255, 255, 0.3);
 
 }
+.box_active_color {
+    background-color: rgba(0, 0, 0, 0);
+}
 .font_color {
-    color: rgba(0, 0, 0, 0.4);
+    color: rgba(0, 0, 0, 0);
     transition: color 0.3s ease;
 }

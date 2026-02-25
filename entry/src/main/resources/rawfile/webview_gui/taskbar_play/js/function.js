@@ -10,6 +10,10 @@ function set_active_color(color = null) {
     if (color !== null) {
         active_color = color
     }
+    document.querySelectorAll('.box_active_color').forEach(element => {
+        element.style.backgroundColor = active_color;
+    })
+    taskbar_page_update()
 }
 
 // 背景色修改 //
@@ -17,10 +21,12 @@ function set_background_color(color = null) {
     if (color !== null) {
         background_color = color
     }
-    const elements = document.querySelectorAll('.svg_color');
-    elements.forEach(element => {
+    document.querySelectorAll('.svg_color').forEach(element => {
         element.style.fill = background_color;
     });
+    document.querySelectorAll('.font_color').forEach(element => {
+        element.style.color = background_color;
+    })
 }
 
 
@@ -43,7 +49,7 @@ function get_icon_position() {
 }
 
 // 页面切换函数 //
-function taskbar_page_update(p) {
+function taskbar_page_update(p = page) {
     page = p
     // 获取坐标
     let tmp = get_icon_position()
@@ -65,7 +71,7 @@ function taskbar_page_update(p) {
             })
         } else {
             icon_path.forEach(path => {
-                path.style.fill = get_bgcolor()
+                path.style.fill = background_color
             })
         }
     })
@@ -130,4 +136,17 @@ function play_status(status) {
         music_bar_button_play.classList.remove('hidden')
         music_bar_button_pause.classList.add('hidden')
     }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 进度更改 //
+////////////
+function change_song_range(value = null) {
+    // 更新变量
+    if ((value !== null) && !is_adjusting) {
+        song_range.value = value
+    }
+    // 更新展示器变量
+    bg_song_range_bar.style.width = `${(song_range.value / song_range.max) * 2 * 100}%`
+    bg_song_range_bar.style.left = `-${(song_range.value / song_range.max) * 100}%`
+
 }
