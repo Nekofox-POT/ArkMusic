@@ -1,0 +1,60 @@
+/* 属taskbar界面的 */
+.music_bar_meta_img_frame {
+
+    height: 50%;
+    aspect-ratio: 1/1;
+    border-radius: 25%;
+    z-index: 910;
+
+    position: absolute;
+    top: 25%;
+    left: 12.5px;
+
+}
+
+.music_bar_meta_img {
+
+    height: 100%;
+    width: 100%;
+    border-radius: 25%;
+    overflow: hidden;
+
+    transition: border-radius 0.3s ease, transform 0.3s ease;
+
+}
+.music_bar_meta_img.active {
+    border-radius: 100%;
+    transform: rotate(90deg);
+}
+
+.music_bar_meta_img img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+/* 属player页面的 */
+.player_meta_img_frame {
+    height: min(100cqw, 100cqh, 90%);
+    aspect-ratio: 1/1;
+    overflow: hidden;   /* 待商议 */
+}
+.player_meta_img {
+
+    height: 100%;
+    width: 100%;
+    border-radius: 5%;
+    overflow: hidden;
+
+    transition: border-radius 0.3s ease, transform 0.3s ease;
+
+}
+.player_meta_img.active {
+    border-radius: 100%;
+    transform: rotate(90deg);
+}
+.player_meta_img img {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}

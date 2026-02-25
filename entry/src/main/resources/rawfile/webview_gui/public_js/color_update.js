@@ -1,35 +1,51 @@
-target_color = 'rgb(244, 198, 206)'
-target_bgcolor = 'rgba(0,0,0,0.4)'
+//
+// 公共函数池（根页面不能用）
+//
+let background_color = 'rgba(0, 0, 0, 0.4)'     // 背景颜色
+let active_color = 'rgba(244, 198, 206, 1.0)'   // 主题颜色
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 色彩更改型 //
+///////////////
 
-// 更新SVG 颜色的函数
-function updateSvgColors() {
-  // 1. 找到所有 class 包含 'svg_color' 的元素
-  const elements = document.querySelectorAll('.svg_color');
-
-  // 2. 遍历这些元素
-  elements.forEach(element => {
-    // 3. 修改 fill 样式
-    // 方式 A: 直接修改 style 属性 (优先级最高)
-    element.style.fill = target_bgcolor;
-
-  });
+// 主题色修改 //
+function set_active_color(color = null) {
+    if (color !== null) {
+        active_color = color
+    }
+    document.querySelectorAll('.box_active_color').forEach(element => {
+        element.style.backgroundColor = active_color;
+    })
+    taskbar_page_update()
 }
 
-// 修改颜色的函数
-function change_color(newColor) {
-  target_color = newColor;
-  updateSvgColors();
-}
-// 获取颜色的函数
-function get_color() {
-  return target_color;
+// 背景色修改 //
+function set_background_color(color = null) {
+    if (color !== null) {
+        background_color = color
+    }
+    document.querySelectorAll('.svg_color').forEach(element => {
+        element.style.fill = background_color;
+    });
+    document.querySelectorAll('.font_color').forEach(element => {
+        element.style.color = background_color;
+    })
 }
 
-// 这是底色的
-function change_bgcolor(newColor) {
-  target_bgcolor = newColor;
-  updateSvgColors();
-}
-function get_bgcolor() {
-  return target_bgcolor;
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 上级监听 //
+/////////////
+window.addEventListener('message', function(event) {
+    
+    func = event.data.action;
+    
+    if (func === 'set_active_color') {
+        set_active_color()
+    }
+    if (func === 'set_background_color') {
+        set_background_color()
+    }
+    if (func === 'init') {
+        init()
+    }
+
+});

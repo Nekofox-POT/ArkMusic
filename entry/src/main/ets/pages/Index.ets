@@ -196,6 +196,24 @@ struct Index {
     });
   }
 
+  ////////////////////
+  // webview功能注册 //
+  ///////////////////
+  reg_webview_js() {
+    try {this.ark_music_ui.registerJavaScriptProxy(
+      {
+        // ready //
+        ready: () => {this.ui_ready = true}
+      },
+      "ark",
+      [
+        'ready'
+      ]
+    )} catch (e) {
+      console.error(`注册webview时出现了错误: ${e}.`)
+    }
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // UI构建 //
   ///////////
@@ -228,8 +246,11 @@ struct Index {
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(900)
           .zoomAccess(false)
-          .onPageEnd( () => {
-            this.ui_ready = true
+          .onControllerAttached(() => {
+            this.reg_webview_js()
+          })
+          .onPageEnd(() => {
+            console.log('页面加载完成.')
           })
       }
 
@@ -278,25 +299,6 @@ struct Index {
             }
           })
       }
-
-
-      /////////////
-      // 测试按钮 //
-      ////////////
-      // Button()
-      //   .width('200vp')
-      //   .height('100vp')
-      //   .onClick(() => {
-      //     if (this.status) {
-      //       this.status = false
-      //       this.ark_music_ui.runJavaScript('taskbar_double(false)')
-      //     } else {
-      //       this.status = true
-      //       this.ark_music_ui.runJavaScript('taskbar_double(true)')
-      //     }
-      //   })
-      //   .zIndex(999)
-      //   .position({ x: 0, y: 0 })
 
     }
   }
