@@ -20,6 +20,7 @@ const song_range = document.getElementById('song_range')
 const bg_song_range_bar = document.getElementById('bg_song_range_bar')
 const music_bar_song_range = document.getElementById('music_bar_song_range')
 const page = document.getElementById('page')
+const taskbar_music_name = document.getElementById('taskbar_music_name')
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 变量配置 //
@@ -32,3 +33,4 @@ let background_color = 'rgba(0, 0, 0, 0.4)'     // 背景颜色
 let active_color = 'rgba(244, 198, 206, 1.0)'   // 主题颜色
 let page_backup = 1    //当前页码
 let is_adjusting = false    // 进度条调节指示器
+let play_status = false     // 播放状态

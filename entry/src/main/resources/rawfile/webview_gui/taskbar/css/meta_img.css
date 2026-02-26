@@ -18,43 +18,29 @@
     width: 100%;
     border-radius: 25%;
     overflow: hidden;
+    box-shadow: 0 4px 8px rgba(71, 71, 71, 0.2);
+    background-image: url(../files/CD.png);
+    background-size: cover;
 
     transition: border-radius 0.3s ease, transform 0.3s ease;
 
-}
-.music_bar_meta_img.active {
-    border-radius: 100%;
-    transform: rotate(90deg);
-}
-
-.music_bar_meta_img img {
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
 }
 
 /* 属player页面的 */
 .player_meta_img_frame {
     height: min(100cqw, 100cqh, 90%);
     aspect-ratio: 1/1;
-    overflow: hidden;   /* 待商议 */
 }
 .player_meta_img {
 
     height: 100%;
     width: 100%;
     border-radius: 5%;
+    box-shadow: 0 4px 8px rgba(71, 71, 71, 0.2);
     overflow: hidden;
+    background-image: url(../files/CD.png);
+    background-size: cover;
 
     transition: border-radius 0.3s ease, transform 0.3s ease;
 
-}
-.player_meta_img.active {
-    border-radius: 100%;
-    transform: rotate(90deg);
-}
-.player_meta_img img {
-    height: 100%;
-    width: 100%;
-    object-fit: cover;
 }

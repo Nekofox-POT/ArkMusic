@@ -6,6 +6,8 @@
 ////////////
 
 const player_meta_img = document.getElementById('player_meta_img')
+const player_title = document.getElementById('player_title')
+const player_sub_title = document.getElementById('player_sub_title')
 const player_controller_range = document.getElementById('player_controller_range')
 const player_controller_range_frame = document.getElementById('player_controller_range_frame')
 const player_song_range_correct_time = document.getElementById('player_song_range_correct_time')

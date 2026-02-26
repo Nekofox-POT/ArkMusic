@@ -31,6 +31,9 @@
               "ohos.want.action.home"
             ]
           }
+        ],
+        "backgroundModes": [
+          "audioPlayback"
         ]
       }
     ],
