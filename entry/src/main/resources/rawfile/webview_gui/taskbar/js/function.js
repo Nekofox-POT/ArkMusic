@@ -2,36 +2,6 @@
 // 函数池
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 色彩更改型 //
-/////////////
-
-// 主题色修改 //
-function set_active_color(color = null) {
-    if (color !== null) {
-        active_color = color
-    }
-    document.querySelectorAll('.box_active_color').forEach(element => {
-        element.style.backgroundColor = active_color;
-    })
-    // abc.contentWindow.postMessage({action: 'set_active_color'}, '*')
-    taskbar_page_update()
-}
-
-// 背景色修改 //
-function set_background_color(color = null) {
-    if (color !== null) {
-        background_color = color
-    }
-    document.querySelectorAll('.svg_color').forEach(element => {
-        element.style.fill = background_color;
-    });
-    document.querySelectorAll('.font_color').forEach(element => {
-        element.style.color = background_color;
-    })
-    // abc.contentWindow.postMessage({action: 'set_active_color'}, '*')
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 页面切换型 //
 /////////////
 
@@ -68,10 +38,12 @@ function taskbar_page_update(p = page_backup) {
         const icon_path = icon.querySelectorAll('.svg_color')
         if (index === p) {
             icon_path.forEach(path => {
+                path.classList.add('svg_active_color')
                 path.style.fill = active_color
             })
         } else {
             icon_path.forEach(path => {
+                path.classList.remove('svg_active_color')
                 path.style.fill = background_color
             })
         }
@@ -142,6 +114,7 @@ function set_play_status(status) {
         music_bar_button_pause.classList.add('hidden')
         player_play_pause_icon.classList.remove('active')
     }
+    set_meta_img_rotate()
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 进度更改 //
@@ -243,32 +216,30 @@ function set_meta_img(byteString) {
 
         const img = new Image();
 
-        // 成功加载时不再操作 meta_img 或模糊背景，仅把封面作为三处背景图
+        // 成功加载把封面作为三处背景图
         img.onload = function() {
+            const url = `url(${blobUrl})`
+            // 更新背景
             try {
-                const url = `url(${blobUrl})`;
-                const musicBar = document.querySelector('.music_bar_meta_img');
-                const playerBar = document.querySelector('.player_meta_img');
-                if (musicBar) musicBar.style.backgroundImage = url;
-                if (playerBar) playerBar.style.backgroundImage = url;
+                music_bar_meta_img.style.backgroundImage = url;
+                player_meta_img.style.backgroundImage = url;
                 document.body.style.backgroundImage = url;
             } catch (e) {
-                console.warn('set_meta_img: unable to apply background images', e);
+                console.log('set_meta_img: unable to apply background images', e);
             }
             img.onload = null;
         };
 
         img.onerror = function() {
             // 加载失败：直接将三个区域设置为任务栏默认封面
-            const defaultUrl = "url('taskbar/files/CD.png')";
+            const url = "url('taskbar/files/CD.png')";
+            // 更新背景
             try {
-                const musicBar = document.querySelector('.music_bar_meta_img');
-                const playerBar = document.querySelector('.player_meta_img');
-                if (musicBar) musicBar.style.backgroundImage = defaultUrl;
-                if (playerBar) playerBar.style.backgroundImage = defaultUrl;
-                document.body.style.backgroundImage = defaultUrl;
+                music_bar_meta_img.style.backgroundImage = url;
+                player_meta_img.style.backgroundImage = url;
+                document.body.style.backgroundImage = url;
             } catch (e) {
-                console.warn('set_meta_img: unable to apply default background images', e);
+                console.log('set_meta_img: unable to apply background images', e);
             }
             URL.revokeObjectURL(blobUrl);
         };
@@ -278,16 +249,16 @@ function set_meta_img(byteString) {
 
     } catch (error) {
         // 出现异常时也设置默认背景
-        const defaultUrl = "url('taskbar/files/CD.png')";
+        const url = "url('taskbar/files/CD.png')";
+        // 更新背景
         try {
-            const musicBar = document.querySelector('.music_bar_meta_img');
-            const playerBar = document.querySelector('.player_meta_img');
-            if (musicBar) musicBar.style.backgroundImage = defaultUrl;
-            if (playerBar) playerBar.style.backgroundImage = defaultUrl;
-            document.body.style.backgroundImage = defaultUrl;
+            music_bar_meta_img.style.backgroundImage = url;
+            player_meta_img.style.backgroundImage = url;
+            document.body.style.backgroundImage = url;
         } catch (e) {
-            console.warn('set_meta_img: unable to apply default background images in catch', e);
+            console.log('set_meta_img: unable to apply background images', e);
         }
+        console.log('set_meta_img: unable to process images', error);
     }
 
 }

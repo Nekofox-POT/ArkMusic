@@ -34,3 +34,4 @@ let active_color = 'rgba(244, 198, 206, 1.0)'   // 主题颜色
 let page_backup = 1    //当前页码
 let is_adjusting = false    // 进度条调节指示器
 let play_status = false     // 播放状态
+let button_enable_active_color = true   // 允许图标高亮

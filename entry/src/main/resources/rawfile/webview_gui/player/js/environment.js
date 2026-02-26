@@ -21,6 +21,12 @@ const vol_control = document.getElementById('vol_control')
 const vol_control_frame = document.getElementById('vol_control_frame')
 const vol_range = document.getElementById('vol_range')
 const vol_range_show = document.getElementById('vol_range_show')
+const player_title_frame = document.getElementById('player_title_frame')
+const player_sub_title_frame = document.getElementById('player_sub_title_frame')
+const play_only_button = document.getElementById('play_only_button')
+const play_forlist_button = document.getElementById('play_forlist_button')
+const play_order_button = document.getElementById('play_order_button')
+const play_disorder_button = document.getElementById('play_disorder_button')
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 变量配置 //

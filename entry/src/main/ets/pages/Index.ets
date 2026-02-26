@@ -116,31 +116,6 @@ struct Index {
     });
   }
 
-  /////////////
-  // 后台注册 //
-  ////////////
-  async reg_bg_run() {
-    console.log('注册后台任务')
-    let wantAgentInfo: wantAgent.WantAgentInfo = {
-      wants: [
-        {
-          bundleName: "com.nekofoxpot.arkmusic",
-          abilityName: "EntryAbility"
-        }
-      ],
-      actionType: wantAgent.OperationType.START_ABILITY,
-      requestCode: 712,
-      actionFlags: [wantAgent.WantAgentFlags.UPDATE_PRESENT_FLAG],
-    };
-
-    try {
-      let tmpWantAgent = await wantAgent.getWantAgent(wantAgentInfo);
-      await backgroundTaskManager.startBackgroundRunning(this.context, backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK, tmpWantAgent);
-    } catch (e) {
-      console.error(`后台注册失败：${e.message}`);
-    }
-  }
-
   ///////////////
   // 元数据获取 //
   /////////////
@@ -295,6 +270,7 @@ struct Index {
           console.log('audio准备就绪。')
           callback(this.avPlayer);
           console.log('callback设置成功，等待audio播放。')
+          this.avPlayer.seek(0);
           this.avPlayer.play();
           break;
         case 'playing': // audio播放

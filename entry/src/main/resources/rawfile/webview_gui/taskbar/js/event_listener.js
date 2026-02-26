@@ -66,7 +66,7 @@ taskbar_page_touch.addEventListener("touchmove", (e) => {
 ////////////
 music_bar_button_play.addEventListener("touchstart", () => {
     music_bar_button_play.classList.add("active")
-    music_bar_button_play.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = active_color})
+    music_bar_button_play.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
 })
 music_bar_button_play.addEventListener("touchend", () => {
     music_bar_button_play.classList.remove("active")
@@ -74,7 +74,7 @@ music_bar_button_play.addEventListener("touchend", () => {
 })
 music_bar_button_pause.addEventListener("touchstart", () => {
     music_bar_button_pause.classList.add("active")
-    music_bar_button_pause.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = active_color})
+    music_bar_button_pause.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
 })
 music_bar_button_pause.addEventListener("touchend", () => {
     music_bar_button_pause.classList.remove("active")
