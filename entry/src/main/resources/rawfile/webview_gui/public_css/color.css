@@ -2,6 +2,7 @@
     fill: rgba(0, 0, 0, 0);
     transition: fill 0.3s ease;
 }
+.svg_active_color {}    /* 占位用的，记住有这个玩意 */
 .box_color {
 
     /* 模糊 */
@@ -17,6 +18,7 @@
 }
 .box_active_color {
     background-color: rgba(0, 0, 0, 0);
+    transition: background-color 0.3s ease;
 }
 .font_color {
     color: rgba(0, 0, 0, 0);

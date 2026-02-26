@@ -21,6 +21,7 @@
     height: 100%;
     border: none;
     flex-shrink: 0;
+    overflow: hidden;
 }
 .player {
     width: 100%;
