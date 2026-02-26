@@ -131,7 +131,8 @@ function taskbar_double(status) {
 // 播放状态            //
 // true播放 false暂停 //
 //////////////////////
-function play_status(status) {
+function set_play_status(status) {
+    play_status = status
     if (status) {
         music_bar_button_play.classList.add('hidden')
         music_bar_button_pause.classList.remove('hidden')
@@ -185,4 +186,108 @@ function change_song_range(value = null) {
 function change_song_range_duration(value) {
     song_range.max = value
     player_song_range_duration_time.innerText = second_to_time(value)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 元数据传入 //
+/////////////
+
+// 标题 //
+function set_meta(meta) {
+    taskbar_music_name.innerText = meta[0]
+    player_title.innerText = meta[1]
+    player_sub_title.innerText = meta[2]
+}
+
+// 封面 //
+function set_meta_img(byteString) {
+
+    try {
+
+        // 将数字数组字符串转换回字符，得到外层的base64
+        let byteArrayStr = byteString.replace(/[\[\]]/g, '');
+        let byteNumbers = byteArrayStr.split(',').map(num => parseInt(num.trim()));
+
+        // 将数字数组转换回base64字符串
+        let outerBase64 = '';
+        for (let i = 0; i < byteNumbers.length; i++) {
+            outerBase64 += String.fromCharCode(byteNumbers[i]);
+        }
+
+        // 解码外层base64，得到真正的Data URL定义
+        let innerContent = atob(outerBase64);
+
+        // 分离MIME类型和数字数组部分
+        let [mimeTypePartWithBase64, numbersPart] = innerContent.split(';base64,');
+        let mimeType = mimeTypePartWithBase64.replace(';base64', '');
+
+        // 将数字字符串转换回真正的base64
+        let numberArray = numbersPart.split(',').map(num => parseInt(num.trim()));
+        let realBase64 = '';
+        for (let i = 0; i < numberArray.length; i++) {
+            realBase64 += String.fromCharCode(numberArray[i]);
+        }
+
+        // 解码base64为二进制数据
+        let binaryData = atob(realBase64);
+
+        // 转换为Uint8Array
+        let uint8Array = new Uint8Array(binaryData.length);
+        for (let i = 0; i < binaryData.length; i++) {
+            uint8Array[i] = binaryData.charCodeAt(i);
+        }
+
+        // 创建Blob对象
+        let blob = new Blob([uint8Array], { type: mimeType });
+        let blobUrl = URL.createObjectURL(blob);
+
+        const img = new Image();
+
+        // 成功加载时不再操作 meta_img 或模糊背景，仅把封面作为三处背景图
+        img.onload = function() {
+            try {
+                const url = `url(${blobUrl})`;
+                const musicBar = document.querySelector('.music_bar_meta_img');
+                const playerBar = document.querySelector('.player_meta_img');
+                if (musicBar) musicBar.style.backgroundImage = url;
+                if (playerBar) playerBar.style.backgroundImage = url;
+                document.body.style.backgroundImage = url;
+            } catch (e) {
+                console.warn('set_meta_img: unable to apply background images', e);
+            }
+            img.onload = null;
+        };
+
+        img.onerror = function() {
+            // 加载失败：直接将三个区域设置为任务栏默认封面
+            const defaultUrl = "url('taskbar/files/CD.png')";
+            try {
+                const musicBar = document.querySelector('.music_bar_meta_img');
+                const playerBar = document.querySelector('.player_meta_img');
+                if (musicBar) musicBar.style.backgroundImage = defaultUrl;
+                if (playerBar) playerBar.style.backgroundImage = defaultUrl;
+                document.body.style.backgroundImage = defaultUrl;
+            } catch (e) {
+                console.warn('set_meta_img: unable to apply default background images', e);
+            }
+            URL.revokeObjectURL(blobUrl);
+        };
+
+        // 设置src
+        img.src = blobUrl;
+
+    } catch (error) {
+        // 出现异常时也设置默认背景
+        const defaultUrl = "url('taskbar/files/CD.png')";
+        try {
+            const musicBar = document.querySelector('.music_bar_meta_img');
+            const playerBar = document.querySelector('.player_meta_img');
+            if (musicBar) musicBar.style.backgroundImage = defaultUrl;
+            if (playerBar) playerBar.style.backgroundImage = defaultUrl;
+            document.body.style.backgroundImage = defaultUrl;
+        } catch (e) {
+            console.warn('set_meta_img: unable to apply default background images in catch', e);
+        }
+    }
+
 }

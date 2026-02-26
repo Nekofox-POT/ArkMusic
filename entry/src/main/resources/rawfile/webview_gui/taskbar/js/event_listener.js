@@ -185,6 +185,7 @@ music_bar_touch.addEventListener("touchend", (e) => {
     // 如果处于长按状态，隐藏bg_song_range
     if (music_bar_isLongPressed) {
         is_adjusting = false
+        ark.seek(song_range.value)
         music_bar_song_range.classList.remove("active")
         bg_song_range.classList.remove("active")
         bg_song_range.style.opacity = '0'
@@ -238,6 +239,7 @@ song_range.addEventListener('touchstart', () => {
 song_range.addEventListener('touchend', () => {
     player_controller_range_frame.classList.remove('active')
     is_adjusting = false
+    ark.seek(song_range.value)
 })
 song_range.addEventListener("input", () => {
     change_song_range()

@@ -8,7 +8,7 @@ function init() {
     // abc.contentWindow.postMessage({action: 'init'}, '*')
 
     // ready
-    ark.ready()
+    try { ark.ready() } catch {}
     // 颜色更新
     set_background_color()
     set_active_color()
@@ -20,7 +20,7 @@ function init() {
     change_song_range_duration(0)
     change_song_range(0)
     // 暂停
-    play_status(false)
+    set_play_status(false)
 
 }
 
