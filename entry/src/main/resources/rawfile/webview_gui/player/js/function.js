@@ -67,18 +67,19 @@ function set_like(value) {
 
 // 变量 //
 let meta_img_rotate_current_rotation = 0
-let meta_img_rotate_rotation_speed = 45 // 每秒旋转45度，即8秒一圈
+// 为了让封面转速减慢一倍，这里从45度/秒改为22.5度/秒
+let meta_img_rotate_rotation_speed = 22.5 // 每秒旋转22.5度，即16秒一圈
 let meta_img_rotate_last_timestamp = null
 let meta_img_rotate_animation_id = null
 let meta_img_rotate_is_snapping = false
 
 // 主函数 //
-function set_meta_img_rotate() {
-    if (play_status) {
+function set_meta_img_rotate(status) {
+    if (status) {
 
         player_meta_img.classList.add('active')
         meta_img_rotate_last_timestamp = performance.now()
-        set_meta_img_rotate_play(play_status)
+        set_meta_img_rotate_play(status)
 
     } else {
 
@@ -135,6 +136,10 @@ function set_meta_img_rotate_pause() {
     setTimeout(() => {
         meta_img_rotate_is_snapping = false
         player_meta_img.style.transition = ''
-        player_meta_img.classList.remove('active')
+        // 如果在1000ms后play_status为true，则不执行这个计时器
+        if (!play_status) {
+
+            player_meta_img.classList.remove('active')
+        }
     }, transitionTime * 1000)
 }

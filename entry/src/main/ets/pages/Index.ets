@@ -15,8 +15,8 @@ import { audio } from '@kit.AudioKit';
 import { image } from '@kit.ImageKit';
 import util from '@ohos.util';
 import { common } from '@kit.AbilityKit';
-import { wantAgent } from '@kit.AbilityKit';
-import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
+
+import nativeModule from 'libentry.so';
 
 
 //////////////////
@@ -78,6 +78,7 @@ struct Index {
   private context = getContext(this) as common.UIAbilityContext   // 身份证
   status: Boolean = false   // 状态
   play_status: boolean = false  // 播放状态
+  allow_auto_play: boolean = false  // 载入后自动播放 (防止第一次打开自动播放)
 
   ///////////
   // 更新池 //
@@ -114,6 +115,15 @@ struct Index {
       this.ark_music_ui.runJavaScript(`set_vol(${this.volume_level})`)
       vib()
     });
+  }
+
+  /////////////
+  // 退出操作 //
+  ////////////
+  aboutToDisappear(): void {
+    console.log('程序结束运行.')
+    this.avPlayer?.release()
+    console.log('再见')
   }
 
   ///////////////
@@ -162,25 +172,24 @@ struct Index {
     // 输出元音频
     this.session?.setAVMetadata({ assetId: '0', mediaImage: metadata })
 
-    // 转换为 ArrayBuffer
+    // 2. 准备图片数据
     let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 };
+    // 注意：packing 是耗时操作，这里得到 ArrayBuffer
     let arrayBuffer = await image.createImagePacker().packing(metadata, packOpts);
-    let uint8Array = new Uint8Array(arrayBuffer);
-    // base64 二重编码
-    let base64 = new util.Base64Helper();
-    let base64Data = base64.encodeSync(uint8Array);
-    let dataURL = `image/jpeg;base64,${base64Data}`;
-    let text_encode = new util.TextEncoder()
-    let encodedData = base64.encodeSync(text_encode.encodeInto(dataURL))
-    // 传入前端
-    this.ark_music_ui.runJavaScript(`set_meta_img('${encodedData}')`);
+
+    // 3. 调用 C++ 进行 Base64 编码
+    // C++ 返回的是完整的 "data:image/jpeg;base64,xxxx" 字符串
+    let dataURL = nativeModule.encodeImageToBase64(arrayBuffer);
+
+    // 4. 传入前端
+    // 使用 JSON.stringify 防止字符串中的特殊字符（如换行）破坏 JS 语法
+    this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(dataURL)})`);
 
   }
 
   ///////////////
   // 元音频创建 //
   /////////////
-  // AV Session创建
   async avs_reg_session() {
     try {
 
@@ -271,7 +280,11 @@ struct Index {
           callback(this.avPlayer);
           console.log('callback设置成功，等待audio播放。')
           this.avPlayer.seek(0);
-          this.avPlayer.play();
+          if (this.allow_auto_play) {
+            this.avPlayer.play();
+          } else {
+            this.allow_auto_play = true
+          }
           break;
         case 'playing': // audio播放
           console.log('audio正在播放~')
@@ -289,7 +302,7 @@ struct Index {
           console.log('audio播放完了。')
           this.play_status = false;
           this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
-          this.ark_music_ui.runJavaScript(`set_play_status(false)`);
+          this.ark_music_ui.runJavaScript(`play_complete()`);
         case 'stopped':
           console.log('audio已结束工作，等待销毁...')
           break
@@ -338,7 +351,12 @@ struct Index {
     try {this.ark_music_ui.registerJavaScriptProxy(
       {
         // ready //
-        ready: () => {this.ui_ready = true},
+        ready: () => {
+          console.log('页面准备完成')
+          this.ui_ready = true
+          this.audio_set(root_path + '二乘 - 时之风.flac')
+          this.ark_music_ui.runJavaScript('set_background_color(\'rgba(255, 255, 255, 0.8)\')')
+        },
         // 播放 //
         play: () => {console.log('想播放.');this.avPlayer?.play()},
         // 暂停 //
@@ -356,12 +374,15 @@ struct Index {
             this.volume_level = parseInt(level)
           }
         },
+        // 放歌 //
+        play_song: (path: string) => {this.audio_set(root_path + path)}
       },
       "ark",
       [
         'ready',
         'play', 'pause', 'seek',
         'set_vol',
+        'play_song'
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)
@@ -412,10 +433,6 @@ struct Index {
           .onPageEnd(() => {
             this.listen_system_volume()  // 开始监听音量
             console.log('页面加载完成.')
-            this.audio_set(root_path + '二乘 - 时之风.flac')
-            // this.audio_set(root_path + '洛天依 - 秋之风.flac')
-            this.ark_music_ui.runJavaScript('set_background_color(\'rgba(255, 255, 255, 0.8)\')')
-            this.avPlayer?.seek(0)
           })
       }
 
