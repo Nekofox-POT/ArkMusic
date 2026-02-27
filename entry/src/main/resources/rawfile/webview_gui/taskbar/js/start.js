@@ -4,16 +4,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function init() {
 
-    // 广播其他页面
-    // abc.contentWindow.postMessage({action: 'init'}, '*')
-
-    // ready
-    try { ark.ready() } catch {}
     // 颜色更新
     set_background_color()
-    set_active_color()
     // 页面归位
-    taskbar_page_update()
+    taskbar_page_update(0)   // 临时修改
     // 音量归0
     set_vol(0)
     // 进度条归位
@@ -23,6 +17,9 @@ function init() {
     set_play_mode("play_order")
     // 暂停
     set_play_status(false)
+
+    // ready
+    ark.ready()
 
 }
 

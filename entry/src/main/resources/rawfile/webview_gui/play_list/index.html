@@ -4,6 +4,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArkMusic</title>
     <link rel="stylesheet" href="../public_css/color.css">
+    <link rel="stylesheet" href="css/queue_show.css">
+    <link rel="stylesheet" href="css/slide.css">
     <style>
         body {
 
@@ -17,11 +19,43 @@
             overflow: hidden;
 
         }
+        body * {
+            /* border: 1px solid palevioletred; */
+        }
     </style>
 </head>
 <body>
     
-    <h1>你好</h1>
+    <!-- 最上层队列显示 -->
+    <div class="queue_show box_color" id="queue_show">
+        <p class="font_color">100 / 100</p>
+    </div>
+
+    <!-- 滑动框架 -->
+    <div class="slide_frame">
+        <!-- 占位符 -->
+        <div style="height: 50px; position: relative; top: 0;"></div>
+        <div class="slide" id="slide">
+
+            <!-- 滑块内容(会实时变动) -->
+            <!-- 以下是案例 -->
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+            <div class="box_color" id="test"><div></div><p class="font_color">未知歌曲</p></div>
+
+        </div>
+        <!-- 占位符 -->
+        <div style="height: 125px; position: relative; top: 0;"></div>
+    </div>
     
     <!-- 函数块 -->
     <script src="../public_js/color_update.js"></script>

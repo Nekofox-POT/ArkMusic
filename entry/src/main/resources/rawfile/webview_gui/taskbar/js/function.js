@@ -114,7 +114,7 @@ function set_play_status(status) {
         music_bar_button_pause.classList.add('hidden')
         player_play_pause_icon.classList.remove('active')
     }
-    set_meta_img_rotate()
+    set_meta_img_rotate(play_status)
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 进度更改 //
@@ -173,92 +173,51 @@ function set_meta(meta) {
 }
 
 // 封面 //
-function set_meta_img(byteString) {
+function set_meta_img(dataUrl) {
+    // 此时 dataUrl 已经是标准的格式："data:image/jpeg;base64,..."
+    // 浏览器可以直接识别，无需 atob 解码，也无需 Blob 转换
 
-    try {
+    const img = new Image();
 
-        // 将数字数组字符串转换回字符，得到外层的base64
-        let byteArrayStr = byteString.replace(/[\[\]]/g, '');
-        let byteNumbers = byteArrayStr.split(',').map(num => parseInt(num.trim()));
-
-        // 将数字数组转换回base64字符串
-        let outerBase64 = '';
-        for (let i = 0; i < byteNumbers.length; i++) {
-            outerBase64 += String.fromCharCode(byteNumbers[i]);
-        }
-
-        // 解码外层base64，得到真正的Data URL定义
-        let innerContent = atob(outerBase64);
-
-        // 分离MIME类型和数字数组部分
-        let [mimeTypePartWithBase64, numbersPart] = innerContent.split(';base64,');
-        let mimeType = mimeTypePartWithBase64.replace(';base64', '');
-
-        // 将数字字符串转换回真正的base64
-        let numberArray = numbersPart.split(',').map(num => parseInt(num.trim()));
-        let realBase64 = '';
-        for (let i = 0; i < numberArray.length; i++) {
-            realBase64 += String.fromCharCode(numberArray[i]);
-        }
-
-        // 解码base64为二进制数据
-        let binaryData = atob(realBase64);
-
-        // 转换为Uint8Array
-        let uint8Array = new Uint8Array(binaryData.length);
-        for (let i = 0; i < binaryData.length; i++) {
-            uint8Array[i] = binaryData.charCodeAt(i);
-        }
-
-        // 创建Blob对象
-        let blob = new Blob([uint8Array], { type: mimeType });
-        let blobUrl = URL.createObjectURL(blob);
-
-        const img = new Image();
-
-        // 成功加载把封面作为三处背景图
-        img.onload = function() {
-            const url = `url(${blobUrl})`
-            // 更新背景
-            try {
-                music_bar_meta_img.style.backgroundImage = url;
-                player_meta_img.style.backgroundImage = url;
-                document.body.style.backgroundImage = url;
-            } catch (e) {
-                console.log('set_meta_img: unable to apply background images', e);
-            }
-            img.onload = null;
-        };
-
-        img.onerror = function() {
-            // 加载失败：直接将三个区域设置为任务栏默认封面
-            const url = "url('taskbar/files/CD.png')";
-            // 更新背景
-            try {
-                music_bar_meta_img.style.backgroundImage = url;
-                player_meta_img.style.backgroundImage = url;
-                document.body.style.backgroundImage = url;
-            } catch (e) {
-                console.log('set_meta_img: unable to apply background images', e);
-            }
-            URL.revokeObjectURL(blobUrl);
-        };
-
-        // 设置src
-        img.src = blobUrl;
-
-    } catch (error) {
-        // 出现异常时也设置默认背景
-        const url = "url('taskbar/files/CD.png')";
-        // 更新背景
+    // 成功加载：把封面作为背景图
+    img.onload = function() {
+        // 注意：直接使用 Data URL 作为背景，不需要 createObjectURL
+        const url = `url('${dataUrl}')`;
         try {
+            // 更新背景
             music_bar_meta_img.style.backgroundImage = url;
             player_meta_img.style.backgroundImage = url;
             document.body.style.backgroundImage = url;
         } catch (e) {
             console.log('set_meta_img: unable to apply background images', e);
         }
-        console.log('set_meta_img: unable to process images', error);
-    }
+        // 清理引用，防止内存泄漏（虽然 Data URL 占用很小，但保持习惯）
+        img.onload = null;
+    };
 
+    // 加载失败：设置默认封面
+    img.onerror = function() {
+        const defaultUrl = "url('taskbar/files/CD.png')";
+        try {
+            music_bar_meta_img.style.backgroundImage = defaultUrl;
+            player_meta_img.style.backgroundImage = defaultUrl;
+            document.body.style.backgroundImage = defaultUrl;
+        } catch (e) {
+            console.log('set_meta_img: unable to apply background images', e);
+        }
+    };
+
+    // 直接将 Data URL 赋值给 src
+    img.src = dataUrl;
+    
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 播放完成提示 //
+///////////////
+function play_complete() {
+    // 暂停
+    set_play_status(false)
+    // 切歌
+    ark.play_song('./洛天依 - 秋之风.flac')
 }

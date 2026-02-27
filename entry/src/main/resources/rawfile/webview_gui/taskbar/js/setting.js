@@ -7,6 +7,7 @@
 
 // 主题色修改 //
 function set_active_color(color = null) {
+    play_list.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
     if (color !== null) {
         active_color = color
     }
@@ -16,11 +17,11 @@ function set_active_color(color = null) {
     document.querySelectorAll('.svg_active_color').forEach(element => {
         element.style.fill = active_color;
     })
-    // abc.contentWindow.postMessage({action: 'set_active_color'}, '*')
 }
 
 // 背景色修改 //
 function set_background_color(color = null) {
+    play_list.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
     if (color !== null) {
         background_color = color
     }
@@ -31,11 +32,12 @@ function set_background_color(color = null) {
         element.style.color = background_color;
     })
     set_active_color()
-    // abc.contentWindow.postMessage({action: 'set_active_color'}, '*')
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 图标高亮设置修改 //
 //////////////////
 function set_button_enable_active_color(value) {
+    play_list.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     button_enable_active_color = value
 }

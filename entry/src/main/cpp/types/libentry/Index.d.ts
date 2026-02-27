@@ -1,1 +1,1 @@
-export const add: (a: number, b: number) => number;
+export const encodeImageToBase64: (buffer: ArrayBuffer) => string;
