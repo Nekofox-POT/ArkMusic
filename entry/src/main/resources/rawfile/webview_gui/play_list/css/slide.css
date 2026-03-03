@@ -37,6 +37,11 @@
 
     border-radius: 12.5px;
 
+    transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.slide > div:active {
+    transform: scale(0.95);
 }
 .slide > div > div {
 

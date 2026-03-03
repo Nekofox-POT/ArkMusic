@@ -39,3 +39,5 @@ let page_backup = 1    //当前页码
 let is_adjusting = false    // 进度条调节指示器
 let play_status = false     // 播放状态
 let button_enable_active_color = true   // 允许图标高亮
+let playing_list = []   // 播放列表
+let playing_list_index = 0  // 播放计数器

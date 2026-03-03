@@ -8,13 +8,11 @@
 import { webview } from '@kit.ArkWeb';
 import { picker, fileUri } from  '@kit.CoreFileKit';
 import { fileIo as fs } from '@kit.CoreFileKit';
-import media from '@ohos.multimedia.media';
-import { avSession } from '@kit.AVSessionKit';
 import { AVVolumePanel } from '@kit.AudioKit';
 import { audio } from '@kit.AudioKit';
 import { image } from '@kit.ImageKit';
-import util from '@ohos.util';
 import { common } from '@kit.AbilityKit';
+import emitter from '@ohos.events.emitter'
 
 import nativeModule from 'libentry.so';
 
@@ -22,7 +20,8 @@ import nativeModule from 'libentry.so';
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { notice, vib, reg_bg_run } from '../background_pages/system_function'
+import { notice, vib, reg_bg_run } from '../package/system_function'
+import { audio_player } from '../package/audio_player/audio_player'
 
 ///////////
 // 变量池 //
@@ -77,8 +76,6 @@ struct Index {
   //////////
   private context = getContext(this) as common.UIAbilityContext   // 身份证
   status: Boolean = false   // 状态
-  play_status: boolean = false  // 播放状态
-  allow_auto_play: boolean = false  // 载入后自动播放 (防止第一次打开自动播放)
 
   ///////////
   // 更新池 //
@@ -93,8 +90,61 @@ struct Index {
   ///////
   ark_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
   dir_create_downloader: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();   // 下载器
-  avPlayer: media.AVPlayer | null = null; // audio播放
-  session: avSession.AVSession | null = null; // 元音频
+  ark_music_player = new audio_player(this.context)   // 播放器核心
+
+  ////////////////
+  // web图片处理 //
+  ///////////////
+  async pixel_to_base(metadata: image.PixelMap) {
+
+    // 2. 准备图片数据
+    let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 };
+    // 注意：packing 是耗时操作，这里得到 ArrayBuffer
+    let arrayBuffer = await image.createImagePacker().packing(metadata, packOpts);
+
+    // 3. 调用 C++ 进行 Base64 编码
+    // C++ 返回的是完整的 "data:image/jpeg;base64,xxxx" 字符串
+    let dataURL = nativeModule.encodeImageToBase64(arrayBuffer);
+
+    // 4. 传入前端
+    // 使用 JSON.stringify 防止字符串中的特殊字符（如换行）破坏 JS 语法
+    this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(dataURL)})`);
+
+  }
+
+  /////////////
+  // 广播监听 //
+  ////////////
+  // 元数据监听程序 //
+  metadata_broadcast: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    console.log(eventData.data?.song_name)
+    console.log(eventData.data?.title)
+    console.log(eventData.data?.artist)
+    // 载入
+    this.ark_music_ui.runJavaScript(`set_meta(['${eventData.data?.song_name}', '${eventData.data?.title}', '${eventData.data?.artist}'])`)
+    // 图片编码
+    this.pixel_to_base(eventData.data?.img)
+  }
+  play_status_broadcast: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    if (eventData.data?.status == 'playing') {
+      this.ark_music_ui.runJavaScript(`set_play_status(true)`)
+    } else {
+      this.ark_music_ui.runJavaScript(`set_play_status(false)`)
+    }
+  }
+  duration_time_broadcast: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    this.ark_music_ui.runJavaScript(`change_song_range_duration(${eventData.data?.duration_time})`)
+  }
+  current_time_broadcast: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
+    this.ark_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
+  }
+  // 启动器 //
+  listen_broadcast() {
+    emitter.on({ eventId: 710 }, this.metadata_broadcast)
+    emitter.on({ eventId: 712 }, this.play_status_broadcast)
+    emitter.on({ eventId: 713 }, this.duration_time_broadcast)
+    emitter.on({ eventId: 714 }, this.current_time_broadcast)
+  }
 
   /////////////
   // 音量监听 //
@@ -122,226 +172,8 @@ struct Index {
   ////////////
   aboutToDisappear(): void {
     console.log('程序结束运行.')
-    this.avPlayer?.release()
+    this.ark_music_player.drop_it()
     console.log('再见')
-  }
-
-  ///////////////
-  // 元数据获取 //
-  /////////////
-  async get_meta(file: fs.File) {
-    if (canIUse('SystemCapability.Multimedia.Media.AVMetadataExtractor')) {
-      let file_name = file.name
-      try {
-        // 创建对象
-        let avMetadataExtractor = await media.createAVMetadataExtractor();
-        avMetadataExtractor.fdSrc = file  ;
-        // 获取元数据。
-        let metadata = await avMetadataExtractor.fetchMetadata();
-        // 获取专辑封面
-        try {
-          this.get_meta_img(await avMetadataExtractor.fetchAlbumCover())
-        } catch {
-          const resourceManager = getContext(this).resourceManager;
-          // 获取媒体资源内容
-          const mediaData = await resourceManager.getMediaContent($r('app.media.CD'));
-          // 创建图像源并生成 PixelMap
-          const imageSource = image.createImageSource(mediaData.buffer);
-          this.get_meta_img(await imageSource.createPixelMap())
-        }
-        // 释放
-        avMetadataExtractor.release();
-        console.log(`专辑名：“${metadata.title}”，作者：“${metadata.artist}” 文件名称：${file_name}`)
-        // 加载名称
-        let song_title = metadata.title ?? file_name
-        let song_artist = metadata.artist ?? '未知艺术家'
-        // 输出
-        this.session?.setAVMetadata({ assetId: '0', title: song_title, artist: song_artist })
-        this.ark_music_ui.runJavaScript(`set_meta(['${file_name}', '${song_title}', '${song_artist}'])`)
-
-      } catch (e) {
-        console.error(`专辑信息获取失败：${e}}`);
-        // 返回空信息
-        this.session?.setAVMetadata({ assetId: '0', title: file_name, artist: '未知艺术家' })
-        this.ark_music_ui.runJavaScript(`set_meta(['${file_name}', '${file_name}', '未知艺术家'])`)
-      }
-    }
-  }
-  async get_meta_img(metadata: image.PixelMap) {
-
-    // 输出元音频
-    this.session?.setAVMetadata({ assetId: '0', mediaImage: metadata })
-
-    // 2. 准备图片数据
-    let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 };
-    // 注意：packing 是耗时操作，这里得到 ArrayBuffer
-    let arrayBuffer = await image.createImagePacker().packing(metadata, packOpts);
-
-    // 3. 调用 C++ 进行 Base64 编码
-    // C++ 返回的是完整的 "data:image/jpeg;base64,xxxx" 字符串
-    let dataURL = nativeModule.encodeImageToBase64(arrayBuffer);
-
-    // 4. 传入前端
-    // 使用 JSON.stringify 防止字符串中的特殊字符（如换行）破坏 JS 语法
-    this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(dataURL)})`);
-
-  }
-
-  ///////////////
-  // 元音频创建 //
-  /////////////
-  async avs_reg_session() {
-    try {
-
-      let context = this.getUIContext().getHostContext() as Context;
-      // 创建session。
-      console.log('创建session...');
-      this.session = await avSession.createAVSession(context, 'SESSION_NAME', 'audio');
-      await this.session.activate();
-
-      // 注册播放器行为
-      console.log('注册行为...');
-      this.session.on("play", () => {this.avPlayer?.play()})  // 播放
-      this.session.on("pause", () => {this.avPlayer?.pause()})  // 暂停
-      // this.session.on("playPrevious", () => {this.ark_music_ui.runJavaScript('post_last_song()')}) // 上一首
-      // this.session.on("playNext", () => {this.ark_music_ui.runJavaScript('post_next_song()')}) //下一首
-      this.session.on("seek", (position) => {this.avPlayer?.seek(position)})  // 跳转
-      this.session.on("answer", () => {console.log('avs:接听电话')})
-      this.session.on("hangUp", () => {console.log('avs:挂断电话')})
-      this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
-      console.log('注册完成！');
-
-      // 初始化
-      await this.session.setAVMetadata({
-        assetId: '-1',
-        title: '未知歌曲',
-        artist: '未知歌手',
-      });
-
-    } catch (e) {
-      console.error(`avs未知错误：${e}`)
-    }
-  }
-
-  ///////////////
-  // audio模块 //
-  //////////////
-  async audio_set(path: string) {
-    try {
-      // 检查文件源
-      const file_sync = fs.openSync(path)
-      // 丢给meta
-      this.get_meta(file_sync)
-      const tmp_fd = file_sync.fd;
-      const tmp_size = fs.statSync(tmp_fd).size;
-      // 检查对象
-      if (this.avPlayer) {
-        console.log(`已存在对象，进行销毁`);
-        // 销毁audio
-        await this.avPlayer.release();
-        // 重置播放状态
-        this.play_status = false;
-        console.log("资源销毁完成.");
-      }
-      // 创建avPlayer。
-      console.log('创建audio.');
-      this.avPlayer = await media.createAVPlayer();
-      // 注册回调函数
-      console.log('注册回调')
-      await this.setAVPlayerCallback((avPlayer: media.AVPlayer) => {});
-      // 设置播放源
-      console.log('设置播放源')
-      this.avPlayer.fdSrc = {fd: tmp_fd, offset: 0, length: tmp_size};
-    } catch (e) {
-      console.log(`装载失败：${e}`)
-      notice(`文件读取失败：${e}`)
-    }
-  }
-  async setAVPlayerCallback(callback: (avPlayer: media.AVPlayer) => void) {
-
-    // 添加保险
-    if (!this.avPlayer) { return; }
-
-    // 状态机变化（主）
-    this.avPlayer.on('stateChange', async (state: string, reason: media.StateChangeReason) => {
-      // 添加保险
-      if (!this.avPlayer) { return; }
-      // 状态分类
-      switch (state) {
-        case 'idle': // audio闲置
-          console.log('audio闲置了');
-          break;
-        case 'initialized': // audio初始化
-          console.log('audio正在初始化');
-          this.avPlayer.prepare();
-          break;
-        case 'prepared': // audio准备就绪
-          console.log('audio准备就绪。')
-          callback(this.avPlayer);
-          console.log('callback设置成功，等待audio播放。')
-          this.avPlayer.seek(0);
-          if (this.allow_auto_play) {
-            this.avPlayer.play();
-          } else {
-            this.allow_auto_play = true
-          }
-          break;
-        case 'playing': // audio播放
-          console.log('audio正在播放~')
-          this.play_status = true;
-          this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PLAY })
-          this.ark_music_ui.runJavaScript(`set_play_status(true)`);
-          break;
-        case 'paused':  // audio暂停
-          console.log('audio暂停了！')
-          this.play_status = false;
-          this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
-          this.ark_music_ui.runJavaScript(`set_play_status(false)`);
-          break;
-        case 'completed': // 播放结束后触发该状态机上报
-          console.log('audio播放完了。')
-          this.play_status = false;
-          this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
-          this.ark_music_ui.runJavaScript(`play_complete()`);
-        case 'stopped':
-          console.log('audio已结束工作，等待销毁...')
-          break
-        case 'released':
-          console.log('audio被销毁了！')
-          break
-        case 'error':
-          console.error(`audio call出现了错误。`);
-          break
-      }
-    });
-
-    // 跳转处理
-    this.avPlayer.on('seekDone', (seekDoneTime) => {
-      console.log(`audio跳转了，跳转至"${seekDoneTime}"`);
-    });
-    // 音频焦点切换处理
-    this.avPlayer.on('audioInterrupt', () => {
-      console.log('audio被中断了！')
-      if (!this.play_status) {
-        this.avPlayer?.play();
-      }
-    });
-    // 错误处理
-    this.avPlayer.on('error', (e) => {
-      console.error(`audio发生错误：${e}`);
-      // 重置
-      this.avPlayer?.reset();
-    });
-    // 总时长更新
-    this.avPlayer.on('durationUpdate', (time: number) => {
-      this.session?.setAVMetadata({ assetId: `0`, duration: time })
-      this.ark_music_ui.runJavaScript(`change_song_range_duration(${time})`)
-    });
-    // 进度条时长更新
-    this.avPlayer.on('timeUpdate', (time: number) => {
-      this.session?.setAVPlaybackState({ position: { elapsedTime: time, updateTime: new Date().getTime() } })
-      this.ark_music_ui.runJavaScript(`change_song_range(${time})`)
-    });
   }
 
   ////////////////////
@@ -354,15 +186,16 @@ struct Index {
         ready: () => {
           console.log('页面准备完成')
           this.ui_ready = true
-          this.audio_set(root_path + '二乘 - 时之风.flac')
+          // 装载播放器
+          this.ark_music_player.set_play_list([`${root_path}二乘 - 时之风.flac`, `${root_path}洛天依 - 秋之风.flac`], 0)
           this.ark_music_ui.runJavaScript('set_background_color(\'rgba(255, 255, 255, 0.8)\')')
         },
         // 播放 //
-        play: () => {console.log('想播放.');this.avPlayer?.play()},
+        play: () => {console.log('想播放.'); this.ark_music_player.set_play_status(true)},
         // 暂停 //
-        pause: () => {console.log('想播放.');this.avPlayer?.pause()},
+        pause: () => {console.log('想播放.'); this.ark_music_player.set_play_status(false)},
         // 更改播放进度 //
-        seek: (time: string) => {this.avPlayer?.seek(parseInt(time))},
+        seek: (time: string) => {this.ark_music_player.audio_seek(parseInt(time))},
         // 更改音量 (-1打开面板 -2关闭面板) //
         set_vol: (level: string) => {
           if (level == '-1') {
@@ -370,12 +203,11 @@ struct Index {
           } else if (level == '-2') {
             this.show_volume = false
           } else {
-
             this.volume_level = parseInt(level)
           }
         },
         // 放歌 //
-        play_song: (path: string) => {this.audio_set(root_path + path)}
+        play_song: (path: string) => {this.ark_music_player.last_next_songs(true)}
       },
       "ark",
       [
@@ -428,10 +260,10 @@ struct Index {
           .onControllerAttached(() => {
             this.reg_webview_js() // 注册web接口
             reg_bg_run(this.context) // 注册后台
-            this.avs_reg_session(); // 注册元音频
           })
           .onPageEnd(() => {
             this.listen_system_volume()  // 开始监听音量
+            this.listen_broadcast()  // 监听广播
             console.log('页面加载完成.')
           })
       }
