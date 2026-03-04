@@ -7,7 +7,6 @@
 // 导入第三方库 //
 ///////////////
 import media from '@ohos.multimedia.media'
-import { avSession } from '@kit.AVSessionKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
 import { image } from '@kit.ImageKit'
 import { common } from '@kit.AbilityKit'
@@ -16,6 +15,7 @@ import emitter from '@ohos.events.emitter'
 //////////////////
 // 导入自创建模块 //
 /////////////////
+import { log } from '../system_function'
 
 ///////////
 // 变量池 //
@@ -24,6 +24,7 @@ import emitter from '@ohos.events.emitter'
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
+@Observed
 export class av_player {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,15 +34,12 @@ export class av_player {
   ///////////
   // 变量池 //
   //////////
-  private context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext   // 身份证记录
   private allow_auto_play: boolean = false  // 载入后自动播放 (防止第一次打开自动播放)
-  private song_id: string = '0'   // 歌曲id
 
   ////////
   // 类 //
   ///////
   private avPlayer: media.AVPlayer | null = null; // audio播放
-  private session: avSession.AVSession | null = null; // 元音频
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
@@ -88,28 +86,6 @@ export class av_player {
         current_time: current_time
       } }
     )
-  }
-
-  // 设置元音频 //
-  private async reg_session() {
-    // 创建session。
-    this.session = await avSession.createAVSession(this.context, 'ArkMusic', 'audio')
-    await this.session.activate()
-    // 注册播放器行为
-    this.session.on("play", () => {this.avPlayer?.play()})  // 播放
-    this.session.on("pause", () => {this.avPlayer?.pause()})  // 暂停
-    // this.session.on("playPrevious", () => {this.ark_music_ui.runJavaScript('post_last_song()')}) // 上一首
-    // this.session.on("playNext", () => {this.ark_music_ui.runJavaScript('post_next_song()')}) //下一首
-    this.session.on("seek", (position) => {this.avPlayer?.seek(position)})  // 跳转
-    this.session.on("answer", () => {console.log('avs:接听电话')})
-    this.session.on("hangUp", () => {console.log('avs:挂断电话')})
-    this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
-    // 初始化
-    await this.session.setAVMetadata({
-      assetId: '-1',
-      title: '未知歌曲',
-      artist: '未知歌手',
-    });
   }
 
   // 获取音频元数据 //
@@ -169,17 +145,14 @@ export class av_player {
         case 'playing': // audio播放
           console.log('audio正在播放~')
           this.send_play_status('playing')
-          this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PLAY })
           break;
         case 'paused':  // audio暂停
           console.log('audio暂停了！')
           this.send_play_status('pause')
-          this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
           break;
         case 'completed': // 播放结束后触发该状态机上报
           console.log('audio播放完了。')
           this.send_play_status('complete')
-          this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
         case 'stopped':
           console.log('audio已结束工作，等待销毁...')
           break
@@ -190,11 +163,10 @@ export class av_player {
           console.error(`audio call出现了错误。`);
           break
       }
-    });
-
+    })
     // 跳转处理
     this.avPlayer.on('seekDone', (seekDoneTime) => {
-      console.log(`audio跳转了，跳转至"${seekDoneTime}"`);
+      console.log(`audio跳转了，跳转至"${seekDoneTime}"`)
     });
     // 音频焦点切换处理
     this.avPlayer.on('audioInterrupt', () => {
@@ -203,20 +175,18 @@ export class av_player {
     });
     // 错误处理
     this.avPlayer.on('error', (e) => {
-      console.error(`audio发生错误：${e}`);
+      console.error(`audio发生错误：${e}`)
       // 重置
-      this.avPlayer?.reset();
-    });
+      this.avPlayer?.reset()
+    })
     // 总时长更新
     this.avPlayer.on('durationUpdate', (time: number) => {
-      this.session?.setAVMetadata({ assetId: this.song_id, duration: time })
       this.send_duration_time(time)
-    });
+    })
     // 进度条时长更新
     this.avPlayer.on('timeUpdate', (time: number) => {
-      this.session?.setAVPlaybackState({ position: { elapsedTime: time, updateTime: new Date().getTime() } })
       this.send_current_time(time)
-    });
+    })
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -224,25 +194,27 @@ export class av_player {
   ////////////
 
   // 音频设置 //
-  async audio_set(path: string, index: number): Promise<[boolean, string]> {
+  async audio_set(path: string): Promise<[boolean, string]> {
     try {
+      // 销毁av_player
+      if (this.avPlayer) {
+        log('销毁av_player')
+        this.send_play_status('pause')
+        await this.avPlayer.release()
+      }
       // 检查文件源
       const file = fs.openSync(path)
-      // 更新id
-      this.song_id = `${index}`
       // 创建av_player
-      if (this.avPlayer) { await this.avPlayer.release() }
+      log('创建av_player')
       this.avPlayer = await media.createAVPlayer()
       // 获取音频元数据
       const meta = await this.get_meta(file)
-      // 设置元音频
-      this.session?.setAVMetadata({ assetId: this.song_id, title: meta[0], artist: meta[1], mediaImage: meta[2] })
+      // 广播
+      this.send_metadata(file.name, meta[0], meta[1], meta[2])
       // 设置回调
       await this.set_av_player_callback(() => {})
       // 设置播放源
       this.avPlayer.fdSrc = { fd: file.fd, offset: 0, length: fs.statSync(file.fd).size }
-      // 广播
-      this.send_metadata(file.name, meta[0], meta[1], meta[2])
       // 返回
       return [true, '']
     } catch (e) {
@@ -273,11 +245,6 @@ export class av_player {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
-  constructor(context_input: common.UIAbilityContext) {
-    // 记录身份证
-    this.context = context_input
-    // 注册音频
-    this.reg_session()
-  }
+  constructor() {}
 
 }

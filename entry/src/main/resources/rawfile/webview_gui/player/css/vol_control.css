@@ -83,7 +83,7 @@
     height: 100%;
     border-radius: 40px;
 
-    transform: width 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform: left 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
 }
 

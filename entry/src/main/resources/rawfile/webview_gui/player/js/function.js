@@ -9,7 +9,7 @@ function set_vol(value = null) {
         vol_range.value = value
     }
     console.log(vol_range.value)
-    vol_range_show.style.width = `${vol_range.value / vol_range.max * 150}px`
+    vol_range_show.style.left = `${(vol_range.value / vol_range.max * 150) - 150}px`
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,259 @@
+//
+// web_ui 界面
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////
+// 导入第三方库 //
+///////////////
+import { webview } from '@kit.ArkWeb';
+import { picker, fileUri } from  '@kit.CoreFileKit';
+import { fileIo as fs } from '@kit.CoreFileKit';
+import { AVVolumePanel } from '@kit.AudioKit';
+import { audio } from '@kit.AudioKit';
+import { image } from '@kit.ImageKit';
+import { common } from '@kit.AbilityKit';
+import emitter from '@ohos.events.emitter'
+
+import nativeModule from 'libentry.so';
+
+
+//////////////////
+// 导入自创建模块 //
+/////////////////
+import { log, notice, vib, reg_bg_run } from '../package/system_function'
+import { audio_player } from '../package/audio_player/audio_player'
+
+///////////
+// 变量池 //
+//////////
+
+const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic/').path // 根目录
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 函数库 //
+//////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// web_ui入口 //
+///////////////
+@Component
+export default struct web_ui {
+
+  ///////////
+  // 变量池 //
+  //////////
+
+  ///////////
+  // 更新池 //
+  //////////
+  @State @Watch('listen_system_volume') show_volume: boolean = false    // 显示音量条
+  @State ready:boolean = false    // 页面准备指示器
+
+  ///////////
+  // 继承池 //
+  //////////
+  @Prop context: common.UIAbilityContext    // 身份证
+  @ObjectLink ark_music_player: audio_player  // 类
+  @Link volume_level: number    // 音量大小
+
+  ////////
+  // 类 //
+  ///////
+  private ark_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
+  private audioVolumeManager = audio.getAudioManager().getVolumeManager()   // 音量条监听
+  private volumeCallback: ((streamVolumeEvent: audio.StreamVolumeEvent) => void) | null = null    // 音量条监听函数
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  ////////////////
+  // web图片处理 //
+  ///////////////
+  async pixel_to_base(metadata: image.PixelMap) {
+
+    // 2. 准备图片数据
+    let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 };
+    // 注意：packing 是耗时操作，这里得到 ArrayBuffer
+    let arrayBuffer = await image.createImagePacker().packing(metadata, packOpts);
+
+    // 3. 调用 C++ 进行 Base64 编码
+    // C++ 返回的是完整的 "data:image/jpeg;base64,xxxx" 字符串
+    let dataURL = nativeModule.encodeImageToBase64(arrayBuffer);
+
+    // 4. 传入前端
+    // 使用 JSON.stringify 防止字符串中的特殊字符（如换行）破坏 JS 语法
+    this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(dataURL)})`);
+
+  }
+
+  /////////////
+  // 广播监听 //
+  ////////////
+  listen_broadcast() {
+    // 元数据监听 //
+    emitter.on({ eventId: 810 }, (eventData: emitter.EventData) => {
+      console.log(eventData.data?.title)
+      console.log(eventData.data?.artist)
+      // 载入
+      this.ark_music_ui.runJavaScript(`set_meta(['${eventData.data?.song_name}', '${eventData.data?.title}', '${eventData.data?.artist}'])`)
+      // 图片编码
+      this.pixel_to_base(eventData.data?.img)
+    })
+    // 播放状态监听 //
+    emitter.on({ eventId: 812 }, (eventData: emitter.EventData) => {
+      if (eventData.data?.status == 'playing') {
+        this.ark_music_ui.runJavaScript(`set_play_status(true)`)
+      } else {
+        this.ark_music_ui.runJavaScript(`set_play_status(false)`)
+      }
+    })
+    // 音频总时长监听 //
+    emitter.on({ eventId: 813 }, (eventData: emitter.EventData) => {
+      this.ark_music_ui.runJavaScript(`change_song_range_duration(${eventData.data?.duration_time})`)
+    })
+    // 音频播放时长监听 //
+    emitter.on({ eventId: 814 }, (eventData: emitter.EventData) => {
+      this.ark_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
+    })
+  }
+
+  /////////////
+  // 音量监听 //
+  ////////////
+
+  listen_system_volume() {
+    if (this.show_volume) {
+      log('音量条打开')
+      // 传入初始音量
+      this.volume_level = this.audioVolumeManager.getVolumeByStream(audio.StreamUsage.STREAM_USAGE_MUSIC)
+      this.ark_music_ui.runJavaScript(`set_vol(${this.volume_level})`)
+      // 【关键步骤】将回调函数赋值给定义好的变量
+      this.volumeCallback = (streamVolumeEvent: audio.StreamVolumeEvent) => {
+        log(`音量: ${streamVolumeEvent.volume} `)
+        // 更新
+        this.volume_level = streamVolumeEvent.volume
+        this.ark_music_ui.runJavaScript(`set_vol(${this.volume_level})`)
+        vib()
+      }
+      this.audioVolumeManager.on('streamVolumeChange', audio.StreamUsage.STREAM_USAGE_MUSIC, this.volumeCallback)
+    } else {
+      log('音量条关闭')
+      this.audioVolumeManager.off('streamVolumeChange', this.volumeCallback)
+    }
+  }
+
+  /////////////
+  // 退出操作 //
+  ////////////
+  aboutToDisappear(): void {
+    log('web_ui销毁.')
+    // 销毁监听
+    emitter.off(810)
+    emitter.off(812)
+    emitter.off(813)
+    emitter.off(814)
+  }
+
+  ////////////////////
+  // webview功能注册 //
+  ///////////////////
+  reg_webview_js() {
+    try {this.ark_music_ui.registerJavaScriptProxy(
+      {
+        // ready //
+        ready: () => {
+          console.log('页面准备完成')
+          this.listen_broadcast()  // 监听广播
+          this.ready = true
+          this.ark_music_player.set_play_list(
+            [
+              root_path + '洛天依 - 秋之风.flac',
+              root_path + '二乘 - 时之风.flac',
+              root_path + '砖厂浪人,洛天依 - 临安雨.flac'
+            ], 0
+          )
+        },
+        // 播放 //
+        play: () => {this.ark_music_player.playing()},
+        // 暂停 //
+        pause: () => {this.ark_music_player.pause()},
+        // 上一首 //
+        last_song: () => {
+          this.ark_music_player.last_song()
+        },
+        // 下一首
+        next_song: () => {this.ark_music_player.next_song()},
+        // 更改播放进度 //
+        seek: (time: string) => {this.ark_music_player.seek(parseInt(time))},
+        // 更改音量 (-1打开面板 -2关闭面板) //
+        set_vol: (level: string) => {
+          if (level == '-1') {
+            this.show_volume = true
+          } else if (level == '-2') {
+            this.show_volume = false
+          } else {
+            this.volume_level = parseInt(level)
+          }
+        },
+      },
+      "ark",
+      [
+        'ready',
+        'play', 'pause', 'seek', 'last_song', 'next_song',
+        'set_vol',
+      ]
+    )} catch (e) {
+      console.error(`注册webview时出现了错误: ${e}.`)
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // UI构建 //
+  ///////////
+  build() {
+    Row() {
+
+      /////////////
+      // 准备界面 //
+      ////////////
+      if (!this.ready) {
+        Column() { Image($r('app.media.foreground_backup')).width('256px').height('256px') }
+          .width('100%').height('100%')
+          .position({ x: 0, y: 0 }).zIndex(900)
+          .backgroundColor('#fff').justifyContent(FlexAlign.Center)
+          .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
+      }
+
+      /////////////
+      // web界面 //
+      ////////////
+      Web({ src: $rawfile("webview_gui/play_taskbar_index.html"), controller: this.ark_music_ui })
+        .width('100%').height('100%')
+        .position({ x: 0, y: 0 }).zIndex(500)
+        .zoomAccess(false)
+
+        .domStorageAccess(true) // 开启 DOM 存储
+        .cacheMode(CacheMode.Default) // 默认模式，对本地文件无副作用，对网络资源有效
+        .javaScriptAccess(true) // 确保 JS 开启
+        .enableNativeEmbedMode(true) // 开启硬件加速渲染层
+
+        .onControllerAttached(() => {
+          this.reg_webview_js() // 注册web接口
+        })
+
+        .onPageEnd(() => {
+          console.log('页面加载完成.')
+        })
+
+      /////////////
+      // 音量界面 //
+      ////////////
+      if (this.show_volume) {
+        AVVolumePanel({
+          volumeLevel: this.volume_level,
+          volumeParameter: { position: { x: -1, y: -1 } }
+        })
+      }
+
+    }
+  }
+}
