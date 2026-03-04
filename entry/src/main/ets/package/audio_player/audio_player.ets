@@ -1,18 +1,20 @@
 //
 // 音频处理器
+// 广播频段：8
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////
 // 导入第三方库 //
 ///////////////
-import { common } from '@kit.AbilityKit';
+import { common } from '@kit.AbilityKit'
 import emitter from '@ohos.events.emitter'
+import { avSession } from '@kit.AVSessionKit'
 
 //////////////////
 // 导入自创建模块 //
 /////////////////
 import { av_player } from './by_av_player'
-import { notice } from '../system_function'
+import { log, notice } from '../system_function'
 
 ///////////
 // 变量池 //
@@ -25,6 +27,7 @@ import { notice } from '../system_function'
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
+@Observed
 export class audio_player {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -45,23 +48,80 @@ export class audio_player {
   ////////
   // 类 //
   ///////
-  private av_player = new av_player(this.context)   // 官方av_player播放器
+  private av_player = new av_player()   // 官方av_player播放器
+  private session: avSession.AVSession | null = null; // 元音频
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
   ////////////
 
-  // 播放完成的监听订阅 //
-  play_status_callback: Callback<emitter.EventData> = (eventData: emitter.EventData) => {
-    // 如果是播放完成
-    if (eventData.data?.status == 'complete') {
-      // 如果不是末尾，那就下一首
-      if (this.play_list_index < this.play_list.length - 1) {
-        this.set_audio_play(this.play_list_index + 1)
-      } else {
-        notice('最后一首播放完了哦！ξ( ✿＞◡❛)')
+  /////////////
+  // 广播监听 //
+  ////////////
+  async listen_broadcast() {
+    // 元数据监听 //
+    emitter.on({ eventId: 710 }, (eventData: emitter.EventData) => {
+      // 转发
+      emitter.emit({ eventId: 810 }, { data: eventData.data })
+      // 载入
+      this.session?.setAVMetadata({
+        assetId: `${this.play_list_index}`,
+        title: eventData.data?.title,
+        artist: eventData.data?.artist,
+        mediaImage: eventData.data?.img
+      })
+    })
+    // 播放状态监听 //
+    emitter.on({ eventId: 712 }, (eventData: emitter.EventData) => {
+      // 转发
+      emitter.emit({ eventId: 812 }, { data: eventData.data })
+      if (eventData.data?.status == 'playing') {
+        this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PLAY })
+      } else if (eventData.data?.status == 'pause') {
+        this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
+      } else if (eventData.data?.status == 'complete') {
+        // 如果不是末尾，那就下一首
+        if (this.play_list_index < this.play_list.length - 1) {
+          this.set_audio_play(this.play_list_index + 1)
+        } else {
+          notice('最后一首播放完了哦！ξ( ✿＞◡❛)')
+        }
       }
-    }
+    })
+    // 音频总时长监听 //
+    emitter.on({ eventId: 713 }, (eventData: emitter.EventData) => {
+      // 转发
+      emitter.emit({ eventId: 813 }, { data: eventData.data })
+      this.session?.setAVMetadata({ assetId: `${this.play_list_index}`, duration: eventData.data?.duration_time })
+    })
+    // 音频播放时长监听 //
+    emitter.on({ eventId: 714 }, (eventData: emitter.EventData) => {
+      // 转发
+      emitter.emit({ eventId: 814 }, { data: eventData.data })
+      this.session?.setAVPlaybackState({ position: { elapsedTime: eventData.data?.current_time, updateTime: new Date().getTime() } })
+    })
+  }
+
+  // 元音频 //
+  private async reg_session() {
+    // 创建session。
+    this.session = await avSession.createAVSession(this.context, 'ArkMusic', 'audio')
+    await this.session.activate()
+    // 注册播放器行为
+    this.session.on("play", () => {this.playing()})  // 播放
+    this.session.on("pause", () => {this.pause()})  // 暂停
+    this.session.on("playPrevious", () => {this.last_song()}) // 上一首
+    this.session.on("playNext", () => {this.next_song()}) //下一首
+    this.session.on("seek", (position) => {this.seek(position)})  // 跳转
+    this.session.on("answer", () => {console.log('avs:接听电话')})
+    this.session.on("hangUp", () => {console.log('avs:挂断电话')})
+    this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
+    // 初始化
+    await this.session.setAVMetadata({
+      assetId: '-1',
+      title: '未知歌曲',
+      artist: '未知歌手',
+    })
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,20 +130,17 @@ export class audio_player {
 
   // 设置播放跳转 //
   async set_audio_play(song_index: number = this.play_list_index) {
-    console.log(`当前：${song_index}`)
     if (song_index != this.play_list_index) { this.play_list_index = song_index }
     // 使用官方播放器
     if (this.player_choice == 0) {
-      const result = await this.av_player.audio_set(this.play_list[song_index], song_index)
-      if (result[0]) {
-        // 成功，广播媒体信息
-
-      } else {
-        // 失败，报错
+      const result = await this.av_player.audio_set(this.play_list[song_index])
+      // 加载失败，报错
+      if (!result[0]) {
+        log(`歌曲加载失败：${result[1]}`, 'error')
         notice(`歌曲加载失败了 (੭ ᐕ)੭？ ：${result[1]}，3s后切换下一首`)
         setTimeout(() => {
           if (song_index == this.play_list_index) {
-            this.set_play_status(true)
+            emitter.emit({ eventId: 712 }, { data: { status: 'complete' } })
           }
         }, 3000)
       }
@@ -100,17 +157,19 @@ export class audio_player {
     this.set_audio_play()
   }
 
-  // 设置播放状态 //
-  set_play_status(status: boolean) {
-    // 如果列表空直接不理
+  // 播放 //
+  playing() {
     if (this.play_list.length == 0) { return }
-    if (this.player_choice == 0) {
-      this.av_player.set_play_status(status)
-    }
+    this.av_player.set_play_status(true)
+  }
+  // 暂停 //
+  pause() {
+    if (this.play_list.length == 0) { return }
+    this.av_player.set_play_status(false)
   }
 
-  // 上下首 (上是false 下是true) //
-  last_next_songs(choice: boolean) {
+  // 上一首 //
+  last_song() {
     // 如果列表空直接不理
     if (this.play_list.length == 0) { return }
     // 单曲循环模式
@@ -131,37 +190,82 @@ export class audio_player {
     }
     // 其他两个
     else {
-      // 下一首
-      if (choice) {
-        // 末尾检查
-        if (this.play_list_index == this.play_list.length - 1) {
-          this.set_audio_play(0)
-          notice('回到开头啦！_(:3 ⌒ﾞ)_')
-        } else {
-          this.set_audio_play(this.play_list_index + 1)
-        }
+      // 末尾检查
+      if (this.play_list_index == 0) {
+        notice('重新回到末尾啦！(ゝ∀･)')
+        this.set_audio_play(this.play_list.length - 1)
+      } else {
+        this.set_audio_play(this.play_list_index - 1)
       }
-      // 上一首
-      else {
-        // 末尾检查
-        if (this.play_list_index == 0) {
-          notice('重新回到末尾啦！(ゝ∀･)')
-          this.set_audio_play(this.play_list.length - 1)
-        } else {
-          this.set_audio_play(this.play_list_index - 1)
-        }
+    }
+  }
+  // 下一首 //
+  next_song() {
+    // 如果列表空直接不理
+    if (this.play_list.length == 0) { return }
+    // 单曲循环模式
+    if (this.play_mode == 0) {
+      // 直接继续播放
+      this.set_audio_play()
+    }
+    // 随机模式
+    else if (this.play_mode == 3) {
+      // 随机抽取
+      let random_index = 0
+      while (true) {
+        random_index = Math.floor(Math.random() * this.play_list.length)
+        if (random_index == this.play_list_index) { continue } else { break }
+      }
+      // 播放
+      this.set_audio_play(random_index)
+    }
+    // 其他两个
+    else {
+      // 末尾检查
+      if (this.play_list_index == this.play_list.length - 1) {
+        this.set_audio_play(0)
+        notice('回到开头啦！_(:3 ⌒ﾞ)_')
+      } else {
+        this.set_audio_play(this.play_list_index + 1)
       }
     }
   }
 
   // 更改播放进度 //
-  audio_seek(time: number) {
+  seek(time: number) {
     this.av_player.audio_seek(time)
+  }
+
+  // 读取播放列表 //
+  get_play_list(): [number, string[]] {
+    return [this.play_list_index, this.play_list]
+  }
+
+  // 更新播放列表排序 //
+  update_play_list_index(list_index: number[]): [number, string[]] {
+    try {
+      // 遍历循环 //
+      let tmp: string[] = []
+      list_index.forEach((item, index) => {
+        tmp.push(this.play_list[item])
+        if (item == this.play_list_index) {
+          this.play_list_index = index
+        }
+      })
+      this.play_list = tmp
+    } catch {}
+    return this.get_play_list()
   }
 
   // 销毁 //
   drop_it() {
+    // 销毁av_player
     this.av_player.drop_it()
+    // 销毁监听
+    emitter.off(710)
+    emitter.off(712)
+    emitter.off(713)
+    emitter.off(714)
   }
 
 
@@ -169,10 +273,13 @@ export class audio_player {
   // 初始化 //
   //////////
   constructor(context_input: common.UIAbilityContext) {
+    log('音频管理器就绪.')
     // 记录身份证
     this.context = context_input
-    // 监听广播
-    emitter.on({ eventId: 712 }, this.play_status_callback)
+    // 注册元音频
+    this.reg_session()
+    // 设置广播监听
+    this.listen_broadcast()
   }
 
 }

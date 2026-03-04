@@ -10,6 +10,7 @@ import { vibrator } from '@kit.SensorServiceKit';
 import { common } from '@kit.AbilityKit';
 import { wantAgent } from '@kit.AbilityKit';
 import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
+import hilog from '@ohos.hilog';
 
 //////////////////
 // 导入自创建模块 //
@@ -18,10 +19,25 @@ import { backgroundTaskManager } from '@kit.BackgroundTasksKit';
 ///////////
 // 变量池 //
 //////////
+const DOMAIN = 0x0712; // 自定义域名
+const TAG = '[ArkMusic]'; // 自定义标签
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
 //////////
+
+/////////////
+// 日志记录 //
+////////////
+export function log(msg: string, level: string = 'info') {
+  if (level == 'error') {
+    hilog.error(DOMAIN, TAG, msg)
+    console.error(msg)
+  } else {
+    hilog.info(DOMAIN, TAG, msg)
+    console.info(msg)
+  }
+}
 
 //////////
 // 通知 //
