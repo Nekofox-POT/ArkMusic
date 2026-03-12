@@ -5,6 +5,8 @@
 ////////////////
 // 导入第三方库 //
 ///////////////
+import { picker, fileUri } from  '@kit.CoreFileKit';
+import { fileIo as fs, ListFileOptions } from '@kit.CoreFileKit';
 
 //////////////////
 // 导入自创建模块 //
@@ -13,12 +15,20 @@
 ///////////
 // 变量池 //
 //////////
+const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
+const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic/').path   // 文件目录
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 函数库 //
-//////////
+// 外部函数库 //
+/////////////
 
 /////////////////////
 // 文件夹扫描创建缓存 //
 ////////////////////
+export function make_music_cache() {
 
+    // 扫描download的所有曲库 //
+
+
+}

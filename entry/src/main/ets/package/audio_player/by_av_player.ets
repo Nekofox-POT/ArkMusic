@@ -97,6 +97,22 @@ export class av_player {
     let meta_data = await avMetadataExtractor.fetchMetadata();
     let song_title = meta_data.title ?? file.name
     let song_artist = meta_data.artist ?? '未知艺术家'
+
+    let sample_rate = meta_data.sampleRate
+    let album = meta_data.album
+    let album_artist = meta_data.albumArtist
+    let author = meta_data.author
+    let composer = meta_data.composer
+    let genre = meta_data.genre
+    console.log(song_title)
+    console.log(song_artist)
+    console.log(sample_rate)
+    console.log(album)
+    console.log(album_artist)
+    console.log(author)
+    console.log(composer)
+    console.log(genre)
+
     // 获取专辑封面
     let meta_img: image.PixelMap | null = null
     try {
