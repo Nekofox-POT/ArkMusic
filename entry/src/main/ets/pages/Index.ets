@@ -28,7 +28,6 @@ import { audio_player } from '../package/audio_player/audio_player'
 ///////////
 // 变量池 //
 //////////
-const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic/').path // 根目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
