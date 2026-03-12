@@ -15,7 +15,12 @@ include_directories(${NATIVERENDER_ROOT_PATH}
 # 1. 设置 C++ 标准为 C++14 或更高（推荐）
 set(CMAKE_CXX_STANDARD 14)
 
-add_library(entry SHARED napi_init.cpp)
+add_library(
+entry SHARED napi_init.cpp
+package/buffer_to_base64/buffer_to_base64.cpp
+package/image_color_calculate/image_color_calculate.cpp
+
+)
 
 # 关键修改点：
 # 2. 链接必要的库
