@@ -9,8 +9,9 @@
 import media from '@ohos.multimedia.media'
 import { fileIo as fs } from '@kit.CoreFileKit'
 import { image } from '@kit.ImageKit'
-import { common } from '@kit.AbilityKit'
 import emitter from '@ohos.events.emitter'
+
+import nativeModule from 'libentry.so'
 
 //////////////////
 // 导入自创建模块 //
@@ -91,27 +92,21 @@ export class av_player {
   // 获取音频元数据 //
   private async get_meta(file: fs.File): Promise<[string, string, image.PixelMap | null]> {
     // 创建对象
-    let avMetadataExtractor = await media.createAVMetadataExtractor();
-    avMetadataExtractor.fdSrc = file;
+    let avMetadataExtractor = await media.createAVMetadataExtractor()
+    avMetadataExtractor.fdSrc = file
     // 获取元数据。
-    let meta_data = await avMetadataExtractor.fetchMetadata();
-    let song_title = meta_data.title ?? file.name
-    let song_artist = meta_data.artist ?? '未知艺术家'
+    let meta_data = await avMetadataExtractor.fetchMetadata()
 
-    let sample_rate = meta_data.sampleRate
-    let album = meta_data.album
-    let album_artist = meta_data.albumArtist
-    let author = meta_data.author
-    let composer = meta_data.composer
-    let genre = meta_data.genre
-    console.log(song_title)
-    console.log(song_artist)
-    console.log(sample_rate)
-    console.log(album)
-    console.log(album_artist)
-    console.log(author)
-    console.log(composer)
-    console.log(genre)
+    let song_title = ''   // 歌曲名
+    let song_artist = ''    // 歌手
+
+    if ((meta_data.title) && (meta_data.artist)) {
+      song_title = meta_data.title
+      song_artist = meta_data.artist
+    } else {
+      song_title = song_title = nativeModule.extractFilename(file.name)
+      song_artist = '未知歌手'
+    }
 
     // 获取专辑封面
     let meta_img: image.PixelMap | null = null
@@ -226,7 +221,7 @@ export class av_player {
       // 获取音频元数据
       const meta = await this.get_meta(file)
       // 广播
-      this.send_metadata(file.name, meta[0], meta[1], meta[2])
+      this.send_metadata(nativeModule.extractFilename(file.name), meta[0], meta[1], meta[2])
       // 设置回调
       await this.set_av_player_callback(() => {})
       // 设置播放源
