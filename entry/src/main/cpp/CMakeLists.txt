@@ -19,6 +19,7 @@ add_library(
 entry SHARED napi_init.cpp
 package/buffer_to_base64/buffer_to_base64.cpp
 package/image_color_calculate/image_color_calculate.cpp
+package/extract_filename/extract_filename.cpp
 
 )
 

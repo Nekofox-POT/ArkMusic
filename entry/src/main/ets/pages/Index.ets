@@ -5,17 +5,7 @@
 ////////////////
 // 导入第三方库 //
 ///////////////
-import { webview } from '@kit.ArkWeb';
-import { picker, fileUri } from  '@kit.CoreFileKit';
-import { fileIo as fs } from '@kit.CoreFileKit';
-import { AVVolumePanel } from '@kit.AudioKit';
-import { audio } from '@kit.AudioKit';
-import { image } from '@kit.ImageKit';
-import { common } from '@kit.AbilityKit';
-import emitter from '@ohos.events.emitter'
-
-import nativeModule from 'libentry.so';
-
+import { common } from '@kit.AbilityKit'
 
 //////////////////
 // 导入自创建模块 //
@@ -24,6 +14,8 @@ import web_ui from './web_ui'
 import arkmusic_start from './start'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
+
+import { make_music_cache } from '../package/file_manager'
 
 ///////////
 // 变量池 //
@@ -69,6 +61,7 @@ struct Index {
   aboutToAppear(): void {
     log('程序开始运行...')
     reg_bg_run(this.context) // 注册后台
+    make_music_cache()
   }
 
   ////////////////

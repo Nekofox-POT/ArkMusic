@@ -140,7 +140,6 @@ export default struct web_ui {
   /////////////
   // 音量监听 //
   ////////////
-
   listen_system_volume() {
     if (this.show_volume) {
       log('音量条打开')
@@ -187,9 +186,10 @@ export default struct web_ui {
           this.ready = true
           this.ark_music_player.set_play_list(
             [
+              root_path + '洛天依 - 陌上花开.wav',
               root_path + '洛天依 - 秋之风.flac',
               root_path + '二乘 - 时之风.flac',
-              root_path + '砖厂浪人,洛天依 - 临安雨.flac'
+              root_path + '砖厂浪人,洛天依 - 临安雨.flac',
             ], 0
           )
         },
