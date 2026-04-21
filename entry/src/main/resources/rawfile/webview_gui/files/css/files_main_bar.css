@@ -1,14 +1,24 @@
 .files_main_bar {
 
-    width: 90vw;
-    height: calc(100vh - 350px);
+    position: absolute;
+    width: calc(90vw - 50px);
+    height: calc(100vh - 400px);
     border: 0;
-    margin-left: 5vw;
-    margin-top: 25px;
+    left: 5vw;
+    top: 225px;
     border-radius: 25px;
     overflow: hidden;
+    z-index: 100;
 
+    padding: 25px;
     display: flex;
     align-items: center;
 
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform: translateY(0);
+
+
+}
+.files_main_bar.hide {
+    transform: translateY(calc(100vh - 200px));
 }

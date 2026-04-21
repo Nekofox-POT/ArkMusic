@@ -18,7 +18,7 @@
             user-select: none;
             overflow: hidden;
 
-            border: 1px solid red;
+            /* border: 1px solid red; */
 
         }
         body > h1 {
@@ -35,25 +35,39 @@
     <!-- 选项栏 -->
     <div class="choice_bar box_color">
         <div class="choice_bar_scroll" id="choice_bar_scroll">
-            <div class="choice_bar_item font_color" data-type="所有歌曲">所有歌曲</div>
+            <div class="choice_bar_item active" data-type="所有歌曲"><p class="font_color">所有歌曲</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item font_color" data-type="文件夹">文件夹</div>
+            <div class="choice_bar_item" data-type="文件夹"><p class="font_color">文件夹</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item font_color" data-type="播放列表">播放列表</div>
+            <div class="choice_bar_item" data-type="播放列表"><p class="font_color">播放列表</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item font_color" data-type="我的喜欢">我的喜欢</div>
+            <div class="choice_bar_item" data-type="我的喜欢"><p class="font_color">我的喜欢</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item font_color" data-type="专辑">专辑</div>
+            <div class="choice_bar_item" data-type="专辑"><p class="font_color">专辑</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item font_color" data-type="歌手">歌手</div>
+            <div class="choice_bar_item" data-type="歌手"><p class="font_color">歌手</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item font_color" data-type="播放最多">播放最多</div>
+            <div class="choice_bar_item" data-type="播放最多"><p class="font_color">播放最多</p></div>
+        </div>
+    </div>
         </div>
     </div>
 
-    <!-- 主页框架 -->
-    <div class="files_main_bar box_color">
-
+    <!-- 主页框架集 -->
+    <div class="files_main_bar box_color" id="all_song_frame">
+        <!-- <div style="border: 1px solid red; width: 100%; height: 100%;"></div> -->
+    </div>
+    <div class="files_main_bar box_color hide" id="folder_frame">
+    </div>
+    <div class="files_main_bar box_color hide" id="playlist_frame">
+    </div>
+    <div class="files_main_bar box_color hide" id="favorite_frame">
+    </div>
+    <div class="files_main_bar box_color hide" id="album_frame">
+    </div>
+    <div class="files_main_bar box_color hide" id="artist_frame">
+    </div>
+    <div class="files_main_bar box_color hide" id="most_played_frame">
     </div>
     
     <!-- 函数块 -->

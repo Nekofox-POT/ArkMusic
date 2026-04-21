@@ -19,6 +19,9 @@ function set_active_color(color = null) {
     document.querySelectorAll('.svg_active_color').forEach(element => {
         element.style.fill = active_color;
     })
+    document.querySelectorAll('.font_active_color').forEach(element => {
+        element.style.color = active_color;
+    })
 }
 
 // 背景色修改 //
