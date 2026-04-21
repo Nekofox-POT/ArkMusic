@@ -77,6 +77,7 @@ function set_meta_img_rotate(status) {
     if (status) {
 
         player_meta_img.classList.add('active')
+        music_bar_meta_img.classList.add('active')
         meta_img_rotate_last_timestamp = performance.now()
         set_meta_img_rotate_play(status)
 
@@ -104,7 +105,9 @@ function set_meta_img_rotate_play() {
     // 应用旋转（清除transition以避免与归位冲突）
     if (!meta_img_rotate_is_snapping) {
         player_meta_img.style.transition = ''
+        music_bar_meta_img.style.transition = ''
         player_meta_img.style.transform = `rotate(${meta_img_rotate_current_rotation}deg)`
+        music_bar_meta_img.style.transform = `rotate(${meta_img_rotate_current_rotation}deg)`
     }
 
     meta_img_rotate_animation_id = requestAnimationFrame(set_meta_img_rotate_play)
@@ -116,7 +119,7 @@ function set_meta_img_rotate_pause() {
     meta_img_rotate_is_snapping = true
 
     // 找到最近的90度倍数
-    const snapAngle = Math.round(meta_img_rotate_current_rotation / 90) * 90
+    const snapAngle = Math.round(meta_img_rotate_current_rotation / 360) * 360
 
     // 计算需要旋转的角度差
     const angleDiff = snapAngle - meta_img_rotate_current_rotation
@@ -126,7 +129,9 @@ function set_meta_img_rotate_pause() {
 
     // 设置过渡并归位
     player_meta_img.style.transition = `transform ${transitionTime}s cubic-bezier(0.4, 0, 0.2, 1)`
+    music_bar_meta_img.style.transition = `transform ${transitionTime}s cubic-bezier(0.4, 0, 0.2, 1)`
     player_meta_img.style.transform = `rotate(${snapAngle}deg)`
+    music_bar_meta_img.style.transform = `rotate(${snapAngle}deg)`
 
     // 更新当前角度
     meta_img_rotate_current_rotation = snapAngle
@@ -135,10 +140,11 @@ function set_meta_img_rotate_pause() {
     setTimeout(() => {
         meta_img_rotate_is_snapping = false
         player_meta_img.style.transition = ''
+        music_bar_meta_img.style.transition = ''
         // 如果在1000ms后play_status为true，则不执行这个计时器
         if (!play_status) {
-
             player_meta_img.classList.remove('active')
+            music_bar_meta_img.classList.remove('active')
         }
     }, transitionTime * 1000)
 }

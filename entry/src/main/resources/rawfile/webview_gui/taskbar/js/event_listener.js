@@ -206,15 +206,57 @@ music_bar_touch.addEventListener("touchend", (e) => {
             if (Math.abs(deltaX) >= 50) {
                 music_bar_touch_isAnimating = true
                 if (deltaX < 0) {
-                    // 往右滑动 -> 上一首
-                    music_bar_song_name.style.transform = "translateX(calc(-100% - 50px))"
-                    console.log("上一首")
-                } else {
                     // 往左滑动 -> 下一首
+                    music_bar_song_name.style.transform = "translateX(calc(-100% - 50px))"
+
+                    // 动画序列：滑出 -> 闪现到右边 -> 从右边滑入
+                    setTimeout(() => {
+                        // 移除过渡效果，瞬间移动到右边
+                        music_bar_song_name.classList.add("dragging")
+                        music_bar_song_name.style.transform = "translateX(calc(100% + 50px))"
+                        
+                        console.log("下一首")
+                        ark.next_song()
+                        // 强制重绘
+                        music_bar_song_name.offsetHeight
+                        
+                        // 恢复过渡效果，滑入
+                        music_bar_song_name.classList.remove("dragging")
+                        music_bar_song_name.style.transform = "translateX(0)"
+                        
+                        // 动画完成
+                        setTimeout(() => {
+                            music_bar_touch_isAnimating = false
+                        }, 300)
+                    }, 300)
+
+                } else {
+                    // 往右滑动 -> 上一首
                     music_bar_song_name.style.transform = "translateX(calc(100% + 50px))"
-                    console.log("下一首")
+
+                    // 动画序列：滑出 -> 闪现到左边 -> 从左边滑入
+                    setTimeout(() => {
+                        // 移除过渡效果，瞬间移动到左边
+                        music_bar_song_name.classList.add("dragging")
+                        music_bar_song_name.style.transform = "translateX(calc(-100% - 50px))"
+                        
+                        
+                        console.log("上一首")
+                        ark.last_song()
+                        // 强制重绘
+                        music_bar_song_name.offsetHeight
+                        
+                        // 恢复过渡效果，滑入
+                        music_bar_song_name.classList.remove("dragging")
+                        music_bar_song_name.style.transform = "translateX(0)"
+                        
+                        // 动画完成
+                        setTimeout(() => {
+                            music_bar_touch_isAnimating = false
+                        }, 300)
+                    }, 300)
+
                 }
-                music_bar_touch_isAnimating = false
             } else {
                 // 滑动距离不够，返回原位
                 music_bar_song_name.style.transform = "translateX(calc(0% - 0px))"
