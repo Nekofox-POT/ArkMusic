@@ -23,16 +23,13 @@ function set_active_color(color = null) {
 
 // 背景色修改 //
 function set_background_color(color = null) {
-    console.log(0)
     if (color !== null) {
         background_color = color
     }
-    console.log(document.querySelectorAll('.font_color'))
     document.querySelectorAll('.svg_color').forEach(element => {
         element.style.fill = background_color;
     });
     document.querySelectorAll('.font_color').forEach(element => {
-        console.log(1)
         element.style.color = background_color;
     })
     set_active_color()

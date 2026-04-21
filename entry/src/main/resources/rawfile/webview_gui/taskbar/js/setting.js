@@ -8,6 +8,7 @@
 // 主题色修改 //
 function set_active_color(color = null) {
     play_list.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
+    files.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
     if (color !== null) {
         active_color = color
     }
@@ -22,6 +23,7 @@ function set_active_color(color = null) {
 // 背景色修改 //
 function set_background_color(color = null) {
     play_list.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
+    files.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
     if (color !== null) {
         background_color = color
     }
@@ -39,5 +41,6 @@ function set_background_color(color = null) {
 //////////////////
 function set_button_enable_active_color(value) {
     play_list.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
+    files.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     button_enable_active_color = value
 }
