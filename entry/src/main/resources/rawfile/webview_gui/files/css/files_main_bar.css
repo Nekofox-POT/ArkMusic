@@ -1,0 +1,14 @@
+.files_main_bar {
+
+    width: 90vw;
+    height: calc(100vh - 350px);
+    border: 0;
+    margin-left: 5vw;
+    margin-top: 25px;
+    border-radius: 25px;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+
+}

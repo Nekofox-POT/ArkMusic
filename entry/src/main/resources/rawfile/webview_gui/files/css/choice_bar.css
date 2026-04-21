@@ -8,4 +8,84 @@
     border-radius: 50px;
     overflow: hidden;
 
+    display: flex;
+    align-items: center;
+
+    position: relative;
+
+    transition: transform 0.15s ease;
+
+}
+
+.choice_bar.active {
+    transform: scale(0.95);
+}
+
+.choice_bar_scroll {
+
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+    padding: 0 15px;
+
+    overflow-x: visible;
+
+    /* 隐藏滚动条 */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+
+    cursor: grab;
+
+    user-select: none;
+    -webkit-user-select: none;
+
+}
+
+.choice_bar_scroll.bounce {
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.choice_bar_scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.choice_bar_item {
+
+    flex-shrink: 0;
+
+    padding: 8px 16px;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+
+    border-radius: 20px;
+
+    cursor: pointer;
+
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.3s ease;
+
+    -webkit-tap-highlight-color: transparent;
+
+}
+
+.choice_bar_item:active {
+    transform: scale(0.95);
+}
+
+.choice_bar_item.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.choice_bar_separator {
+
+    flex-shrink: 0;
+
+    width: 2px;
+    height: 20px;
+
+    border-radius: 1px;
+    background-color: rgba(255, 255, 255, 0.3);
+
 }

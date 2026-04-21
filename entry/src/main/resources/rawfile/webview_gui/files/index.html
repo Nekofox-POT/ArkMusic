@@ -5,6 +5,7 @@
     <title>ArkMusic</title>
     <link rel="stylesheet" href="../public_css/color.css">
     <link rel="stylesheet" href="./css/choice_bar.css">
+    <link rel="stylesheet" href="./css/files_main_bar.css">
     <style>
         body {
 
@@ -20,15 +21,40 @@
             border: 1px solid red;
 
         }
+        body > h1 {
+            margin-left: 5vw;
+            margin-top: 50px;
+        }
     </style>
 </head>
 <body>
     
     <!-- 标题 -->
-    <h1 class="font_color" style="margin-left: 5vw; margin-top: 50px;">文件浏览</h1>
+    <h1 class="font_color">文件浏览</h1>
 
     <!-- 选项栏 -->
-    <div class="choice_bar box_color"></div>
+    <div class="choice_bar box_color">
+        <div class="choice_bar_scroll" id="choice_bar_scroll">
+            <div class="choice_bar_item font_color" data-type="所有歌曲">所有歌曲</div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item font_color" data-type="文件夹">文件夹</div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item font_color" data-type="播放列表">播放列表</div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item font_color" data-type="我的喜欢">我的喜欢</div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item font_color" data-type="专辑">专辑</div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item font_color" data-type="歌手">歌手</div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item font_color" data-type="播放最多">播放最多</div>
+        </div>
+    </div>
+
+    <!-- 主页框架 -->
+    <div class="files_main_bar box_color">
+
+    </div>
     
     <!-- 函数块 -->
     <script src="../public_js/color_update.js"></script>
