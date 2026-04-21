@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArkMusic</title>
     <link rel="stylesheet" href="../public_css/color.css">
+    <link rel="stylesheet" href="./css/choice_bar.css">
     <style>
         body {
 
@@ -16,12 +17,18 @@
             user-select: none;
             overflow: hidden;
 
+            border: 1px solid red;
+
         }
     </style>
 </head>
 <body>
     
-    <h1>你好</h1>
+    <!-- 标题 -->
+    <h1 class="font_color" style="margin-left: 5vw; margin-top: 50px;">文件浏览</h1>
+
+    <!-- 选项栏 -->
+    <div class="choice_bar box_color"></div>
     
     <!-- 函数块 -->
     <script src="../public_js/color_update.js"></script>
