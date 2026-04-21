@@ -7,6 +7,7 @@
     margin-top: 50px;
     border-radius: 50px;
     overflow: hidden;
+    z-index: 200;
 
     display: flex;
     align-items: center;
@@ -68,6 +69,11 @@
 
     -webkit-tap-highlight-color: transparent;
 
+}
+
+.choice_bar_item > p {
+    margin: 0;
+    padding: 0;
 }
 
 .choice_bar_item:active {

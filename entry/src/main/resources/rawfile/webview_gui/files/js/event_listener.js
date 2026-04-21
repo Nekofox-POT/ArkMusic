@@ -169,11 +169,36 @@ choice_bar_scroll.addEventListener("touchend", () => {
 ////////////
 choice_bar_items.forEach((item) => {
     item.addEventListener("click", () => {
-        // 移除其他item的active类
-        choice_bar_items.forEach(tmp => tmp.classList.remove("active"))
-        // 添加当前item的active类
+        // 移除其他item的active类，并恢复文字颜色
+        choice_bar_items.forEach(tmp => {
+            tmp.classList.remove("active")
+            const p = tmp.querySelector('p')
+            if (p) {
+                p.classList.remove('font_active_color')
+                p.style.color = background_color
+            }
+        })
+        // 添加当前item的active类，并设置文字颜色
         item.classList.add("active")
+        const activeP = item.querySelector('p')
+        if (activeP) {
+            activeP.classList.add('font_active_color')
+            activeP.style.color = active_color
+        }
+        
+        // 切换框架显示
+        const type = item.dataset.type
+        Object.keys(frame_map).forEach(key => {
+            if (frame_map[key]) {
+                if (key === type) {
+                    frame_map[key].classList.remove("hide")
+                } else {
+                    frame_map[key].classList.add("hide")
+                }
+            }
+        })
+        
         // 打印选项类型
-        console.log(item.dataset.type)
+        console.log(type)
     })
 })
