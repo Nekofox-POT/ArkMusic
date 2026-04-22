@@ -1,6 +1,8 @@
 //
 // 音频处理器
 // 广播频段：8
+// 81x:转发元数据
+// 82x:播报播放列表和序号
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////
@@ -58,7 +60,7 @@ export class audio_player {
   /////////////
   // 广播监听 //
   ////////////
-  async listen_broadcast() {
+  private async listen_broadcast() {
     // 元数据监听 //
     emitter.on({ eventId: 710 }, (eventData: emitter.EventData) => {
       // 转发
@@ -100,6 +102,20 @@ export class audio_player {
       emitter.emit({ eventId: 814 }, { data: eventData.data })
       this.session?.setAVPlaybackState({ position: { elapsedTime: eventData.data?.current_time, updateTime: new Date().getTime() } })
     })
+  }
+
+  /////////////
+  // 广播列表 //
+  ////////////
+  private send_play_list(play_list: string[][] = [], play_number: number = 0) {
+    // 发送广播
+    emitter.emit(
+      { eventId: 820 },
+      { data: {
+        play_list: play_list,
+        play_number: play_number
+      } }
+    )
   }
 
   // 元音频 //
@@ -148,11 +164,18 @@ export class audio_player {
   }
 
   // 设置播放列表（初始化） //
-  set_play_list(list: string[], index: number) {
+  set_play_list(list: string[][], index: number) {
+    // 提取歌曲目录
+    let tmp: string[] = []
+    for (let i = 0; i < list.length; i++) {
+      tmp.push(list[i][0])
+    }
     // 设置
-    this.play_list = list
+    this.play_list = tmp
     this.play_list_index = index
     this.random_record = []
+    // 广播列表
+    this.send_play_list(list, index)
     // 初始化（播放）
     this.set_audio_play()
   }

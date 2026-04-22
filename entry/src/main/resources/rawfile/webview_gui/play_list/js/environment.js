@@ -8,4 +8,31 @@ const slide = document.getElementById('slide')
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 变量配置 //
+////////////
+let all_songs = 0   // 歌曲总数
+let playing_index = 0   // 正在播放第几首
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 拖拽排序 //
 /////////////
+// 拖拽状态
+let dragState = {
+    isDragging: false,          // 是否正在拖拽
+    dragElement: null,          // 当前拖拽的元素
+    dragClone: null,            // 拖拽时的克隆元素（跟随手指）
+    placeholder: null,          // 占位符元素
+    startIndex: -1,             // 拖拽开始时的索引
+    currentIndex: -1,           // 当前位置索引
+    longPressTimer: null,       // 长按计时器
+    startX: 0,                  // 触摸开始的X坐标
+    startY: 0,                  // 触摸开始的Y坐标
+    offsetX: 0,                 // 元素相对于触摸点的X偏移
+    offsetY: 0                  // 元素相对于触摸点的Y偏移
+}
+
+// 配置参数
+const dragConfig = {
+    longPressDelay: 350,        // 长按触发时间(ms)
+    scrollThreshold: 50,        // 触发自动滚动的边界阈值(px)
+    scrollSpeed: 5              // 自动滚动速度
+}

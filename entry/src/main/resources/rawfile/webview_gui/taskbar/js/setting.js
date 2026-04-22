@@ -51,3 +51,6 @@ function set_button_enable_active_color(value) {
 function songs_update(mode, obj) {
     files.contentWindow.postMessage({action: mode, arg1: obj}, '*')
 }
+function playing_update(obj, num) {
+    play_list.contentWindow.postMessage({action: 'update_playing_songs', arg1: obj, arg2: num}, '*')
+}
