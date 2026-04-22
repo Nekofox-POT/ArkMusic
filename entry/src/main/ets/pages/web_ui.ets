@@ -33,6 +33,52 @@ const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Dow
 // 函数库 //
 //////////
 
+///////////////////
+// web图片色值计算 //
+//////////////////
+async function pixel_light_count(metadata: image.PixelMap): Promise<number> {
+
+  // 调用 C++ 计算颜色
+  const imageInfo = await metadata.getImageInfo()
+  const width = imageInfo.size.width
+  const height = imageInfo.size.height
+
+  // 从 PixelMap 获取实际像素数据（RGBA格式，每个像素4字节）
+  const pixelBufferSize = width * height * 4;
+  const pixelBuffer = new ArrayBuffer(pixelBufferSize)
+  const area: image.PositionArea = {
+    pixels: pixelBuffer,
+    offset: 0,
+    stride: width * 4,  // 每一行的字节数（宽度 * 4字节）
+    region: { size: { width: width, height: height }, x: 0, y: 0 }
+  };
+  await metadata.readPixels(area);  // 读取像素数据到 buffer
+  const colorValue = nativeModule.getImageAverageColor(pixelBuffer, width, height)
+  log(`计算出的颜色值: ${colorValue}`)
+
+  return colorValue
+
+}
+
+////////////////
+// web图片处理 //
+///////////////
+async function pixel_to_base(metadata: image.PixelMap): Promise<string> {
+
+  // 1. 准备图片数据
+  let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 }
+  // 注意：packing 是耗时操作，这里得到 ArrayBuffer
+  let arrayBuffer = await image.createImagePacker().packing(metadata, packOpts)
+
+  // 2. 调用 C++ 进行 Base64 编码
+  // C++ 返回的是完整的 "data:image/jpeg;base64,xxxx" 字符串
+  let dataURL = nativeModule.encodeImageToBase64(arrayBuffer)
+
+  return dataURL
+
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // web_ui入口 //
 ///////////////
@@ -65,59 +111,23 @@ export default struct web_ui {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  ////////////////
-  // web图片处理 //
-  ///////////////
-  async pixel_to_base(metadata: image.PixelMap) {
-
-    // 2. 准备图片数据
-    let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 }
-    // 注意：packing 是耗时操作，这里得到 ArrayBuffer
-    let arrayBuffer = await image.createImagePacker().packing(metadata, packOpts)
-
-    // 3. 调用 C++ 进行 Base64 编码
-    // C++ 返回的是完整的 "data:image/jpeg;base64,xxxx" 字符串
-    let dataURL = nativeModule.encodeImageToBase64(arrayBuffer)
-
-    // 4. 调用 C++ 计算颜色
-    const imageInfo = await metadata.getImageInfo()
-    const width = imageInfo.size.width
-    const height = imageInfo.size.height
-    
-    // 从 PixelMap 获取实际像素数据（RGBA格式，每个像素4字节）
-    const pixelBufferSize = width * height * 4;
-    const pixelBuffer = new ArrayBuffer(pixelBufferSize)
-    const area: image.PositionArea = {
-      pixels: pixelBuffer,
-      offset: 0,
-      stride: width * 4,  // 每一行的字节数（宽度 * 4字节）
-      region: { size: { width: width, height: height }, x: 0, y: 0 }
-    };
-    await metadata.readPixels(area);  // 读取像素数据到 buffer
-    const colorValue = nativeModule.getImageAverageColor(pixelBuffer, width, height)
-    console.info(`计算出的颜色值: ${colorValue}`)
-    if (colorValue > 128) {
-      this.ark_music_ui.runJavaScript(`set_background_color('rgba(0, 0, 0, 0.4)')`)
-    } else {
-      this.ark_music_ui.runJavaScript(`set_background_color('rgba(255, 255, 255, 0.6)')`)
-    }
-
-    // 5. 传入前端
-    // 使用 JSON.stringify 防止字符串中的特殊字符（如换行）破坏 JS 语法
-    this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(dataURL)})`)
-
-  }
-
   /////////////
   // 广播监听 //
   ////////////
   listen_broadcast() {
     // 元数据监听 //
-    emitter.on({ eventId: 810 }, (eventData: emitter.EventData) => {
+    emitter.on({ eventId: 810 }, async (eventData: emitter.EventData) => {
       // 载入
       this.ark_music_ui.runJavaScript(`set_meta(['${eventData.data?.song_name}', '${eventData.data?.title}', '${eventData.data?.artist}'])`)
-      // 图片编码
-      this.pixel_to_base(eventData.data?.img)
+      // 图片编码发送
+      const base_img: string = await pixel_to_base(eventData.data?.img)
+      this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)
+      // 颜色值调整
+      if (await pixel_light_count(eventData.data?.img) > 128) {
+        this.ark_music_ui.runJavaScript(`set_background_color('rgba(0, 0, 0, 0.4)')`)
+      } else {
+        this.ark_music_ui.runJavaScript(`set_background_color('rgba(255, 255, 255, 0.6)')`)
+      }
     })
     // 播放状态监听 //
     emitter.on({ eventId: 812 }, (eventData: emitter.EventData) => {
