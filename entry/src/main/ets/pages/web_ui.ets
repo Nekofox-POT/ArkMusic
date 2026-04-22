@@ -195,14 +195,6 @@ export default struct web_ui {
           console.log('页面准备完成')
           this.listen_broadcast()  // 监听广播
           this.ready = true
-          this.ark_music_player.set_play_list(
-            [
-              song_path + '洛天依 - 陌上花开.wav',
-              song_path + '洛天依 - 秋之风.flac',
-              song_path + '二乘 - 时之风.flac',
-              song_path + '砖厂浪人,洛天依 - 临安雨.flac',
-            ], 0
-          )
         },
 
         // 播放 //
@@ -249,6 +241,17 @@ export default struct web_ui {
             this.ark_music_ui.runJavaScript(`songs_update('update_all_songs', ${JSON.stringify(tmp)})`)
           }
         },
+        // 在所有歌曲中播放
+        play_with_all_songs: (tmp: number) => {
+          // 获取所有歌曲
+          const all_songs = read_json_to_array('all_songs.json')
+          let play_list: string[] = []
+          for (let i = 0; i < all_songs.length; i++) {
+            play_list.push(all_songs[i][0])
+          }
+          console.log(`${play_list}`)
+          this.ark_music_player.set_play_list(play_list, tmp)
+        },
 
       },
       "ark",
@@ -256,7 +259,7 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'seek', 'last_song', 'next_song',
         'set_vol', 'get_song_image',
-        'get_all_songs',
+        'get_all_songs', 'play_with_all_songs'
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)
