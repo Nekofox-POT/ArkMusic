@@ -77,7 +77,7 @@ async function get_meta(path: string, name: string, file: fs.File): Promise<[str
   let composer = ''   // 作曲家
   let sample_rate = meta_data.sampleRate + 'hz'   // 采样率
 
-  if (meta_data.title) {song_title = meta_data.title} else {song_artist = name}
+  if (meta_data.title) {song_title = meta_data.title} else {song_title = name}
   if (meta_data.artist) {song_artist = meta_data.artist} else {song_artist = '未知歌手'}
   if (meta_data.album) {album = meta_data.album} else {album = '未知专辑'}
   if (meta_data.albumArtist) {album_artist = meta_data.albumArtist} else {album_artist = '未知专辑艺术家'}
@@ -144,6 +144,7 @@ export async function make_music_cache() {
         if (support_audio_format.includes(file_suffix)) {
 
           // 获取元数据
+          console.log(tmp)
           let meta = await get_meta(tmp, nativeModule.extractFilename(tmp), fs.openSync(tmp))
           // 添加
           cache_list.push(meta)
