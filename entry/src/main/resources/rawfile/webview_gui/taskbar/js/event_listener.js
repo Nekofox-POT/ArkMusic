@@ -103,8 +103,6 @@ let music_bar_rangeStartValue = 0
 music_bar_touch.addEventListener("touchstart", (e) => {
     if (music_bar_touch_isAnimating) return
 
-    setTimeout(() => {taskbar_page_update()}, 50)
-    
     music_bar_touch_startX = e.touches[0].clientX
     music_bar_touch_currentX = music_bar_touch_startX
     music_bar_isMoved = false
@@ -266,7 +264,7 @@ music_bar_touch.addEventListener("touchend", (e) => {
     
     // 归位
     taskbar.classList.remove("active")
-    setTimeout(() => {taskbar_page_update()}, 50)
+
 })
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

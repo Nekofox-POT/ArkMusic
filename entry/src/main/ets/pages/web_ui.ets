@@ -213,6 +213,8 @@ export default struct web_ui {
         next_song: () => {this.ark_music_player.next_song()},
         // 更改播放进度 //
         seek: (time: string) => {this.ark_music_player.seek(parseInt(time))},
+        // 跳转歌曲 //
+        seek_song: (index: number) => {this.ark_music_player.seek_song(index)},
         // 更改音量 (-1打开面板 -2关闭面板) //
         set_vol: (level: string) => {
           if (level == '-1') {
@@ -258,7 +260,7 @@ export default struct web_ui {
       "ark",
       [
         'ready',
-        'play', 'pause', 'seek', 'last_song', 'next_song',
+        'play', 'pause', 'seek', 'last_song', 'next_song', 'seek_song',
         'set_vol', 'get_song_image',
         'get_all_songs', 'play_with_all_songs'
       ]
