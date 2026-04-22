@@ -35,7 +35,7 @@
     align-items: center;
     justify-content: flex-start;
 
-    border-radius: 12.5px;
+    border-radius: 25px;
 
     transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
                 margin 0.2s ease, 
@@ -93,21 +93,15 @@
     pointer-events: none; /* 防止拖拽元素本身阻挡碰撞检测 */
 }
 
-/* 给非拖拽的元素添加过渡效果，让它们在被挤开时有动画 */
-.slide > div:not(.dragging) {
-    /* 这里继承了你原有的 transition，为了确保交换位置时平滑，可以加上 transition-property */
-    transition: transform 0.2s ease, top 0.2s ease; 
-}
+/* === 拖拽排序动画样式 === */
 
-/* === 新增动画样式 === */
-
-/* 1. 拖拽中的元素样式 */
+/* 1. 拖拽中的克隆元素样式 */
 .dragging-active {
     /* 固定定位，脱离文档流，跟随手指 */
     position: fixed !important;
     z-index: 1000;
     
-    /* 放大 1.05 倍，并稍微上移一点增加悬浮感 */
+    /* 放大并上移，增加悬浮感 */
     transform: scale(1.05) translateY(-5px);
     
     /* 加深阴影，营造立体感 */
@@ -115,41 +109,26 @@
     
     /* 拖拽时去除过渡，保证跟手性 */
     transition: none !important;
-    pointer-events: none; /* 防止挡住触控事件 */
+    pointer-events: none;
     opacity: 0.95;
 }
 
-/* 2. 占位符样式 (白边空位) */
-.drag-placeholder {
-    /* 隐藏原内容 */
-    background-color: transparent !important;
-    box-shadow: none !important;
-    
-    /* 描绘白边 - 这里用 border 模拟 */
-    border: 2px dashed rgba(255, 255, 255, 0.5) !important;
-    
-    /* 或者如果你想要一个实体的“空坑”效果，可以用背景 */
-    /* background: rgba(255, 255, 255, 0.1) !important; */
-    
-    /* 内部内容隐藏 */
-    visibility: hidden;
-    
-    /* 保持原有的高度和边距，维持列表结构稳定 */
-    height: 50px;
-    margin-bottom: 12.5px;
-    
-    /* 添加一个特殊的动画，让占位符出现时有点弹性 */
-    animation: placeholderPop 0.2s ease forwards;
+/* 2. 原元素被拖拽时的占位样式 */
+.slide > div.drag-source {
+    /* 半透明虚线框效果 - 保持可见 */
+    opacity: 0.5 !important;
+    border: 2px dashed rgba(255, 255, 255, 0.8) !important;
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(2px) !important;
+    /* 添加过渡动画 */
+    transition: opacity 0.2s ease, border 0.2s ease !important;
 }
 
-@keyframes placeholderPop {
-    0% { transform: scale(0.9); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-}
-
-/* 3. 其他被挤压元素的增强反应 */
-.slide > div:not(.dragging-active):not(.drag-placeholder) {
-    /* 确保其他元素有足够的反应速度 */
+/* 3. 其他元素被挤压时的动画 */
+.slide > div:not(.drag-source) {
+    /* 确保其他元素有流畅的移动动画 */
     transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-                margin 0.25s ease;
+                margin 0.25s ease,
+                opacity 0.25s ease,
+                box-shadow 0.25s ease;
 }

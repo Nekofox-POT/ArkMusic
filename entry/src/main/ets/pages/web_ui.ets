@@ -146,6 +146,11 @@ export default struct web_ui {
     emitter.on({ eventId: 814 }, (eventData: emitter.EventData) => {
       this.ark_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
     })
+    // 播放列表监听
+    emitter.on({eventId: 820}, (eventData: emitter.EventData) => {
+      // 转发js
+      this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.play_list)}, ${eventData.data?.play_number})`)
+    })
   }
 
   /////////////
@@ -182,6 +187,7 @@ export default struct web_ui {
     emitter.off(812)
     emitter.off(813)
     emitter.off(814)
+    emitter.off(820)
   }
 
   ////////////////////
@@ -245,12 +251,7 @@ export default struct web_ui {
         play_with_all_songs: (tmp: number) => {
           // 获取所有歌曲
           const all_songs = read_json_to_array('all_songs.json')
-          let play_list: string[] = []
-          for (let i = 0; i < all_songs.length; i++) {
-            play_list.push(all_songs[i][0])
-          }
-          console.log(`${play_list}`)
-          this.ark_music_player.set_play_list(play_list, tmp)
+          this.ark_music_player.set_play_list(all_songs, tmp)
         },
 
       },
