@@ -16,23 +16,18 @@ export function array_to_json_save(data: string[][], path: string): boolean {
 
   // 转换
   if (!data || data.length === 0) {
-    console.log('#1')
     return false
   }
-  console.log('#2')
   const packData = JSON.stringify(data)
-  console.log('#3')
   console.log(`${packData}`)
 
   // 保存
   try {
-    console.log('#4')
     console.log(getContext().filesDir + path)
     const file = fs.openSync(getContext().filesDir + '/' + path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
     fs.writeSync(file.fd, packData)
     fs.closeSync(file)
   } catch (e) {
-    console.log('#0')
     console.log(e)
     return false
   }

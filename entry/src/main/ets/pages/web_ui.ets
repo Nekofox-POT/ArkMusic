@@ -22,12 +22,13 @@ import nativeModule from 'libentry.so';
 /////////////////
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
+import { read_json_to_array, array_to_json_save } from '../package/hashmap_save_load';
 
 ///////////
 // 变量池 //
 //////////
-
-const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic/').path // 根目录
+const root_path = getContext().filesDir
+const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic/').path // 根目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -196,21 +197,20 @@ export default struct web_ui {
           this.ready = true
           this.ark_music_player.set_play_list(
             [
-              root_path + '洛天依 - 陌上花开.wav',
-              root_path + '洛天依 - 秋之风.flac',
-              root_path + '二乘 - 时之风.flac',
-              root_path + '砖厂浪人,洛天依 - 临安雨.flac',
+              song_path + '洛天依 - 陌上花开.wav',
+              song_path + '洛天依 - 秋之风.flac',
+              song_path + '二乘 - 时之风.flac',
+              song_path + '砖厂浪人,洛天依 - 临安雨.flac',
             ], 0
           )
         },
+
         // 播放 //
         play: () => {this.ark_music_player.playing()},
         // 暂停 //
         pause: () => {this.ark_music_player.pause()},
         // 上一首 //
-        last_song: () => {
-          this.ark_music_player.last_song()
-        },
+        last_song: () => {this.ark_music_player.last_song()},
         // 下一首
         next_song: () => {this.ark_music_player.next_song()},
         // 更改播放进度 //
@@ -225,12 +225,38 @@ export default struct web_ui {
             this.volume_level = parseInt(level)
           }
         },
+
+        // 获取图片编码
+        get_song_image: async (path: string) => {
+          // 打开图片
+          let meta_img: image.PixelMap | null = null
+          try {
+            const imageSource = image.createImageSource(root_path + path)
+            meta_img = await imageSource.createPixelMap()
+            imageSource.release()
+            return await pixel_to_base(meta_img)
+          } catch (e) {
+            console.log(e)
+            return ''
+          }
+        },
+        // 获取所有歌曲信息
+        get_all_songs: () => {
+          // 获取所有歌曲
+          const tmp = read_json_to_array('all_songs.json')
+          if (tmp) {
+            // 更新歌曲
+            this.ark_music_ui.runJavaScript(`songs_update('update_all_songs', ${JSON.stringify(tmp)})`)
+          }
+        },
+
       },
       "ark",
       [
         'ready',
         'play', 'pause', 'seek', 'last_song', 'next_song',
-        'set_vol',
+        'set_vol', 'get_song_image',
+        'get_all_songs',
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)

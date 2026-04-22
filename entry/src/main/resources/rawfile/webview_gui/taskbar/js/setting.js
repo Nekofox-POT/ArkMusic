@@ -44,3 +44,10 @@ function set_button_enable_active_color(value) {
     files.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     button_enable_active_color = value
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ark文件更新池 //
+////////////////
+function songs_update(mode, obj) {
+    files.contentWindow.postMessage({action: mode, arg1: obj}, '*')
+}
