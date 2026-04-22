@@ -8,7 +8,13 @@
 // 更新所有歌曲 //
 async function update_playing_songs(data, num) {
 
-    if (data) {
+    // 载入缓存
+    playing_index = num
+
+    if (data.length !== 0) {
+
+        // 载入缓存
+        all_songs = data.length
 
         // 清空现有内容
         slide.innerHTML = ''
@@ -30,11 +36,11 @@ async function update_playing_songs(data, num) {
             // 创建元素
             const div = document.createElement('div')
             div.className = 'box_color'
+            div.id = index
 
             // 点击事件
             div.addEventListener('click', () => {
-                // ark.play_with_all_songs(index)
-                console.log(index)
+                ark.seek_song(index)
             })
 
             // 创建图片容器
@@ -42,11 +48,7 @@ async function update_playing_songs(data, num) {
 
             // 创建文本
             const p = document.createElement('p')
-            if (index === num) {
-                p.className = 'font_color font_active_color'
-            } else {
-                p.className = 'font_color'
-            }
+            p.className = 'font_color'
             p.textContent = tmp[1]
 
             // 组装元素
@@ -64,14 +66,27 @@ async function update_playing_songs(data, num) {
 
         }
 
-    } else {
-        // 这里是列表为空的情况，只更改高亮色
-        // 高亮色根据num序号更改
-        // 通过添加和移除font_active_color。
     }
+
+    // 更改高亮色
+    // 高亮色根据num和id序号对应更改添加和移除font_active_color
+    const items = slide.querySelectorAll('div.box_color')
+    items.forEach(item => {
+        const p = item.querySelector('p')
+        if (p) {
+            if (parseInt(item.id) === num) {
+                p.className = 'font_color font_active_color'
+            } else {
+                p.className = 'font_color'
+            }
+        }
+    })
 
     // 更新色彩
     set_background_color()
+
+    // 更新头显
+    play_index_screen.innerText = `${playing_index} / ${all_songs}`
 
 }
 

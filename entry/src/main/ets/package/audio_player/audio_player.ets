@@ -161,6 +161,8 @@ export class audio_player {
         }, 3000)
       }
     }
+    // 广播跳转
+    this.send_play_list([], this.play_list_index)
   }
 
   // 设置播放列表（初始化） //
@@ -175,7 +177,7 @@ export class audio_player {
     this.play_list_index = index
     this.random_record = []
     // 广播列表
-    this.send_play_list(list, index)
+    this.send_play_list(list, this.play_list_index)
     // 初始化（播放）
     this.set_audio_play()
   }
@@ -252,6 +254,13 @@ export class audio_player {
         this.set_audio_play(this.play_list_index + 1)
       }
     }
+  }
+  // 跳转指定歌曲 //
+  seek_song(index: number) {
+    // 如果超出了那不管
+    if (index < 0 || index >= this.play_list.length) { return }
+    // 点歌
+    this.set_audio_play(index)
   }
 
   // 更改播放进度 //
