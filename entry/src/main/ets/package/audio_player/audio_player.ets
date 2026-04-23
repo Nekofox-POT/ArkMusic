@@ -14,7 +14,7 @@ import { avSession } from '@kit.AVSessionKit'
 
 //////////////////
 // 导入自创建模块 //
-/////////////////
+////////////////
 import { av_player } from './by_av_player'
 import { log, notice } from '../system_function'
 

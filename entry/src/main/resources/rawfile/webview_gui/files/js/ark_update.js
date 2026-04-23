@@ -14,6 +14,7 @@ async function update_all_songs(data) {
 
     // 遍历数据创建元素
     for (let index = 0; index < data.length; index++) {
+
         const tmp = data[index]
         // tmp[0] = path (路径)
         // tmp[1] = name (文件名)
@@ -32,7 +33,6 @@ async function update_all_songs(data) {
         // 点击事件
         div.addEventListener('click', () => {
             ark.play_with_all_songs(index)
-            console.log(index)
         })
 
         // 创建图片容器
@@ -69,6 +69,9 @@ async function update_all_songs(data) {
 window.addEventListener('message', function(event) {
 
     func = event.data.action
+
+    // 返回手势
+    if (func === 'back_gesture') {router_back()}
 
     // 更新所有歌曲栏目
     if (func === 'update_all_songs') {

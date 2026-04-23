@@ -133,6 +133,7 @@ async function img_save(pixelMap: image.PixelMap): Promise<string> {
   const packData = await imagePackerApi.packing(pixelMap, packOpts)
   
   // 写入文件
+  console.log(`正在扫描第 ${img_number} 首歌曲`)
   const file = fs.openSync(root_path + `/cache_img/${img_number}.png`, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
   fs.writeSync(file.fd, packData)
   fs.closeSync(file)
@@ -307,6 +308,8 @@ export function read_dir_songs(path: string = ''): string[][][] {
   let dir_data: string[][] = []
 
   // 读取文件夹 //
+  console.log('读取文件夹：')
+  console.log(root_path + '/dir_mode/' + path)
   for (const i of fs.listFileSync(root_path + '/dir_mode/' + path, { recursion: false })) {
     if (fs.statSync(root_path + '/dir_mode/' + path + '/' + i).isDirectory()) {
       dir_data.push([i])
