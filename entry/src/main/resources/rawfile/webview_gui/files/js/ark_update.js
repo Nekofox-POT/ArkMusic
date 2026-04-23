@@ -8,7 +8,6 @@
 // 更新所有歌曲 //
 async function update_all_songs(data) {
     const slide = document.querySelector('#all_song_frame .slide')
-    if (!slide) return
 
     // 清空现有内容
     slide.innerHTML = ''
@@ -57,10 +56,11 @@ async function update_all_songs(data) {
             imgDiv.style.backgroundImage = `url(${tmp_img})`
         }
 
-        // 更新色彩
-        set_background_color()
-
     }
+
+    // 更新色彩
+    set_background_color()
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

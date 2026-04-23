@@ -18,20 +18,104 @@ import nativeModule from 'libentry.so'
 import { log } from './system_function'
 import { read_json_to_array, array_to_json_save } from './hashmap_save_load';
 
-
-
 ///////////
 // 变量池 //
 //////////
 const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
 const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
-const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic/').path   // 文件目录
+const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic').path   // 文件目录
 const root_path = getContext().filesDir
 let img_number = 0    // img缓存编号
+
+// 字符权重池（比较用）
+enum CharType {
+  PUNCTUATION = 0, // 符号（包含 '.'）
+  DIGIT = 1,       // 数字
+  LETTER = 2,      // 字母
+  CHINESE = 3      // 中文
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 内部函数库 //
 /////////////
+
+// 字符比较器 //
+function getCharWeight(char: string): number {
+  if (!char) return CharType.CHINESE; // 兜底空字符串
+
+  const code = char.charCodeAt(0);
+
+  // 1. 符号 (ASCII 0-47, 58-64, 91-96, 123-127 等)
+  // 这里把所有非字母数字中文的常见字符都归为符号
+  if ((code >= 33 && code <= 47) ||
+    (code >= 58 && code <= 64) ||
+    (code >= 91 && code <= 96) ||
+    (code >= 123 && code <= 126)) {
+    return CharType.PUNCTUATION;
+  }
+
+  // 2. 数字 (0-9)
+  if (code >= 48 && code <= 57) {
+    return CharType.DIGIT;
+  }
+
+  // 3. 字母 (A-Z, a-z)
+  if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+    return CharType.LETTER;
+  }
+
+  // 4. 中文 (按照 Unicode 范围，基本涵盖了常用汉字)
+  if ((code >= 0x4E00 && code <= 0x9FFF) ||
+    (code >= 0x3400 && code <= 0x4DBF) ||
+    (code >= 0x20000 && code <= 0x2A6DF)) {
+    return CharType.CHINESE;
+  }
+
+  // 其他未知的罕见字符也当做符号处理，排在前面
+  return CharType.PUNCTUATION;
+}
+// 列表排序器 //
+function customCompare(strA: string, strB: string): number {
+  const lenA = strA.length;
+  const lenB = strB.length;
+  const minLen = Math.min(lenA, lenB);
+
+  // 逐个字符进行比较
+  for (let i = 0; i < minLen; i++) {
+    const charA = strA.charAt(i);
+    const charB = strB.charAt(i);
+
+    const weightA = getCharWeight(charA);
+    const weightB = getCharWeight(charB);
+
+    // 如果类型不同，直接按类型权重排序（符号->数字->字母->中文）
+    if (weightA !== weightB) {
+      return weightA - weightB;
+    }
+
+    // 如果类型相同，进行组内比较
+    if (weightA === CharType.LETTER) {
+      // 字母组：不区分大小写比较
+      const lowerA = charA.toLowerCase();
+      const lowerB = charB.toLowerCase();
+      if (lowerA < lowerB) return -1;
+      if (lowerA > lowerB) return 1;
+    } else if (weightA === CharType.CHINESE) {
+      // 中文组：使用手机系统的本地化排序（通常是拼音排序）
+      // 注意：ArkTS 中使用 Intl.Collator 是安全的
+      const collator = new Intl.Collator('zh-CN');
+      const cmp = collator.compare(charA, charB);
+      if (cmp !== 0) return cmp;
+    } else {
+      // 符号组和数字组：直接按 Unicode 码点比较（符号按ASCII表，数字按0-9）
+      if (charA < charB) return -1;
+      if (charA > charB) return 1;
+    }
+  }
+
+  // 如果前面字符都一样，短的排在前面 (例如 ".txt" 排在 ".txta" 前面)
+  return lenA - lenB;
+}
 
 // 图片储存 //
 async function img_save(pixelMap: image.PixelMap): Promise<string> {
@@ -49,7 +133,7 @@ async function img_save(pixelMap: image.PixelMap): Promise<string> {
   const packData = await imagePackerApi.packing(pixelMap, packOpts)
   
   // 写入文件
-  const file = fs.openSync(root_path + `cache_img/${img_number}.png`, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+  const file = fs.openSync(root_path + `/cache_img/${img_number}.png`, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
   fs.writeSync(file.fd, packData)
   fs.closeSync(file)
   
@@ -100,6 +184,61 @@ async function get_meta(path: string, name: string, file: fs.File): Promise<[str
   return [path, name, song_title, song_artist, album, album_artist, author, composer, img_path, sample_rate]
 }
 
+// 文件递归扫描（兼文件夹模式缓存） //
+async function scan_download_dir(path: string = ''): Promise<string[][]> {
+
+  // 扫描
+  let files = fs.listFileSync(song_path + '/' + path, { recursion: false })
+  let data: string[][] = []
+  let dir_data: string[][] = []
+
+  // 分类
+  for (const i of files) {
+    let stat = fs.statSync(song_path + '/' + path + '/' + i)
+    if (stat.isFile()) {
+
+      // 文件 //
+      const tmp = song_path + '/' + path + '/' + i
+      try {
+        // 获取后缀
+        let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
+        // 后缀解析（普通音乐）
+        if (support_audio_format.includes(file_suffix)) {
+
+          // 获取元数据
+          let meta = await get_meta(tmp, nativeModule.extractFilename(tmp), fs.openSync(tmp))
+          // 添加
+          data.push(meta)
+        }
+        // 解析后缀（dsd音乐）
+        else if (support_dsd_format.includes(file_suffix)) {
+          console.log('有dsd音频！')
+        }
+      } catch (e) {log(e, 'error')}
+
+    } else if (stat.isDirectory()) {
+
+      // 文件夹 //
+      // 创建文件夹
+      fs.mkdirSync(root_path + '/dir_mode/' + path + '/' + i)
+      // 递归添加
+      // 添加
+      for (const e of await scan_download_dir(path + '/' + i)) {
+        dir_data.push(e)
+      }
+
+    }
+  }
+  // 保存目录 //
+  array_to_json_save(data, '/dir_mode/' + path + '/songs.json')
+  // 合并扫描结果 //
+  for (const i of dir_data) {
+    data.push(i)
+  }
+  return data
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 外部函数库 //
 /////////////
@@ -113,58 +252,83 @@ export async function make_music_cache() {
   // 变量集 //
   //////////
   let cache_list: string[][] = []
-  
+
+  /////////////
+  // 初始化集 //
+  ////////////
+
   // 初始化cache_img //
-  try {
-    fs.rmdirSync(root_path + 'cache_img')
-    throw new Error()
-  } catch {
-    fs.mkdirSync(root_path + 'cache_img')
-  }
+  // 初始化img文件号
   img_number = 0
+  // 初始化img文件夹
+  try {fs.rmdirSync(root_path + '/cache_img')} catch {}
+  fs.mkdirSync(root_path + '/cache_img')
+  // 载入头部数据
   const resourceManager = getContext().resourceManager
   const mediaData = await resourceManager.getMediaContent($r('app.media.CD'))
   const imageSource = image.createImageSource(mediaData.buffer)
   const meta_img = await imageSource.createPixelMap()
   await img_save(meta_img)
 
+  // 删除all_songs //
+  try {fs.unlinkSync(root_path + '/all_songs.json')} catch {}
+
+  // 初始化dir_mode //
+  try {fs.rmdirSync(root_path + '/dir_mode')} catch {}
+  fs.mkdirSync(root_path + '/dir_mode')
+
+  ////////////////
+  // 正常程序流程 //
+  ///////////////
 
   // 扫描download的所有曲库 //
-  let filenames = fs.listFileSync(song_path, { recursion: true })
+  cache_list = await scan_download_dir()
 
-  // 处理识别音频是否有效，如果有效则添加 //
-  for (const i of filenames) {
-    const tmp = song_path + i
-    try {
-      // 如果音频有效
-      if (fs.statSync(tmp).isFile()) {
-        // 获取后缀
-        let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
-        // 解析后缀（普通音乐）
-        if (support_audio_format.includes(file_suffix)) {
+  // 排序 //
+  cache_list.sort((a: string[], b: string[]) => {
+    return customCompare(a[0], b[0]);
+  })
 
-          // 获取元数据
-          console.log(tmp)
-          let meta = await get_meta(tmp, nativeModule.extractFilename(tmp), fs.openSync(tmp))
-          // 添加
-          cache_list.push(meta)
-        }
-        // 解析后缀（dsd音乐）
-        else if (support_dsd_format.includes(file_suffix)) {
-          console.log('有dsd音频！')
-        }
-      }
-    } catch (e) {log(e, 'error')}
+  // 保存 //
+  // 所有歌曲保存
+  array_to_json_save(cache_list, 'all_songs.json')
+
+}
+
+// 读取所有歌曲 //
+export function read_all_songs(): string[][] {
+  return read_json_to_array('all_songs.json')
+}
+
+// 读取文件夹的歌曲 //
+export function read_dir_songs(path: string = ''): string[][][] {
+
+
+  let dir_data: string[][] = []
+
+  // 读取文件夹 //
+  for (const i of fs.listFileSync(root_path + '/dir_mode/' + path, { recursion: false })) {
+    if (fs.statSync(root_path + '/dir_mode/' + path + '/' + i).isDirectory()) {
+      dir_data.push([i])
+    }
   }
 
-  // 保存读取list
-  if (array_to_json_save(cache_list, 'all_songs.json')) {
-    console.log('保存成功')
-  }
-  const tmp = read_json_to_array('all_songs.json')
-  if (!tmp) {
-    console.log('读取成功')
-  }
-  console.log(`${tmp}`)
+  // 读取json（如果有） //
+  let songs_data: string[][] = []
+  try {
+    fs.statSync(root_path + '/dir_mode/' + path + '/songs.json')
+    songs_data = read_json_to_array('/dir_mode/' + path + '/songs.json')
+  } catch {}
+
+  // 排序 //
+  dir_data.sort((a: string[], b: string[]) => {
+    return customCompare(a[0], b[0]);
+  })
+  songs_data.sort((a: string[], b: string[]) => {
+    return customCompare(a[0], b[0]);
+  })
+
+  // 返回 //
+  return [dir_data, songs_data]
 
 }

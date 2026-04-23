@@ -201,5 +201,10 @@ choice_bar_items.forEach((item) => {
         // 打印选项类型
         console.log(type)
 
+        // 添加点击操作
+        if (type === '文件夹') {
+            get_folder_songs()
+        }
+
     })
 })
