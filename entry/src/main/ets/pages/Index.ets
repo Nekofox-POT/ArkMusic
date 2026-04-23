@@ -1,11 +1,14 @@
 //
 // ArkMusic主界面
+// 频段：9
+// 912：给webui的返回广播
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////
 // 导入第三方库 //
 ///////////////
 import { common } from '@kit.AbilityKit'
+import emitter from '@ohos.events.emitter'
 
 //////////////////
 // 导入自创建模块 //
@@ -14,7 +17,6 @@ import web_ui from './web_ui'
 import arkmusic_start from './start'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
-
 import { make_music_cache } from '../package/file_manager'
 
 ///////////
@@ -71,6 +73,20 @@ struct Index {
     log('程序结束运行...')
     this.ark_music_player.drop_it()
     log('再见.')
+  }
+
+  /////////////
+  // 返回操作 //
+  ////////////
+  onBackPress(): boolean {
+
+    // ---- 在这里执行你指定的任务 ----
+    emitter.emit({ eventId: 912 })
+    // --------------------------------
+
+    // 返回 true：表示消费掉该返回事件，原生页面不退出，Web也不后退
+    // 返回 false：表示放行，原生执行默认的退出页面动作
+    return true
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -13,7 +13,7 @@ import { audio } from '@kit.AudioKit';
 import { image } from '@kit.ImageKit';
 import { common } from '@kit.AbilityKit';
 import emitter from '@ohos.events.emitter'
-
+import { router } from '@kit.ArkUI';
 import nativeModule from 'libentry.so';
 
 
@@ -148,10 +148,19 @@ export default struct web_ui {
     emitter.on({ eventId: 814 }, (eventData: emitter.EventData) => {
       this.ark_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
     })
-    // 播放列表监听
+    // 播放列表监听 //
     emitter.on({eventId: 820}, (eventData: emitter.EventData) => {
       // 转发js
       this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.play_list)}, ${eventData.data?.play_number})`)
+    })
+    // 返回手势监听 //
+    emitter.on({eventId: 912}, async () => {
+      // 转发js
+      const tmp = await this.ark_music_ui.runJavaScript(`back_gesture()`)
+      console.log(`${tmp}`)
+      if (tmp === '"back"') {
+        router.back()
+      }
     })
   }
 
@@ -190,6 +199,7 @@ export default struct web_ui {
     emitter.off(813)
     emitter.off(814)
     emitter.off(820)
+    emitter.off(912)
   }
 
   ////////////////////
@@ -217,6 +227,7 @@ export default struct web_ui {
         seek: (time: string) => {this.ark_music_player.seek(parseInt(time))},
         // 跳转歌曲 //
         seek_song: (index: number) => {this.ark_music_player.seek_song(index)},
+
         // 更改音量 (-1打开面板 -2关闭面板) //
         set_vol: (level: string) => {
           if (level == '-1') {
@@ -227,7 +238,6 @@ export default struct web_ui {
             this.volume_level = parseInt(level)
           }
         },
-
         // 获取图片编码
         get_song_image: async (path: string) => {
           // 打开图片
@@ -242,6 +252,9 @@ export default struct web_ui {
             return ''
           }
         },
+        // 跳转到主页面
+        back_to_player: () => {this.ark_music_ui.runJavaScript('taskbar_page_update(1)')},
+
         // 获取所有歌曲信息
         get_all_songs: () => {
           // 获取所有歌曲
@@ -250,6 +263,7 @@ export default struct web_ui {
             // 更新歌曲
             this.ark_music_ui.runJavaScript(`songs_update('update_all_songs', ${JSON.stringify(tmp)})`)
           }
+          console.log('扫描完成')
         },
         // 在所有歌曲中播放
         play_with_all_songs: (tmp: number) => {
@@ -262,14 +276,20 @@ export default struct web_ui {
           // return JSON.stringify(read_dir_songs(path))
           return read_dir_songs(path)
         },
+        // 在文件夹模式中播放
+        play_with_dir_mode: (path: string, index: number) => {
+          // 读取播放
+          console.log(path)
+          this.ark_music_player.set_play_list(read_dir_songs(path)[1], index)
+        },
 
       },
       "ark",
       [
         'ready',
         'play', 'pause', 'seek', 'last_song', 'next_song', 'seek_song',
-        'set_vol', 'get_song_image',
-        'get_all_songs', 'play_with_all_songs', 'get_dir_songs'
+        'set_vol', 'get_song_image', 'back_to_player',
+        'get_all_songs', 'play_with_all_songs', 'get_dir_songs', 'play_with_dir_mode',
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)

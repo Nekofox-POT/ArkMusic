@@ -46,6 +46,25 @@ function set_button_enable_active_color(value) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 返回手势 //
+////////////
+function back_gesture() {
+    // 如果在页面2则转发手势
+    if (page_backup === 2) {
+        files.contentWindow.postMessage({action: 'back_gesture'}, '*')
+    }
+    // 如果在页面1则返回桌面
+    else if (page_backup === 1) {
+        return 'back'
+    }
+    // 其他页面则直接返回主页
+    else {
+        taskbar_page_update(1)
+    }
+    return ''
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ark文件更新池 //
 ////////////////
 function songs_update(mode, obj) {
