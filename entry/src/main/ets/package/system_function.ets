@@ -26,19 +26,6 @@ const TAG = '[ArkMusic]'; // 自定义标签
 // 函数库 //
 //////////
 
-/////////////
-// 日志记录 //
-////////////
-export function log(msg: string, level: string = 'info') {
-  if (level == 'error') {
-    hilog.error(DOMAIN, TAG, msg)
-    console.error(msg)
-  } else {
-    hilog.info(DOMAIN, TAG, msg)
-    console.info(msg)
-  }
-}
-
 //////////
 // 通知 //
 /////////
@@ -46,6 +33,20 @@ export async function notice(msg: string) {
   try {
     promptAction.showToast({ message: msg, duration: 3000 });
   } catch (e) { console.log(`通知失效：${e}`) }
+}
+
+/////////////
+// 日志记录 //
+////////////
+export function log(msg: string, level: string = 'info') {
+  if (level == 'error') {
+    hilog.error(DOMAIN, TAG, msg)
+    notice(msg)
+    console.error(msg)
+  } else {
+    hilog.info(DOMAIN, TAG, msg)
+    console.info(msg)
+  }
 }
 
 //////////

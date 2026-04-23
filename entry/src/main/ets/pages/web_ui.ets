@@ -22,7 +22,9 @@ import nativeModule from 'libentry.so';
 /////////////////
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
-import { read_json_to_array, array_to_json_save } from '../package/hashmap_save_load';
+import {
+  read_all_songs, read_dir_songs
+} from '../package/file_manager'
 
 ///////////
 // 变量池 //
@@ -243,7 +245,7 @@ export default struct web_ui {
         // 获取所有歌曲信息
         get_all_songs: () => {
           // 获取所有歌曲
-          const tmp = read_json_to_array('all_songs.json')
+          const tmp = read_all_songs()
           if (tmp) {
             // 更新歌曲
             this.ark_music_ui.runJavaScript(`songs_update('update_all_songs', ${JSON.stringify(tmp)})`)
@@ -252,8 +254,13 @@ export default struct web_ui {
         // 在所有歌曲中播放
         play_with_all_songs: (tmp: number) => {
           // 获取所有歌曲
-          const all_songs = read_json_to_array('all_songs.json')
-          this.ark_music_player.set_play_list(all_songs, tmp)
+          this.ark_music_player.set_play_list(read_all_songs(), tmp)
+        },
+        // 获取文件夹模式的歌曲信息
+        get_dir_songs: (path: string) => {
+          // 回传
+          // return JSON.stringify(read_dir_songs(path))
+          return read_dir_songs(path)
         },
 
       },
@@ -262,7 +269,7 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'seek', 'last_song', 'next_song', 'seek_song',
         'set_vol', 'get_song_image',
-        'get_all_songs', 'play_with_all_songs'
+        'get_all_songs', 'play_with_all_songs', 'get_dir_songs'
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)
