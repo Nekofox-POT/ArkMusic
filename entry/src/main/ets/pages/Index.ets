@@ -63,7 +63,7 @@ struct Index {
   aboutToAppear(): void {
     log('程序开始运行...')
     reg_bg_run(this.context) // 注册后台
-    make_music_cache()
+    // make_music_cache()
   }
 
   ////////////////

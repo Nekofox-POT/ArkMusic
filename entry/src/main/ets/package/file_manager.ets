@@ -15,7 +15,7 @@ import nativeModule from 'libentry.so'
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { log } from './system_function'
+import { log, notice } from './system_function'
 import { read_json_to_array, array_to_json_save } from './hashmap_save_load'
 import { img_save } from "./cache_image_save"
 
@@ -272,6 +272,7 @@ export async function make_music_cache() {
   // 所有歌曲保存
   array_to_json_save(cache_list, 'all_songs.json')
   console.log(`配置文件保存完成！`)
+  notice(`配置文件保存完成！`)
 
 }
 

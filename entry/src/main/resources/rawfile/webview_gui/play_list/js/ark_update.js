@@ -3,10 +3,18 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 更新函数 //
-/////////////
+////////////
+
+// 异步更新图片
+async function get_song_image(img, path) {
+    const tmp_img = await ark.get_song_image(path)
+    if (tmp_img) {
+        img.style.backgroundImage = `url(${tmp_img})`
+    }
+}
 
 // 更新所有歌曲 //
-async function update_playing_songs(data, num) {
+function update_playing_songs(data, num) {
 
     // 载入缓存
     playing_index = num
@@ -59,10 +67,7 @@ async function update_playing_songs(data, num) {
             slide.appendChild(div)
 
             // 异步加载图片
-            const tmp_img = await ark.get_song_image(tmp[8])
-            if (tmp_img) {
-                imgDiv.style.backgroundImage = `url(${tmp_img})`
-            }
+            get_song_image(imgDiv, tmp[8])
 
         }
 
@@ -82,11 +87,11 @@ async function update_playing_songs(data, num) {
         }
     })
 
-    // 更新色彩
-    set_background_color()
-
     // 更新头显
     play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
+
+    // 更新色彩
+    set_background_color()
 
 }
 
