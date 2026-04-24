@@ -121,7 +121,12 @@ export default struct web_ui {
     // 元数据监听 //
     emitter.on({ eventId: 810 }, async (eventData: emitter.EventData) => {
       // 载入
-      this.ark_music_ui.runJavaScript(`set_meta(['${eventData.data?.song_name}', '${eventData.data?.title}', '${eventData.data?.artist}'])`)
+      console.log(eventData.data?.song_name)
+      console.log(eventData.data?.title)
+      console.log(eventData.data?.artist)
+      console.log('1')
+      this.ark_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.song_name, eventData.data?.title, eventData.data?.artist])})`)
+      console.log('2')
       // 图片编码发送
       const base_img: string = await pixel_to_base(eventData.data?.img)
       this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)

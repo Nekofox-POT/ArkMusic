@@ -43,7 +43,6 @@ async function pack_image_task(pixelMap: image.PixelMap): Promise<ArrayBuffer> {
 // 文件写入任务（在TaskPool线程中执行）
 @Concurrent
 function write_file_task(rootPath: string, path: string, data: ArrayBuffer): void {
-  console.log(`正在保存 ${path}`)
   try {
     const file = fs.openSync(rootPath + `/` + path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
     fs.writeSync(file.fd, data)
