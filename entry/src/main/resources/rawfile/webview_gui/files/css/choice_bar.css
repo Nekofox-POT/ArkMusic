@@ -16,6 +16,9 @@
 
     transition: transform 0.15s ease;
 
+    -webkit-mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
+
 }
 
 .choice_bar.active {

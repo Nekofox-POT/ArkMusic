@@ -23,7 +23,7 @@ import nativeModule from 'libentry.so';
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
 import {
-  read_all_songs, read_dir_songs
+  read_all_songs, read_dir_songs, read_play_list
 } from '../package/file_manager'
 
 ///////////
@@ -121,12 +121,7 @@ export default struct web_ui {
     // 元数据监听 //
     emitter.on({ eventId: 810 }, async (eventData: emitter.EventData) => {
       // 载入
-      console.log(eventData.data?.song_name)
-      console.log(eventData.data?.title)
-      console.log(eventData.data?.artist)
-      console.log('1')
       this.ark_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.song_name, eventData.data?.title, eventData.data?.artist])})`)
-      console.log('2')
       // 图片编码发送
       const base_img: string = await pixel_to_base(eventData.data?.img)
       this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)
@@ -278,14 +273,21 @@ export default struct web_ui {
         // 获取文件夹模式的歌曲信息
         get_dir_songs: (path: string) => {
           // 回传
-          // return JSON.stringify(read_dir_songs(path))
           return read_dir_songs(path)
         },
         // 在文件夹模式中播放
         play_with_dir_mode: (path: string, index: number) => {
           // 读取播放
-          console.log(path)
           this.ark_music_player.set_play_list(read_dir_songs(path)[1], index)
+        },
+        // 获取播放列表
+        get_play_list_songs: (name: string = '') => {
+          // 回调
+          return read_play_list(name)
+        },
+        // 在播放列表模式中播放
+        play_with_play_list_mode: (name: string, index: number) => {
+          this.ark_music_player.set_play_list(read_play_list(name), index)
         },
 
       },
@@ -295,6 +297,7 @@ export default struct web_ui {
         'play', 'pause', 'seek', 'last_song', 'next_song', 'seek_song',
         'set_vol', 'get_song_image', 'back_to_player',
         'get_all_songs', 'play_with_all_songs', 'get_dir_songs', 'play_with_dir_mode',
+        'get_play_list_songs', 'play_with_play_list_mode',
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)
