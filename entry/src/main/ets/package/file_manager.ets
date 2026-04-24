@@ -16,7 +16,10 @@ import nativeModule from 'libentry.so'
 // 导入自创建模块 //
 /////////////////
 import { log } from './system_function'
-import { read_json_to_array, array_to_json_save } from './hashmap_save_load';
+import { read_json_to_array, array_to_json_save } from './hashmap_save_load'
+import { img_save } from "./cache_image_save"
+
+
 
 ///////////
 // 变量池 //
@@ -117,32 +120,6 @@ function customCompare(strA: string, strB: string): number {
   return lenA - lenB;
 }
 
-// 图片储存 //
-async function img_save(pixelMap: image.PixelMap, index: number) {
-  
-  // 创建图片打包器
-  const imagePackerApi = image.createImagePacker()
-  
-  // 设置打包参数
-  const packOpts: image.PackingOption = {
-    format: 'image/png',
-    quality: 100
-  }
-  
-  // 打包 PixelMap 为 PNG 数据
-  const packData = await imagePackerApi.packing(pixelMap, packOpts)
-  
-  // 写入文件
-  console.log(`正在保存第 ${index} 首歌曲封面`)
-  const file = fs.openSync(root_path + `/cache_img/${index}.png`, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-  fs.writeSync(file.fd, packData)
-  fs.closeSync(file)
-  
-  // 释放打包器
-  imagePackerApi.release()
-
-}
-
 // 获取元数据 //
 async function get_meta(path: string, name: string, file: fs.File): Promise<[string, string, string, string, string, string, string, string, string, string]> {
   // 创建对象
@@ -174,8 +151,8 @@ async function get_meta(path: string, name: string, file: fs.File): Promise<[str
     // 获取
     meta_img = await avMetadataExtractor.fetchAlbumCover()
     // 保存
-    img_save(meta_img, img_number)
     img_path = `cache_img/${img_number++}.png`
+    img_save(meta_img, img_path)
   } catch {
     // 使用默认封面
     img_path = 'cache_img/0.png'
@@ -270,7 +247,7 @@ export async function make_music_cache() {
   const mediaData = await resourceManager.getMediaContent($r('app.media.CD'))
   const imageSource = image.createImageSource(mediaData.buffer)
   const meta_img = await imageSource.createPixelMap()
-  img_save(meta_img, img_number++)
+  img_save(meta_img, `cache_img/${img_number++}.png`)
 
   // 删除all_songs //
   try {fs.unlinkSync(root_path + '/all_songs.json')} catch {}
