@@ -69,7 +69,7 @@ export default struct arkmusic_start {
   ///////////
   // 更新池 //
   //////////
-  @State is_first: boolean = false    // 第一次启动
+  @State is_first: boolean = true    // 第一次启动
   @State dir_ready: boolean = false    // 环境指示器（是否初始化）
 
   @State cache_ready: boolean = false   // 临时！目录准备指示器
