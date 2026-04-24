@@ -14,6 +14,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 // 导入自创建模块 //
 /////////////////
 import { log, notice, vib } from '../package/system_function'
+import { make_music_cache } from '../package/file_manager'
 
 ///////////
 // 变量池 //
@@ -71,6 +72,8 @@ export default struct arkmusic_start {
   @State is_first: boolean = false    // 第一次启动
   @State dir_ready: boolean = false    // 环境指示器（是否初始化）
 
+  @State cache_ready: boolean = false   // 临时！目录准备指示器
+
   ///////////
   // 继承池 //
   //////////
@@ -85,31 +88,30 @@ export default struct arkmusic_start {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  ////////////////
-  // 工作目录扫描 //
-  ///////////////
-  async scan_app_dir() {
-    let filesDir = this.context.filesDir
-    try {
-      fs.openSync(filesDir + 'version', fs.OpenMode.READ_ONLY)
-    } catch {
-      // 没有，进入向导
-      this.is_first = true
-    }
-  }
-
   //////////
   // 开始 //
   /////////
-  aboutToAppear(): void {
+  async aboutToAppear() {
     // 扫描工作目录
-    let filesDir = this.context.filesDir
     try {
-      fs.openSync(filesDir + 'version', fs.OpenMode.READ_ONLY)
+      fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.READ_ONLY)
+      this.ready = true
     } catch {
       // 没有，进入向导
       log('目录没有文件。')
       this.is_first = true
+      // 扫描目录
+      await make_music_cache()
+      // 创建version
+      console.log('#1')
+      console.log(getContext().filesDir + '/version.json')
+      const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+      fs.writeSync(file.fd, '')
+      fs.closeSync(file)
+      console.log('#2')
+      // 结束，放行
+      this.cache_ready = true
+      console.log('#3')
     }
   }
 
@@ -135,18 +137,20 @@ export default struct arkmusic_start {
       if (this.is_first) {
         Column() {
           Image($r('app.media.foreground_backup')).width('512px').height('512px')
-          Button('开始使用')
-            .width('144vp')
-            .height('72vp')
-            .backgroundColor('rgba(244, 198, 206, 1.0)')
+          if (this.cache_ready) {
+            Button('开始使用')
+              .width('144vp')
+              .height('72vp')
+              .backgroundColor('rgba(244, 198, 206, 1.0)')
+              .onClick(() => {
+                this.ready = true
+              })
+          }
         }
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(900)
           .backgroundColor('#fff').justifyContent(FlexAlign.SpaceAround)
           .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
-          .onClick(() => {
-            this.ready = true
-          })
       }
 
       ///////////////////////

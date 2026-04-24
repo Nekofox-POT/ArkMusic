@@ -5,8 +5,16 @@
 // 更新函数 //
 /////////////
 
+// 异步更新图片
+async function get_song_image(img, path) {
+    const tmp_img = await ark.get_song_image(path)
+    if (tmp_img) {
+        img.style.backgroundImage = `url(${tmp_img})`
+    }
+}
+
 // 更新所有歌曲 //
-async function update_all_songs(data) {
+function update_all_songs(data) {
     const slide = document.querySelector('#all_song_frame .slide')
 
     // 清空现有内容
@@ -51,10 +59,7 @@ async function update_all_songs(data) {
         slide.appendChild(div)
 
         // 异步加载图片
-        const tmp_img = await ark.get_song_image(tmp[8])
-        if (tmp_img) {
-            imgDiv.style.backgroundImage = `url(${tmp_img})`
-        }
+        get_song_image(imgDiv, tmp[8])
 
     }
 
