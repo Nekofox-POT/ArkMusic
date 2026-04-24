@@ -243,12 +243,12 @@ export default struct web_ui {
           // 打开图片
           let meta_img: image.PixelMap | null = null
           try {
-            const imageSource = image.createImageSource(root_path + path)
+            const imageSource = image.createImageSource(root_path + '/' + path)
             meta_img = await imageSource.createPixelMap()
             imageSource.release()
             return await pixel_to_base(meta_img)
           } catch (e) {
-            console.log(e)
+            console.log(`获取图片 ${path} 失败：${e}`)
             return ''
           }
         },

@@ -86,7 +86,7 @@ async function update_playing_songs(data, num) {
     set_background_color()
 
     // 更新头显
-    play_index_screen.innerText = `${playing_index} / ${all_songs}`
+    play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
 
 }
 

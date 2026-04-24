@@ -118,7 +118,7 @@ function customCompare(strA: string, strB: string): number {
 }
 
 // 图片储存 //
-async function img_save(pixelMap: image.PixelMap): Promise<string> {
+async function img_save(pixelMap: image.PixelMap, index: number) {
   
   // 创建图片打包器
   const imagePackerApi = image.createImagePacker()
@@ -133,15 +133,13 @@ async function img_save(pixelMap: image.PixelMap): Promise<string> {
   const packData = await imagePackerApi.packing(pixelMap, packOpts)
   
   // 写入文件
-  console.log(`正在扫描第 ${img_number} 首歌曲`)
-  const file = fs.openSync(root_path + `/cache_img/${img_number}.png`, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+  console.log(`正在保存第 ${index} 首歌曲封面`)
+  const file = fs.openSync(root_path + `/cache_img/${index}.png`, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
   fs.writeSync(file.fd, packData)
   fs.closeSync(file)
   
   // 释放打包器
   imagePackerApi.release()
-  
-  return `cache_img/${img_number++}.png`
 
 }
 
@@ -173,8 +171,11 @@ async function get_meta(path: string, name: string, file: fs.File): Promise<[str
   let meta_img: image.PixelMap | null = null
   let img_path: string = ''
   try {
+    // 获取
     meta_img = await avMetadataExtractor.fetchAlbumCover()
-    img_path = await img_save(meta_img)
+    // 保存
+    img_save(meta_img, img_number)
+    img_path = `cache_img/${img_number++}.png`
   } catch {
     // 使用默认封面
     img_path = 'cache_img/0.png'
@@ -269,7 +270,7 @@ export async function make_music_cache() {
   const mediaData = await resourceManager.getMediaContent($r('app.media.CD'))
   const imageSource = image.createImageSource(mediaData.buffer)
   const meta_img = await imageSource.createPixelMap()
-  await img_save(meta_img)
+  img_save(meta_img, img_number++)
 
   // 删除all_songs //
   try {fs.unlinkSync(root_path + '/all_songs.json')} catch {}
@@ -293,6 +294,7 @@ export async function make_music_cache() {
   // 保存 //
   // 所有歌曲保存
   array_to_json_save(cache_list, 'all_songs.json')
+  console.log(`配置文件保存完成！`)
 
 }
 
@@ -303,7 +305,6 @@ export function read_all_songs(): string[][] {
 
 // 读取文件夹的歌曲 //
 export function read_dir_songs(path: string = ''): string[][][] {
-
 
   let dir_data: string[][] = []
 

@@ -204,7 +204,12 @@ choice_bar_items.forEach((item) => {
 
         // 添加点击操作
         if (type === '文件夹') {
-            get_folder_songs()
+            let tmp = ''
+            for (const e of router_list) {
+                tmp += e
+                tmp += '/'
+            }
+            get_folder_songs(tmp)
         }
 
     })

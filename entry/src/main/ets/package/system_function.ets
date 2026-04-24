@@ -41,7 +41,6 @@ export async function notice(msg: string) {
 export function log(msg: string, level: string = 'info') {
   if (level == 'error') {
     hilog.error(DOMAIN, TAG, msg)
-    notice(msg)
     console.error(msg)
   } else {
     hilog.info(DOMAIN, TAG, msg)
