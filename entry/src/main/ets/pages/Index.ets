@@ -8,6 +8,7 @@
 // 导入第三方库 //
 ///////////////
 import { common } from '@kit.AbilityKit'
+import router from '@ohos.router';
 import emitter from '@ohos.events.emitter'
 
 //////////////////
@@ -15,9 +16,10 @@ import emitter from '@ohos.events.emitter'
 /////////////////
 import web_ui from './web_ui'
 import arkmusic_start from './start'
+import ark_music_scan from './scan'
+
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
-import { make_music_cache } from '../package/file_manager'
 
 ///////////
 // 变量池 //
@@ -47,6 +49,7 @@ struct Index {
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
+  @State scan_ui: boolean = false   // 扫描界面控制
 
   ////////
   // 类 //
@@ -63,7 +66,6 @@ struct Index {
   aboutToAppear(): void {
     log('程序开始运行...')
     reg_bg_run(this.context) // 注册后台
-    // make_music_cache()
   }
 
   ////////////////
@@ -105,6 +107,21 @@ struct Index {
         })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(900)
+          .transition(
+            TransitionEffect.opacity(0)
+              .animation({ duration: 500 })
+          )
+      }
+
+      /////////////
+      // 扫描界面 //
+      ////////////
+      if (this.scan_ui) {
+        ark_music_scan({
+          scan_ui: this.scan_ui
+        })
+          .width('100%').height('100%')
+          .position({ x: 0, y: 0 }).zIndex(950)
           .transition(
             TransitionEffect.opacity(0)
               .animation({ duration: 500 })

@@ -1,5 +1,6 @@
 //
 // 文件管理器
+// 广播：10
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////
@@ -9,16 +10,15 @@ import media from '@ohos.multimedia.media'
 import { image } from '@kit.ImageKit'
 import { picker, fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs, ListFileOptions } from '@kit.CoreFileKit'
-
+import emitter from '@ohos.events.emitter'
 import nativeModule from 'libentry.so'
 
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { log, notice } from './system_function'
+import { log } from './system_function'
 import { read_json_to_array, array_to_json_save } from './hashmap_save_load'
 import { img_save } from "./cache_image_save"
-
 
 
 ///////////
@@ -29,6 +29,7 @@ const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic').path   // 文件目录
 const root_path = getContext().filesDir
 let img_number = 0    // img缓存编号
+let m3u_cache = []    // m3u文件缓存
 
 // 字符权重池（比较用）
 enum CharType {
@@ -41,6 +42,13 @@ enum CharType {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 内部函数库 //
 /////////////
+
+// 扫描进度上报 //
+function notice(msg: string) {
+  emitter.emit({ eventId: 1010 }, { data: {
+    msg: msg
+  } })
+}
 
 // 字符比较器 //
 function getCharWeight(char: string): number {
@@ -147,6 +155,7 @@ async function get_meta(path: string, name: string, file: fs.File): Promise<[str
   // 获取专辑封面
   let meta_img: image.PixelMap | null = null
   let img_path: string = ''
+  notice(`正在处理：${name}`)
   try {
     // 获取
     meta_img = await avMetadataExtractor.fetchAlbumCover()
@@ -167,6 +176,7 @@ async function get_meta(path: string, name: string, file: fs.File): Promise<[str
 async function scan_download_dir(path: string = ''): Promise<string[][]> {
 
   // 扫描
+  notice(`正在扫描：/${path}}`)
   let files = fs.listFileSync(song_path + '/' + path, { recursion: false })
   let data: string[][] = []
   let dir_data: string[][] = []
@@ -242,7 +252,7 @@ export async function make_music_cache() {
   /////////////
   // 初始化集 //
   ////////////
-
+  notice('初始化数据库...')
   // 初始化cache_img //
   // 初始化img文件号
   img_number = 0
@@ -266,17 +276,18 @@ export async function make_music_cache() {
   ////////////////
   // 正常程序流程 //
   ///////////////
-
   // 扫描download的所有曲库 //
   cache_list = await scan_download_dir()
 
   // 排序 //
+  notice('正在排序')
   cache_list.sort((a: string[], b: string[]) => {
     return customCompare(a[0], b[0]);
   })
 
   // 保存 //
   // 所有歌曲保存
+  notice('写入数据库')
   array_to_json_save(cache_list, 'all_songs.json')
   console.log(`配置文件保存完成！`)
   notice(`配置文件保存完成！`)
