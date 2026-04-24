@@ -200,10 +200,17 @@ async function scan_download_dir(path: string = ''): Promise<string[][]> {
       // 文件夹 //
       // 创建文件夹
       fs.mkdirSync(root_path + '/dir_mode/' + path + '/' + i)
-      // 递归添加
-      // 添加
-      for (const e of await scan_download_dir(path + '/' + i)) {
-        dir_data.push(e)
+      // 递归添加扫描
+      let tmp: string[][] = await scan_download_dir(path + '/' + i)
+      // 如果没有
+      if (tmp.length === 0) {
+        // 删掉文件夹
+        fs.rmdirSync(root_path + '/dir_mode/' + path + '/' + i)
+      } else {
+        // 递归写入
+        for (const e of tmp) {
+          dir_data.push(e)
+        }
       }
 
     }

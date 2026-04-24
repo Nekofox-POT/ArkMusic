@@ -103,15 +103,11 @@ export default struct arkmusic_start {
       // 扫描目录
       await make_music_cache()
       // 创建version
-      console.log('#1')
-      console.log(getContext().filesDir + '/version.json')
       const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
       fs.writeSync(file.fd, '')
       fs.closeSync(file)
-      console.log('#2')
       // 结束，放行
       this.cache_ready = true
-      console.log('#3')
     }
   }
 
