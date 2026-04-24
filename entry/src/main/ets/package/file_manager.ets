@@ -29,7 +29,6 @@ const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic').path   // 文件目录
 const root_path = getContext().filesDir
 let img_number = 0    // img缓存编号
-let m3u_cache = []    // m3u文件缓存
 
 // 字符权重池（比较用）
 enum CharType {
@@ -172,6 +171,47 @@ async function get_meta(path: string, name: string, file: fs.File): Promise<[str
   return [path, name, song_title, song_artist, album, album_artist, author, composer, img_path, sample_rate]
 }
 
+// 播放列表处理 //
+async function make_m3u_playlist(path: string, env: string, name:string) {
+
+  // 读取格式化文件
+  let raw_txt: string = ''
+  try {
+    raw_txt = fs.readTextSync(path)
+  } catch {return}
+  const raw_list: string[] = raw_txt.replace(/\r\n/g, '\n').split('\n').filter(Boolean)
+
+  // 读取
+  let play_list: string[][] = []
+  for (const i of raw_list) {
+
+    // 文件 //
+    const tmp = env + '/' + i.replaceAll('\\', '/')
+    console.log(tmp)
+    try {
+      // 获取后缀
+      let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
+      // 后缀解析（普通音乐）
+      if (support_audio_format.includes(file_suffix)) {
+
+        // 获取元数据
+        let meta = await get_meta(tmp, nativeModule.extractFilename(tmp), fs.openSync(tmp))
+        // 添加
+        play_list.push(meta)
+      }
+      // 解析后缀（dsd音乐）
+      else if (support_dsd_format.includes(file_suffix)) {
+        console.log('有dsd音频！')
+      }
+    } catch (e) {log(e, 'error')}
+
+  }
+
+  // 保存
+  array_to_json_save(play_list, 'play_list_mode/' + name + '.json')
+
+}
+
 // 文件递归扫描（兼文件夹模式缓存） //
 async function scan_download_dir(path: string = ''): Promise<string[][]> {
 
@@ -202,6 +242,10 @@ async function scan_download_dir(path: string = ''): Promise<string[][]> {
         // 解析后缀（dsd音乐）
         else if (support_dsd_format.includes(file_suffix)) {
           console.log('有dsd音频！')
+        }
+        // 解析后缀（m3u播放列表）
+        else if (file_suffix === '.m3u') {
+          await make_m3u_playlist(tmp, song_path + '/' + path + '/', nativeModule.extractFilename(tmp))
         }
       } catch (e) {log(e, 'error')}
 
@@ -273,6 +317,10 @@ export async function make_music_cache() {
   try {fs.rmdirSync(root_path + '/dir_mode')} catch {}
   fs.mkdirSync(root_path + '/dir_mode')
 
+  // 初始化play_list_mode //
+  try {fs.rmdirSync(root_path + '/play_list_mode')} catch {}
+  fs.mkdirSync(root_path + '/play_list_mode')
+
   ////////////////
   // 正常程序流程 //
   ///////////////
@@ -331,4 +379,25 @@ export function read_dir_songs(path: string = ''): string[][][] {
   // 返回 //
   return [dir_data, songs_data]
 
+}
+
+// 读取播放列表 //
+export function read_play_list(name: string = ''): string[][] {
+  if (name) {
+
+    // 回传内容
+    return read_json_to_array('/play_list_mode/' + name)
+
+  } else {
+
+    // 获取列表 //
+    // 获取文件内所有列表
+    let tmp: string[][] = []
+    for (const i of fs.listFileSync(root_path + '/play_list_mode', { recursion: false })) {
+      tmp.push([nativeModule.extractFilename(root_path + '/play_list_mode/' + i)])
+    }
+    // 发送
+    return tmp
+
+  }
 }

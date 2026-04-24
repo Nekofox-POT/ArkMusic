@@ -77,6 +77,9 @@ choice_bar_scroll.addEventListener("touchstart", (e) => {
         choice_bar_animationId = null
     }
     
+    // 同步当前位置为滑动起点
+    choice_bar_translateX = choice_bar_currentTranslate
+    
     // 更新最大滑动距离
     choice_bar_updateMaxTranslate()
     
