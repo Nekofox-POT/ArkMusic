@@ -9,7 +9,7 @@ const BATCH_SIZE = 20 // 每批渲染的元素数量
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 懒加载观察器 //
-/////////////////
+///////////////
 
 let imageObserver = null
 
@@ -77,6 +77,7 @@ function create_song_element(tmp, index) {
     // 创建文本
     const p = document.createElement('p')
     p.className = 'font_color'
+    p.style.color = background_color
     p.textContent = tmp[1]
 
     // 组装元素

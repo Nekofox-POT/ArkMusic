@@ -20,7 +20,6 @@ import { log } from './system_function'
 import { read_json_to_array, array_to_json_save } from './hashmap_save_load'
 import { img_save } from "./cache_image_save"
 
-
 ///////////
 // 变量池 //
 //////////
@@ -29,6 +28,7 @@ const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic').path   // 文件目录
 const root_path = getContext().filesDir
 let img_number = 0    // img缓存编号
+let like_songs: string[][] = []   // 我的喜欢 列表
 
 // 字符权重池（比较用）
 enum CharType {
@@ -313,6 +313,12 @@ export async function make_music_cache() {
   // 删除all_songs //
   try {fs.unlinkSync(root_path + '/all_songs.json')} catch {}
 
+  //创建my like //
+  try {
+    fs.statSync(root_path + '/my_like.json')
+    like_songs = read_json_to_array('/my_like.json')
+  } catch {array_to_json_save([], '/my_like.json')}
+
   // 初始化dir_mode //
   try {fs.rmdirSync(root_path + '/dir_mode')} catch {}
   fs.mkdirSync(root_path + '/dir_mode')
@@ -385,8 +391,9 @@ export function read_dir_songs(path: string = ''): string[][][] {
 export function read_play_list(name: string = ''): string[][] {
   if (name) {
 
+    console.log('.js #1')
     // 回传内容
-    return read_json_to_array('/play_list_mode/' + name)
+    return read_json_to_array('/play_list_mode/' + name + '.json')
 
   } else {
 
@@ -396,8 +403,48 @@ export function read_play_list(name: string = ''): string[][] {
     for (const i of fs.listFileSync(root_path + '/play_list_mode', { recursion: false })) {
       tmp.push([nativeModule.extractFilename(root_path + '/play_list_mode/' + i)])
     }
+    // 排序
+    tmp.sort((a: string[], b: string[]) => {
+      return customCompare(a[0], b[0]);
+    })
     // 发送
     return tmp
 
   }
+}
+
+// 我的喜欢 查询 //
+export function search_my_like(match: string): boolean {
+  return (like_songs.includes([match]))
+}
+// 我的喜欢 更改 //
+export function set_my_like(match: string, mode: boolean) {
+  // true喜欢，false不喜欢
+  if (mode) {
+    if (!like_songs.includes([match])) {
+      like_songs.push([match])
+    }
+  } else {
+    let index: number = like_songs.indexOf([match])
+    if (index >= 0) {
+      like_songs.splice(index, 1)
+    }
+  }
+  console.log(`${like_songs}`)
+  // 保存
+  array_to_json_save(like_songs, '/my_like.json')
+}
+
+// 获取喜欢的歌的播放列表的内容 //
+export function get_my_like(): string[][] {
+  let tmp: string[][] = []
+  // 解析匹配播放列表
+  for (const i of like_songs) {
+    for (const e of read_all_songs()) {
+      if (i[0] === e[0]) {
+        tmp.push(e)
+      }
+    }
+  }
+  return tmp
 }

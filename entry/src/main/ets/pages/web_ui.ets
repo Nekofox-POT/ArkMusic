@@ -11,7 +11,7 @@ import { fileIo as fs } from '@kit.CoreFileKit';
 import { AVVolumePanel } from '@kit.AudioKit';
 import { audio } from '@kit.AudioKit';
 import { image } from '@kit.ImageKit';
-import { common } from '@kit.AbilityKit';
+import { common, FailureCode } from '@kit.AbilityKit';
 import emitter from '@ohos.events.emitter'
 import { router } from '@kit.ArkUI';
 import nativeModule from 'libentry.so';
@@ -23,7 +23,8 @@ import nativeModule from 'libentry.so';
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
 import {
-  read_all_songs, read_dir_songs, read_play_list
+  read_all_songs, read_dir_songs, read_play_list,
+  get_my_like, set_my_like, search_my_like
 } from '../package/file_manager'
 
 ///////////
@@ -281,7 +282,7 @@ export default struct web_ui {
           this.ark_music_player.set_play_list(read_dir_songs(path)[1], index)
         },
         // 获取播放列表
-        get_play_list_songs: (name: string = '') => {
+        get_play_list_songs: (name: string) => {
           // 回调
           return read_play_list(name)
         },
@@ -289,6 +290,19 @@ export default struct web_ui {
         play_with_play_list_mode: (name: string, index: number) => {
           this.ark_music_player.set_play_list(read_play_list(name), index)
         },
+        // 查询我喜欢的列表
+        get_my_like_song_list: () => {
+          return get_my_like()
+        },
+        // 查询这首歌是否喜欢
+        get_my_like_song: (match: string) => {
+          return search_my_like(match)
+        },
+        // 修改我的最爱
+        set_my_like_song: (match: string, mode: boolean) => {
+          set_my_like(match, mode)
+        }
+
 
       },
       "ark",
@@ -298,6 +312,7 @@ export default struct web_ui {
         'set_vol', 'get_song_image', 'back_to_player',
         'get_all_songs', 'play_with_all_songs', 'get_dir_songs', 'play_with_dir_mode',
         'get_play_list_songs', 'play_with_play_list_mode',
+        'get_my_like_song_list', 'get_my_like_song', 'set_my_like_song'
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)

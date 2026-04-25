@@ -49,7 +49,7 @@ struct Index {
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
-  @State scan_ui: boolean = true   // 扫描界面控制
+  @State scan_ui: boolean = false   // 扫描界面控制
 
   ////////
   // 类 //

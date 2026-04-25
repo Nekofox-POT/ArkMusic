@@ -46,6 +46,8 @@ export class audio_player {
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
   private random_record: number[] = []    // 随机模式记录表
   private random_record_index: number = 0   // 随机模式记录表 - 指针
+  private like_list: string[] = []    // 喜欢列表
+  private is_like: boolean = false  // 喜欢指示
 
   ////////
   // 类 //
@@ -107,6 +109,7 @@ export class audio_player {
   /////////////
   // 广播列表 //
   ////////////
+  // 列表发送 //
   private send_play_list(play_list: string[][] = [], play_number: number = 0) {
     // 发送广播
     emitter.emit(
@@ -149,6 +152,7 @@ export class audio_player {
     if (song_index != this.play_list_index) { this.play_list_index = song_index }
     // 使用官方播放器
     if (this.player_choice == 0) {
+      console.log(this.play_list[song_index])
       const result = await this.av_player.audio_set(this.play_list[song_index])
       // 加载失败，报错
       if (!result[0]) {
