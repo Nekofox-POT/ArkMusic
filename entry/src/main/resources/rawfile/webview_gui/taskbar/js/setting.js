@@ -73,3 +73,17 @@ function songs_update(mode, obj) {
 function playing_update(obj, num) {
     play_list.contentWindow.postMessage({action: 'update_playing_songs', arg1: obj, arg2: num}, '*')
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 喜欢图标更改 //
+///////////////
+function set_like(is_like) {
+    if (is_like) {
+        player_like_button.querySelectorAll('.svg_color').forEach(tmp => {
+            tmp.style.fill = active_color
+        })
+    } else {
+        player_like_button.querySelectorAll('.svg_color').forEach(tmp => {
+            tmp.style.fill = background_color
+        })
+    }
+}

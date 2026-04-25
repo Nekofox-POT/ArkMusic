@@ -24,3 +24,4 @@ const frame_map = {
 ////////////
 let page = '所有歌曲'   // 当前页面
 let router_list = []    // 当前dir位置
+let play_list_backup = ''   // 播放列表备份（返回手势用）

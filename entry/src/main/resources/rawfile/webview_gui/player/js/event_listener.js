@@ -132,5 +132,9 @@ player_like_button.addEventListener("touchstart", () => {
 })
 player_like_button.addEventListener("touchend", () => {
     player_like_button.style.transform = 'scale(1)'
-    // ark.like(
+})
+player_like_button.addEventListener("click", () => {
+
+    ark.set_my_like_song(play_list_backup[play_index_backup][0], !is_like)
+
 })

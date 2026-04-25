@@ -79,6 +79,11 @@ function playList_create_song_element(tmp, index, num) {
     // 创建文本
     const p = document.createElement('p')
     p.className = (index === num) ? 'font_color font_active_color' : 'font_color'
+    if (index === num) {
+        p.style.color = active_color
+    } else {
+        p.style.color = background_color
+    }
     p.textContent = tmp[1]
 
     // 组装元素
@@ -128,8 +133,10 @@ function update_highlight(num) {
         if (p) {
             if (parseInt(item.id) === num) {
                 p.className = 'font_color font_active_color'
+                p.style.color = active_color
             } else {
                 p.className = 'font_color'
+                p.style.color = background_color
             }
         }
     })

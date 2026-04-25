@@ -16,9 +16,6 @@ import { log } from './system_function'
 export function array_to_json_save(data: string[][], path: string): boolean {
 
   // 转换
-  if (!data || data.length === 0) {
-    return false
-  }
   const packData = JSON.stringify(data)
 
   // 保存
