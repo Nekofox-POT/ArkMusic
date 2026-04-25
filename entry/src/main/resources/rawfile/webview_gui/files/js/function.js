@@ -337,5 +337,8 @@ function router_back() {
             get_play_list_songs('')
         }
     }
+    else if (type === '播放列表') {
+        ark.back_to_player()
+    }
 
 }

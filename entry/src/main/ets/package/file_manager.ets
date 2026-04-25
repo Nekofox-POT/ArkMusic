@@ -412,39 +412,3 @@ export function read_play_list(name: string = ''): string[][] {
 
   }
 }
-
-// 我的喜欢 查询 //
-export function search_my_like(match: string): boolean {
-  return (like_songs.includes([match]))
-}
-// 我的喜欢 更改 //
-export function set_my_like(match: string, mode: boolean) {
-  // true喜欢，false不喜欢
-  if (mode) {
-    if (!like_songs.includes([match])) {
-      like_songs.push([match])
-    }
-  } else {
-    let index: number = like_songs.indexOf([match])
-    if (index >= 0) {
-      like_songs.splice(index, 1)
-    }
-  }
-  console.log(`${like_songs}`)
-  // 保存
-  array_to_json_save(like_songs, '/my_like.json')
-}
-
-// 获取喜欢的歌的播放列表的内容 //
-export function get_my_like(): string[][] {
-  let tmp: string[][] = []
-  // 解析匹配播放列表
-  for (const i of like_songs) {
-    for (const e of read_all_songs()) {
-      if (i[0] === e[0]) {
-        tmp.push(e)
-      }
-    }
-  }
-  return tmp
-}
