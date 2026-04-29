@@ -121,6 +121,8 @@ music_bar_touch.addEventListener("touchstart", (e) => {
         // 显示bg_song_range
         bg_song_range.style.top = '0'
         bg_song_range.style.opacity = '1'
+        // 更新时间显示
+        change_song_range()
         // 记录调节基准点
         music_bar_rangeStartX = e.touches[0].clientX
         music_bar_rangeStartValue = Number(song_range.value)

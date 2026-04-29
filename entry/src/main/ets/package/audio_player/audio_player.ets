@@ -120,6 +120,16 @@ export class audio_player {
       } }
     )
   }
+  // 喜欢广播 //
+  private like_broadcast() {
+    // 发送广播
+    emitter.emit(
+      { eventId: 830 },
+      { data: {
+        is_like: this.is_like
+      } }
+    )
+  }
 
   // 元音频 //
   private async reg_session() {
@@ -142,6 +152,7 @@ export class audio_player {
       artist: '未知歌手',
     })
   }
+
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 外部函数 //
@@ -308,10 +319,11 @@ export class audio_player {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
-  constructor(context_input: common.UIAbilityContext) {
+  constructor(context_input: common.UIAbilityContext, like_list: string[][]) {
     log('音频管理器就绪.')
     // 记录身份证
     this.context = context_input
+    // 记录like列表
     // 注册元音频
     this.reg_session()
     // 设置广播监听

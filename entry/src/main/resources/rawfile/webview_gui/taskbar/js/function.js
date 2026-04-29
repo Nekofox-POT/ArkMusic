@@ -152,6 +152,7 @@ function change_song_range(value = null) {
     player_controller_range.style.left = `-${(song_range.value / song_range.max) * 100}%`
     // 更新时间
     player_song_range_correct_time.innerText = second_to_time(song_range.value)
+    bg_song_range_time.innerText = `${second_to_time(song_range.value)} / ${second_to_time(song_range.max)}`
 
 }
 
@@ -159,6 +160,7 @@ function change_song_range(value = null) {
 function change_song_range_duration(value) {
     song_range.max = value
     player_song_range_duration_time.innerText = second_to_time(value)
+    bg_song_range_time.innerText = `${second_to_time(song_range.value)} / ${second_to_time(value)}`
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,6 +172,22 @@ function set_meta(meta) {
     taskbar_music_name.innerText = meta[0]
     player_title.innerText = meta[1]
     player_sub_title.innerText = meta[2]
+    check_title_overflow()
+}
+
+function check_title_overflow() {
+    player_title_frame.classList.remove('marquee')
+    player_sub_title_frame.classList.remove('marquee')
+
+    void player_title_frame.offsetWidth
+    void player_sub_title_frame.offsetWidth
+
+    if (player_title.scrollWidth > player_title_frame.clientWidth * 0.8) {
+        player_title_frame.classList.add('marquee')
+    }
+    if (player_sub_title.scrollWidth > player_sub_title_frame.clientWidth * 0.8) {
+        player_sub_title_frame.classList.add('marquee')
+    }
 }
 
 // 封面 //
