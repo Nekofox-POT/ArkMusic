@@ -5,6 +5,7 @@
     height: 50px;
     border-radius: 25px;
     overflow: hidden;
+    backdrop-filter: blur(10px);
 
     position: fixed;
     top: calc(100vh - 70px);
