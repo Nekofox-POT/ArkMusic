@@ -85,6 +85,7 @@ player_sub_title_frame.addEventListener("touchend", () => {
     player_sub_title_frame.classList.remove('active')
     taskbar_page_update(0)
 })
+window.addEventListener('resize', check_title_overflow)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 播放方式监听 //
 ///////////////

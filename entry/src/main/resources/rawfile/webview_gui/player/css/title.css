@@ -13,6 +13,9 @@
 
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
+    overflow: hidden;
+    white-space: nowrap;
+
 }
 .player_title.active {
     transform: scale(0.9);
@@ -29,6 +32,16 @@
     font-size: 1rem;
     font-weight: 750;
 
+    white-space: nowrap;
+
+}
+
+.player_title.marquee p {
+    display: inline-block;
+    width: max-content;
+    padding-left: 120%;
+    line-height: 40px;
+    animation: marquee 8s linear infinite;
 }
 
 .player_sub_title {
@@ -46,6 +59,9 @@
 
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
+    overflow: hidden;
+    white-space: nowrap;
+
 }
 .player_sub_title.active {
     transform: scale(0.9);
@@ -62,4 +78,18 @@
     font-size: 0.75rem;
     font-weight: 600;
 
+    white-space: nowrap;
+
+}
+
+.player_sub_title.marquee p {
+    display: inline-block;
+    width: max-content;
+    padding-left: 120%;
+    line-height: 30px;
+    animation: marquee 8s linear infinite;
+}
+
+@keyframes marquee {
+    to { transform: translateX(-110%); }
 }
