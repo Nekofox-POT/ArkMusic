@@ -39,6 +39,7 @@ export default struct ark_music_scan {
   // 继承池 //
   //////////
   @Link scan_ui: boolean
+  @Link ready: boolean
 
   ////////
   // 类 //
@@ -50,6 +51,7 @@ export default struct ark_music_scan {
     // 执行数据库创建 //
     await make_music_cache()
     // 退出 //
+    this.ready = true
     setTimeout(() => {this.scan_ui = false}, 1000)
   }
   aboutToDisappear(): void {
