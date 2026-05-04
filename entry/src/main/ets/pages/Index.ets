@@ -49,7 +49,7 @@ struct Index {
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
-  @State scan_ui: boolean = false   // 扫描界面控制
+  @State scan_ui: boolean = true   // 扫描界面控制
 
   ////////
   // 类 //
@@ -100,25 +100,26 @@ struct Index {
       /////////////
       // 开始页面 //
       ////////////
-      if (!this.ready) {
-        arkmusic_start({
-          context: this.context,
-          ready: this.ready
-        })
-          .width('100%').height('100%')
-          .position({ x: 0, y: 0 }).zIndex(900)
-          .transition(
-            TransitionEffect.opacity(0)
-              .animation({ duration: 500 })
-          )
-      }
+      // if (!this.ready) {
+      //   arkmusic_start({
+      //     context: this.context,
+      //     ready: this.ready
+      //   })
+      //     .width('100%').height('100%')
+      //     .position({ x: 0, y: 0 }).zIndex(900)
+      //     .transition(
+      //       TransitionEffect.opacity(0)
+      //         .animation({ duration: 500 })
+      //     )
+      // }
 
       /////////////
       // 扫描界面 //
       ////////////
       if (this.scan_ui) {
         ark_music_scan({
-          scan_ui: this.scan_ui
+          scan_ui: this.scan_ui,
+          ready: this.ready
         })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(950)
