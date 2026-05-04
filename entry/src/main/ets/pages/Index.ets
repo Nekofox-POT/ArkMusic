@@ -54,7 +54,7 @@ struct Index {
   ////////
   // 类 //
   ///////
-  @State ark_music_player: audio_player = new audio_player(this.context)   // 播放器核心
+  @State ark_music_player: audio_player = new audio_player(this.context, [])   // 播放器核心
 
   ///////////
   // 初始化 //

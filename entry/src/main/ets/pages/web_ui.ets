@@ -23,7 +23,7 @@ import nativeModule from 'libentry.so';
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
 import {
-  read_all_songs, read_dir_songs, read_play_list,
+  read_all_songs, read_dir_songs, read_play_list, read_my_like_list
 } from '../package/file_manager'
 
 ///////////
@@ -153,6 +153,10 @@ export default struct web_ui {
       // 转发js
       this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.play_list)}, ${eventData.data?.play_number})`)
     })
+    // 喜欢监听 //
+    emitter.on({eventId: 830}, (eventData: emitter.EventData) => {
+      this.ark_music_ui.runJavaScript(`set_like(${eventData.data?.is_like})`)
+    })
     // 返回手势监听 //
     emitter.on({eventId: 912}, async () => {
       // 转发js
@@ -186,6 +190,14 @@ export default struct web_ui {
       log('音量条关闭')
       this.audioVolumeManager.off('streamVolumeChange', this.volumeCallback)
     }
+  }
+
+  /////////////
+  // 载入操作 //
+  ////////////
+  aboutToAppear(): void {
+    // audio_player植入喜欢列表
+    this.ark_music_player.set_like_list(read_my_like_list())
   }
 
   /////////////
@@ -289,6 +301,10 @@ export default struct web_ui {
         play_with_play_list_mode: (name: string, index: number) => {
           this.ark_music_player.set_play_list(read_play_list(name), index)
         },
+        // 喜欢的歌曲
+        set_like: () => {
+          this.ark_music_player.set_is_like()
+        },
 
       },
       "ark",
@@ -297,7 +313,7 @@ export default struct web_ui {
         'play', 'pause', 'seek', 'last_song', 'next_song', 'seek_song',
         'set_vol', 'get_song_image', 'back_to_player',
         'get_all_songs', 'play_with_all_songs', 'get_dir_songs', 'play_with_dir_mode',
-        'get_play_list_songs', 'play_with_play_list_mode',
+        'get_play_list_songs', 'play_with_play_list_mode', 'set_like'
       ]
     )} catch (e) {
       console.error(`注册webview时出现了错误: ${e}.`)

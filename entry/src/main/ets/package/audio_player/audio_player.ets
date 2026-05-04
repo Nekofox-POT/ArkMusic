@@ -17,6 +17,7 @@ import { avSession } from '@kit.AVSessionKit'
 ////////////////
 import { av_player } from './by_av_player'
 import { log, notice } from '../system_function'
+import { array_to_json_save } from '../hashmap_save_load'
 
 ///////////
 // 变量池 //
@@ -46,8 +47,7 @@ export class audio_player {
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
   private random_record: number[] = []    // 随机模式记录表
   private random_record_index: number = 0   // 随机模式记录表 - 指针
-  private like_list: string[] = []    // 喜欢列表
-  private is_like: boolean = false  // 喜欢指示
+  private like_list: string[][] = []    // 喜欢列表
 
   ////////
   // 类 //
@@ -121,12 +121,12 @@ export class audio_player {
     )
   }
   // 喜欢广播 //
-  private like_broadcast() {
+  private like_broadcast(tmp: boolean) {
     // 发送广播
     emitter.emit(
       { eventId: 830 },
       { data: {
-        is_like: this.is_like
+        is_like: tmp
       } }
     )
   }
@@ -142,6 +142,9 @@ export class audio_player {
     this.session.on("playPrevious", () => {this.last_song()}) // 上一首
     this.session.on("playNext", () => {this.next_song()}) //下一首
     this.session.on("seek", (position) => {this.seek(position)})  // 跳转
+    this.session.on("toggleFavorite", () => {
+      this.set_is_like()
+    })
     this.session.on("answer", () => {console.log('avs:接听电话')})
     this.session.on("hangUp", () => {console.log('avs:挂断电话')})
     this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
@@ -174,6 +177,15 @@ export class audio_player {
             emitter.emit({ eventId: 712 }, { data: { status: 'complete' } })
           }
         }, 3000)
+      }
+      // 设置喜欢
+      const index = this.like_list.findIndex(item => item[0] === this.play_list[this.play_list_index])
+      if (index === -1) {
+        this.session?.setAVPlaybackState({ isFavorite: false })
+        this.like_broadcast(false)
+      } else {
+        this.session?.setAVPlaybackState({ isFavorite: true })
+        this.like_broadcast(true)
       }
     }
     // 广播跳转
@@ -277,7 +289,6 @@ export class audio_player {
     // 点歌
     this.set_audio_play(index)
   }
-
   // 更改播放进度 //
   seek(time: number) {
     this.av_player.audio_seek(time)
@@ -302,6 +313,40 @@ export class audio_player {
       this.play_list = tmp
     } catch {}
     return this.get_play_list()
+  }
+
+  // 导入喜欢列表 //
+  set_like_list(tmp: string[][]) {
+    this.like_list = tmp
+    console.log('导入播放列表')
+    console.log(`${this.like_list}`)
+  }
+
+  // 导出播放列表 //
+  send_like_list(tmp: string[][]) {
+    array_to_json_save(tmp, '/my_like.json')
+  }
+
+  // 喜欢切换 //
+  set_is_like() {
+    const index = this.like_list.findIndex(item => item[0] === this.play_list[this.play_list_index])
+    if (index !== -1) {
+      console.log('取消喜欢')
+      this.like_list.splice(index, 1)
+      this.session?.setAVPlaybackState({ isFavorite: false })
+      this.like_broadcast(false)
+      this.send_like_list(this.like_list)
+      console.log('导出播放列表')
+      console.log(`${this.like_list}`)
+    } else {
+      console.log('喜欢❤~')
+      this.like_list.push([this.play_list[this.play_list_index]])
+      this.session?.setAVPlaybackState({ isFavorite: true })
+      this.like_broadcast(true)
+      this.send_like_list(this.like_list)
+      console.log('导出播放列表')
+      console.log(`${this.like_list}`)
+    }
   }
 
   // 销毁 //
