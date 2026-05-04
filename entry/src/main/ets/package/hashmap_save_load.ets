@@ -15,6 +15,8 @@ import { log } from './system_function'
 // string[][]转json储存 //
 export function array_to_json_save(data: string[][], path: string): boolean {
 
+  try {fs.rmdirSync(getContext().filesDir + '/' + path)} catch {}
+
   // 转换
   const packData = JSON.stringify(data)
 

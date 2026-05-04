@@ -412,3 +412,8 @@ export function read_play_list(name: string = ''): string[][] {
 
   }
 }
+
+// 读取我的喜欢 //
+export function read_my_like_list(): string[][] {
+  return read_json_to_array('/my_like.json')
+}
