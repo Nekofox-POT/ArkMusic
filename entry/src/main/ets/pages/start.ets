@@ -19,7 +19,7 @@ import { make_music_cache } from '../package/file_manager'
 ///////////
 // 变量池 //
 //////////
-const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic/').path // 根目录
+const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic/').path // 根目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //

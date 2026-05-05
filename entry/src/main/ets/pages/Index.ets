@@ -100,18 +100,18 @@ struct Index {
       /////////////
       // 开始页面 //
       ////////////
-      // if (!this.ready) {
-      //   arkmusic_start({
-      //     context: this.context,
-      //     ready: this.ready
-      //   })
-      //     .width('100%').height('100%')
-      //     .position({ x: 0, y: 0 }).zIndex(900)
-      //     .transition(
-      //       TransitionEffect.opacity(0)
-      //         .animation({ duration: 500 })
-      //     )
-      // }
+      if (!this.ready) {
+        arkmusic_start({
+          context: this.context,
+          ready: this.ready
+        })
+          .width('100%').height('100%')
+          .position({ x: 0, y: 0 }).zIndex(900)
+          .transition(
+            TransitionEffect.opacity(0)
+              .animation({ duration: 500 })
+          )
+      }
 
       /////////////
       // 扫描界面 //

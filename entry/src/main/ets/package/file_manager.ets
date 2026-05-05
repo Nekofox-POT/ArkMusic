@@ -25,7 +25,7 @@ import { img_save } from "./cache_image_save"
 //////////
 const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
 const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
-const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofoxpot.arkmusic').path   // 文件目录
+const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic').path   // 文件目录
 const root_path = getContext().filesDir
 let img_number = 0    // img缓存编号
 let like_songs: string[][] = []   // 我的喜欢 列表
@@ -330,6 +330,10 @@ export async function make_music_cache() {
   ////////////////
   // 正常程序流程 //
   ///////////////
+  console.log('#0')
+  let files = fs.listFileSync(song_path + '/', { recursion: true })
+  console.log('#1')
+
   // 扫描download的所有曲库 //
   cache_list = await scan_download_dir()
 
