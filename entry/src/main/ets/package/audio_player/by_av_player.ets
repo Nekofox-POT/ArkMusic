@@ -17,6 +17,7 @@ import nativeModule from 'libentry.so'
 // 导入自创建模块 //
 /////////////////
 import { log } from '../system_function'
+import { get_image, get_meta } from '../meta_manager'
 
 ///////////
 // 变量池 //

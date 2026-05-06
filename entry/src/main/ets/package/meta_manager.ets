@@ -26,8 +26,6 @@ function translate_second(duration: number): string {
 // 外部函数 //
 ////////////
 
-
-
 // 封面获取 //
 export async function get_image(path: string): Promise<image.PixelMap> {
 
@@ -35,7 +33,8 @@ export async function get_image(path: string): Promise<image.PixelMap> {
 
   // 创建对象
   let avMetadataExtractor = await media.createAVMetadataExtractor()
-  avMetadataExtractor.fdSrc = fs.openSync(path)
+  let tmp = fs.openSync(path)
+  avMetadataExtractor.fdSrc = tmp
 
   // 获取专辑封面
   try {

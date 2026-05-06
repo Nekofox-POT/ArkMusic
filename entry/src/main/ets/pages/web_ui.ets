@@ -16,7 +16,6 @@ import emitter from '@ohos.events.emitter'
 import { router } from '@kit.ArkUI';
 import nativeModule from 'libentry.so';
 
-
 //////////////////
 // 导入自创建模块 //
 /////////////////
@@ -25,6 +24,7 @@ import { audio_player } from '../package/audio_player_old/audio_player'
 import {
   read_all_songs, read_dir_songs, read_play_list, read_my_like_list
 } from '../package/file_manager'
+import { get_image_base64 } from '../package/meta_manager'
 
 ///////////
 // 变量池 //
@@ -258,7 +258,8 @@ export default struct web_ui {
             const imageSource = image.createImageSource(root_path + '/' + path)
             meta_img = await imageSource.createPixelMap()
             imageSource.release()
-            return await pixel_to_base(meta_img)
+            console.log(root_path + '/' + path)
+            return await get_image_base64(root_path + '/' + path)
           } catch (e) {
             console.log(`获取图片 ${path} 失败：${e}`)
             return ''
