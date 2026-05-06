@@ -1,0 +1,14 @@
+prefix=/home/pot/Downloads/ffmpeg-8.1.1/install
+exec_prefix=${prefix}
+libdir=/home/pot/Downloads/ffmpeg-8.1.1/install/lib
+includedir=/home/pot/Downloads/ffmpeg-8.1.1/install/include
+
+Name: libswscale
+Description: FFmpeg image rescaling library
+Version: 9.5.101
+Requires: 
+Requires.private: libavutil >= 60.26.101
+Conflicts:
+Libs: -L${libdir}  -lswscale 
+Libs.private: -lm
+Cflags: -I${includedir}

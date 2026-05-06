@@ -1,0 +1,14 @@
+prefix=/home/pot/Downloads/ffmpeg-8.1.1/install
+exec_prefix=${prefix}
+libdir=/home/pot/Downloads/ffmpeg-8.1.1/install/lib
+includedir=/home/pot/Downloads/ffmpeg-8.1.1/install/include
+
+Name: libavformat
+Description: FFmpeg container format library
+Version: 62.12.101
+Requires: 
+Requires.private: libavcodec >= 62.28.101, libavutil >= 60.26.101
+Conflicts:
+Libs: -L${libdir}  -lavformat 
+Libs.private: -lm -lz
+Cflags: -I${includedir}

@@ -3,6 +3,7 @@
 #include "package/buffer_to_base64/buffer_to_base64.h" // 引用我们的头文件
 #include "package/image_color_calculate/image_color_calculate.h"
 #include "package/extract_filename/extract_filename.h"
+#include "package/ffmpeg_manager/ffmpeg_manager.h"
 
 // --- 功能1：Base64 编码 (完整代码，请替换原来的省略版本) ---
 static napi_value EncodeImageToBase64(napi_env env, napi_callback_info info) {
@@ -123,7 +124,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         // 暴露三个函数给 ArkTS
         {"encodeImageToBase64", nullptr, EncodeImageToBase64, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getImageAverageColor", nullptr, GetImageAverageColor, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"extractFilename", nullptr, ExtractFilename, nullptr, nullptr, nullptr, napi_default, nullptr}
+        {"extractFilename", nullptr, ExtractFilename, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"getAudioMetadata", nullptr, GetAudioMetadata, nullptr, nullptr, nullptr, napi_default, nullptr}
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

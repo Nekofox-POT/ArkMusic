@@ -21,7 +21,7 @@ import nativeModule from 'libentry.so';
 // 导入自创建模块 //
 /////////////////
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
-import { audio_player } from '../package/audio_player/audio_player'
+import { audio_player } from '../package/audio_player_old/audio_player'
 import {
   read_all_songs, read_dir_songs, read_play_list, read_my_like_list
 } from '../package/file_manager'

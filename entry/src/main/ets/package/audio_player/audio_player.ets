@@ -1,5 +1,5 @@
 //
-// 音频处理器
+// 音频播放器
 // 广播频段：8
 // 81x:转发元数据
 // 82x:播报播放列表和序号
@@ -37,21 +37,15 @@ export class audio_player {
   // 环境准备 //
   ////////////
 
-  ///////////
   // 变量池 //
-  //////////
   private context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext   // 身份证记录
   private play_list: string[] = []    // 播放列表
   private play_list_index: number = 0   // 播放列表指针
-  private player_choice: number = 0   // 播放器使用 ( 0：avplayer播放器 )
+  private player_choice: number = 0   // 播放器使用 ( 0：avplayer播放器 1：ffmpeg播放器 )
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
-  private random_record: number[] = []    // 随机模式记录表
-  private random_record_index: number = 0   // 随机模式记录表 - 指针
   private like_list: string[][] = []    // 喜欢列表
 
-  ////////
   // 类 //
-  ///////
   private av_player = new av_player()   // 官方av_player播放器
   private session: avSession.AVSession | null = null; // 元音频
 
@@ -202,7 +196,6 @@ export class audio_player {
     // 设置
     this.play_list = tmp
     this.play_list_index = index
-    this.random_record = []
     // 广播列表
     this.send_play_list(list, this.play_list_index)
     // 初始化（播放）
@@ -364,11 +357,8 @@ export class audio_player {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
-  constructor(context_input: common.UIAbilityContext, like_list: string[][]) {
+  constructor() {
     log('音频管理器就绪.')
-    // 记录身份证
-    this.context = context_input
-    // 记录like列表
     // 注册元音频
     this.reg_session()
     // 设置广播监听

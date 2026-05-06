@@ -51,6 +51,14 @@ function notice(msg: string) {
 
 // 字符比较器 //
 function getCharWeight(char: string): number {
+
+  enum CharType {
+    PUNCTUATION = 0, // 符号（包含 '.'）
+    DIGIT = 1,       // 数字
+    LETTER = 2,      // 字母
+    CHINESE = 3      // 中文
+  }
+
   if (!char) return CharType.CHINESE; // 兜底空字符串
 
   const code = char.charCodeAt(0);
@@ -331,7 +339,7 @@ export async function make_music_cache() {
   // 正常程序流程 //
   ///////////////
   console.log('#0')
-  let files = fs.listFileSync(song_path + '/', { recursion: true })
+  // let files = fs.listFileSync(song_path + '/', { recursion: true })
   console.log('#1')
 
   // 扫描download的所有曲库 //

@@ -1,0 +1,14 @@
+prefix=/home/pot/Downloads/ffmpeg-8.1.1/install
+exec_prefix=${prefix}
+libdir=/home/pot/Downloads/ffmpeg-8.1.1/install/lib
+includedir=/home/pot/Downloads/ffmpeg-8.1.1/install/include
+
+Name: libavutil
+Description: FFmpeg utility library
+Version: 60.26.101
+Requires: 
+Requires.private: 
+Conflicts:
+Libs: -L${libdir}  -lavutil 
+Libs.private: -lm -lz -pthread
+Cflags: -I${includedir}

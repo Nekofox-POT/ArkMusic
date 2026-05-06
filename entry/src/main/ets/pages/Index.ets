@@ -19,7 +19,7 @@ import arkmusic_start from './start'
 import ark_music_scan from './scan'
 
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
-import { audio_player } from '../package/audio_player/audio_player'
+import { audio_player } from '../package/audio_player_old/audio_player'
 
 ///////////
 // 变量池 //
@@ -49,7 +49,7 @@ struct Index {
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
-  @State scan_ui: boolean = true   // 扫描界面控制
+  @State scan_ui: boolean = false   // 扫描界面控制
 
   ////////
   // 类 //
