@@ -19,18 +19,17 @@ import nativeModule from 'libentry.so';
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { log, notice, vib, reg_bg_run } from '../package/system_function'
-import { audio_player } from '../package/audio_player_old/audio_player'
+import { log, notice, vib } from '../package/system_function'
+import { audio_player } from '../package/audio_player/audio_player'
 import {
   read_all_songs, read_dir_songs, read_play_list, read_my_like_list
 } from '../package/file_manager'
-import { get_image_base64 } from '../package/meta_manager'
+import { image_to_base64 } from '../package/meta_manager'
 
 ///////////
 // 变量池 //
 //////////
 const root_path = getContext().filesDir
-const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic/').path // 根目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -119,21 +118,25 @@ export default struct web_ui {
   ////////////
   listen_broadcast() {
     // 元数据监听 //
-    emitter.on({ eventId: 810 }, async (eventData: emitter.EventData) => {
+    emitter.on({ eventId: 712 }, async (eventData: emitter.EventData) => {
+      console.log('收到！')
+      console.log(eventData.data?.name)
+      console.log(eventData.data?.title)
+      console.log(eventData.data?.artist)
       // 载入
-      this.ark_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.song_name, eventData.data?.title, eventData.data?.artist])})`)
+      this.ark_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.name, eventData.data?.title, eventData.data?.artist])})`)
       // 图片编码发送
-      const base_img: string = await pixel_to_base(eventData.data?.img)
+      const base_img: string = await pixel_to_base(eventData.data?.image)
       this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)
       // 颜色值调整
-      if (await pixel_light_count(eventData.data?.img) > 128) {
+      if (await pixel_light_count(eventData.data?.image) > 128) {
         this.ark_music_ui.runJavaScript(`set_background_color('rgba(0, 0, 0, 0.4)')`)
       } else {
         this.ark_music_ui.runJavaScript(`set_background_color('rgba(255, 255, 255, 0.6)')`)
       }
     })
     // 播放状态监听 //
-    emitter.on({ eventId: 812 }, (eventData: emitter.EventData) => {
+    emitter.on({ eventId: 714 }, (eventData: emitter.EventData) => {
       if (eventData.data?.status == 'playing') {
         this.ark_music_ui.runJavaScript(`set_play_status(true)`)
       } else {
@@ -141,21 +144,21 @@ export default struct web_ui {
       }
     })
     // 音频总时长监听 //
-    emitter.on({ eventId: 813 }, (eventData: emitter.EventData) => {
+    emitter.on({ eventId: 715 }, (eventData: emitter.EventData) => {
       this.ark_music_ui.runJavaScript(`change_song_range_duration(${eventData.data?.duration_time})`)
     })
     // 音频播放时长监听 //
-    emitter.on({ eventId: 814 }, (eventData: emitter.EventData) => {
+    emitter.on({ eventId: 716 }, (eventData: emitter.EventData) => {
       this.ark_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
     })
     // 播放列表监听 //
-    emitter.on({eventId: 820}, (eventData: emitter.EventData) => {
-      // 转发js
-      this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.play_list)}, ${eventData.data?.play_number})`)
-    })
+    // emitter.on({eventId: 820}, (eventData: emitter.EventData) => {
+    //   // 转发js
+    //   this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.play_list)}, ${eventData.data?.play_number})`)
+    // })
     // 喜欢监听 //
-    emitter.on({eventId: 830}, (eventData: emitter.EventData) => {
-      this.ark_music_ui.runJavaScript(`set_like(${eventData.data?.is_like})`)
+    emitter.on({eventId: 717}, (eventData: emitter.EventData) => {
+      this.ark_music_ui.runJavaScript(`set_like(${eventData.data?.like})`)
     })
     // 返回手势监听 //
     emitter.on({eventId: 912}, async () => {
@@ -196,8 +199,6 @@ export default struct web_ui {
   // 载入操作 //
   ////////////
   aboutToAppear(): void {
-    // audio_player植入喜欢列表
-    this.ark_music_player.set_like_list(read_my_like_list())
   }
 
   /////////////
@@ -258,8 +259,7 @@ export default struct web_ui {
             const imageSource = image.createImageSource(root_path + '/' + path)
             meta_img = await imageSource.createPixelMap()
             imageSource.release()
-            console.log(root_path + '/' + path)
-            return await get_image_base64(root_path + '/' + path)
+            return await image_to_base64(meta_img)
           } catch (e) {
             console.log(`获取图片 ${path} 失败：${e}`)
             return ''
@@ -281,7 +281,12 @@ export default struct web_ui {
         // 在所有歌曲中播放
         play_with_all_songs: (tmp: number) => {
           // 获取所有歌曲
-          this.ark_music_player.set_play_list(read_all_songs(), tmp)
+          let tmpA = read_all_songs()
+          let tmpB: string[] = []
+          for (const i of tmpA) {
+            tmpB.push(i[0])
+          }
+          this.ark_music_player.set_play_list(tmpB, tmp)
         },
         // 获取文件夹模式的歌曲信息
         get_dir_songs: (path: string) => {
@@ -291,7 +296,12 @@ export default struct web_ui {
         // 在文件夹模式中播放
         play_with_dir_mode: (path: string, index: number) => {
           // 读取播放
-          this.ark_music_player.set_play_list(read_dir_songs(path)[1], index)
+          let tmpA = read_dir_songs(path)[1]
+          let tmpB: string[] = []
+          for (const i of tmpA) {
+            tmpB.push(i[0])
+          }
+          this.ark_music_player.set_play_list(tmpB, index)
         },
         // 获取播放列表
         get_play_list_songs: (name: string) => {
@@ -300,11 +310,16 @@ export default struct web_ui {
         },
         // 在播放列表模式中播放
         play_with_play_list_mode: (name: string, index: number) => {
-          this.ark_music_player.set_play_list(read_play_list(name), index)
+          let tmpA = read_play_list(name)
+          let tmpB: string[] = []
+          for (const i of tmpA) {
+            tmpB.push(i[0])
+          }
+          this.ark_music_player.set_play_list(tmpB, index)
         },
         // 喜欢的歌曲
         set_like: () => {
-          this.ark_music_player.set_is_like()
+          this.ark_music_player.toggle_like()
         },
 
       },

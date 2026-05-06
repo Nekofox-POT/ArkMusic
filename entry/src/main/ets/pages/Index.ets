@@ -19,7 +19,7 @@ import arkmusic_start from './start'
 import ark_music_scan from './scan'
 
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
-import { audio_player } from '../package/audio_player_old/audio_player'
+import { audio_player } from '../package/audio_player/audio_player'
 
 ///////////
 // 变量池 //
@@ -54,7 +54,7 @@ struct Index {
   ////////
   // 类 //
   ///////
-  @State ark_music_player: audio_player = new audio_player(this.context, [])   // 播放器核心
+  @State ark_music_player: audio_player = new audio_player()   // 播放器核心
 
   ///////////
   // 初始化 //

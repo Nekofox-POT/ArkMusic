@@ -52,11 +52,10 @@ export async function get_image(path: string): Promise<image.PixelMap> {
 }
 
 // 封面获取（返回base64）
-export async function get_image_base64(path: string) {
+export async function image_to_base64(img: PixelMap) {
   // 获取封面
-  let tmp = await get_image(path)
   let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 }
-  let arrayBuffer = await image.createImagePacker().packing(tmp, packOpts)
+  let arrayBuffer = await image.createImagePacker().packing(img, packOpts)
   let dataURL = nativeModule.encodeImageToBase64(arrayBuffer)
   return dataURL
 }

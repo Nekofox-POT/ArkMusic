@@ -25,6 +25,14 @@ import { log } from '../system_function'
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
+
+// 回调参数类定义
+class MetadataCallbackData {
+  title: string = ''
+  artist: string = ''
+  img: image.PixelMap | null = null
+}
+
 @Observed
 export class av_player {
 
@@ -42,15 +50,27 @@ export class av_player {
   ///////
   private avPlayer: media.AVPlayer | null = null; // audio播放
 
+  /////////////
+  // 回调函数 //
+  ////////////
+  private on_metadata_update?: (data: MetadataCallbackData) => void
+  private on_play_status_update?: (status: string) => void
+  private on_duration_update?: (duration: number) => void
+  private on_position_update?: (position: number) => void
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
   ////////////
 
   // 广播元数据 //
   private send_metadata(song_name: string, title: string, artist: string, img: image.PixelMap | null) {
-    // 发送广播
+    // 调用回调
+    if (this.on_metadata_update) {
+      this.on_metadata_update({ title, artist, img })
+    }
+    // 发送广播（保留用于其他模块监听）
     emitter.emit(
-      { eventId: 710 },
+      { eventId: 810 },
       { data: {
         song_name: song_name,
         title: title,
@@ -61,9 +81,13 @@ export class av_player {
   }
   // 广播播放状态 //
   private send_play_status(msg: string) {
-    // 发送广播
+    // 调用回调
+    if (this.on_play_status_update) {
+      this.on_play_status_update(msg)
+    }
+    // 发送广播（保留用于其他模块监听）
     emitter.emit(
-      { eventId: 712 },
+      { eventId: 812 },
       { data: {
         status: msg
       } }
@@ -71,8 +95,13 @@ export class av_player {
   }
   // 广播歌曲时长 //
   private send_duration_time(duration_time: number) {
+    // 调用回调
+    if (this.on_duration_update) {
+      this.on_duration_update(duration_time)
+    }
+    // 发送广播（保留用于其他模块监听）
     emitter.emit(
-      { eventId: 713 },
+      { eventId: 813 },
       { data: {
         duration_time: duration_time
       } }
@@ -80,9 +109,13 @@ export class av_player {
   }
   // 广播播放时长 //
   private send_current_time(current_time: number) {
-    // 发送广播
+    // 调用回调
+    if (this.on_position_update) {
+      this.on_position_update(current_time)
+    }
+    // 发送广播（保留用于其他模块监听）
     emitter.emit(
-      { eventId: 714 },
+      { eventId: 814 },
       { data: {
         current_time: current_time
       } }
@@ -252,7 +285,25 @@ export class av_player {
   drop_it() {
     this.avPlayer?.release()
   }
+  // 设置回调 //
+  set_callbacks(
+    on_metadata_update?: (data: MetadataCallbackData) => void,
+    on_play_status_update?: (status: string) => void,
+    on_duration_update?: (duration: number) => void,
+    on_position_update?: (position: number) => void
+  ): void {
+    this.on_metadata_update = on_metadata_update
+    this.on_play_status_update = on_play_status_update
+    this.on_duration_update = on_duration_update
+    this.on_position_update = on_position_update
+  }
 
+  // 触发播放完成（用于错误处理）
+  trigger_complete(): void {
+    if (this.on_play_status_update) {
+      this.on_play_status_update('complete')
+    }
+  }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
