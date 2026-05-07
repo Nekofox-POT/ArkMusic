@@ -21,9 +21,7 @@ import nativeModule from 'libentry.so';
 /////////////////
 import { log, notice, vib } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
-import {
-  read_all_songs
-} from '../package/file_manager'
+import { files_manager } from '../package/files_manager'
 import { get_image, get_meta, image_to_base64 } from '../package/meta_manager'
 
 ///////////
@@ -96,13 +94,13 @@ export default struct web_ui {
   // 更新池 //
   //////////
   @State @Watch('listen_system_volume') show_volume: boolean = false    // 显示音量条
-  @State ready:boolean = false    // 页面准备指示器
+  @State ready: boolean = false    // 页面准备指示器
 
   ///////////
   // 继承池 //
   //////////
-  @Prop context: common.UIAbilityContext    // 身份证
-  @ObjectLink ark_music_player: audio_player  // 类
+  @ObjectLink ark_music_player: audio_player  // 类 播放器
+  @ObjectLink files_manager: files_manager    // 类 文件管理器
   @Link volume_level: number    // 音量大小
 
   ////////
@@ -212,122 +210,13 @@ export default struct web_ui {
     emitter.off(912)
   }
 
-  ////////////////////
-  // webview功能注册 //
-  ///////////////////
-  reg_webview_js1() {
-    try {this.ark_music_ui.registerJavaScriptProxy(
-      {
-        // ready //
-        ready: () => {
-          console.log('页面准备完成')
-          this.listen_broadcast()  // 监听广播
-          this.ready = true
-        },
-
-        // 播放 //
-        play: () => {this.ark_music_player.playing()},
-        // 暂停 //
-        pause: () => {this.ark_music_player.pause()},
-        // 上一首 //
-        last_song: () => {this.ark_music_player.last_song()},
-        // 下一首
-        next_song: () => {this.ark_music_player.next_song()},
-        // 更改播放进度 //
-        seek: (time: string) => {this.ark_music_player.seek(parseInt(time))},
-        // 跳转歌曲 //
-        seek_song: (index: number) => {this.ark_music_player.seek_song(index)},
-
-        // 更改音量 (-1打开面板 -2关闭面板) //
-        set_vol: (level: string) => {
-          if (level == '-1') {
-            this.show_volume = true
-          } else if (level == '-2') {
-            this.show_volume = false
-          } else {
-            this.volume_level = parseInt(level)
-          }
-        },
-        // 获取图片编码
-        get_song_image: async (path: string) => {return await image_to_base64(await get_image(path))},
-        // 跳转到主页面
-        back_to_player: () => {this.ark_music_ui.runJavaScript('taskbar_page_update(1)')},
-
-        // 获取所有歌曲信息
-        get_all_songs: () => {
-          // 获取所有歌曲
-          const tmp = read_all_songs()
-          if (tmp) {
-            // 更新歌曲
-            this.ark_music_ui.runJavaScript(`songs_update('update_all_songs', ${JSON.stringify(tmp)})`)
-          }
-          console.log('扫描完成')
-        },
-        // 在所有歌曲中播放
-        // play_with_all_songs: (tmp: number) => {
-        //   // 获取所有歌曲
-        //   let tmpA = read_all_songs()
-        //   let tmpB: string[] = []
-        //   for (const i of tmpA) {
-        //     tmpB.push(i[0])
-        //   }
-        //   this.ark_music_player.set_play_list(tmpB, tmp)
-        // },
-        // 获取文件夹模式的歌曲信息
-        // get_dir_songs: (path: string) => {
-        //   // 回传
-        //   return read_dir_songs(path)
-        // },
-        // 在文件夹模式中播放
-        // play_with_dir_mode: (path: string, index: number) => {
-        //   // 读取播放
-        //   let tmpA = read_dir_songs(path)[1]
-        //   let tmpB: string[] = []
-        //   for (const i of tmpA) {
-        //     tmpB.push(i[0])
-        //   }
-        //   this.ark_music_player.set_play_list(tmpB, index)
-        // },
-        // // 获取播放列表
-        // get_play_list_songs: (name: string) => {
-        //   // 回调
-        //   return read_play_list(name)
-        // },
-        // // 在播放列表模式中播放
-        // play_with_play_list_mode: (name: string, index: number) => {
-        //   let tmpA = read_play_list(name)
-        //   let tmpB: string[] = []
-        //   for (const i of tmpA) {
-        //     tmpB.push(i[0])
-        //   }
-        //   this.ark_music_player.set_play_list(tmpB, index)
-        // },
-        // 喜欢的歌曲
-        set_like: () => {
-          this.ark_music_player.toggle_like()
-        },
-
-      },
-      "ark",
-      [
-        'ready',
-        'play', 'pause', 'seek', 'last_song', 'next_song', 'seek_song',
-        'set_vol', 'get_song_image', 'back_to_player',
-        'get_all_songs', 'play_with_all_songs', 'get_dir_songs', 'play_with_dir_mode',
-        'get_play_list_songs', 'play_with_play_list_mode', 'set_like'
-      ]
-    )} catch (e) {
-      console.error(`注册webview时出现了错误: ${e}.`)
-    }
-  }
-
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Webview功能注册 //
   ///////////////////
   reg_webview_js() {
     try {this.ark_music_ui.registerJavaScriptProxy({
 
-      ///////////////
+      ////////////
       // ready //
       //////////
       ready: () => {
@@ -375,6 +264,9 @@ export default struct web_ui {
       // 获取图片编码 //
       get_song_image: async (path: string) => {return await image_to_base64(await get_image(path))},
 
+      // 点歌 //
+      play_song: (tmp: number) => {this.ark_music_player.set_play_list(this.play_list, tmp)},
+
       ///////////////////
       // play_list页用 //
       //////////////////
@@ -382,9 +274,11 @@ export default struct web_ui {
       ///////////////
       // files页用 //
       /////////////
+
       // 获取所有歌曲 //
       get_all_songs: () => {
-
+        this.play_list = this.files_manager.all_songs_list
+        return this.play_list
       }
 
 
@@ -396,8 +290,8 @@ export default struct web_ui {
       [
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
-        'set_vol', 'back_to_player', 'get_song_meta', 'get_song_image',
-        ''
+        'set_vol', 'back_to_player', 'get_song_meta', 'get_song_image', 'play_song',
+        'get_all_songs'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}

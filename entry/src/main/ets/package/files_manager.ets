@@ -29,8 +29,6 @@ const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', 
 const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic').path   // 文件目录
 const root_path = getContext().filesDir + '/files_manager'
-let img_number = 0    // img缓存编号
-let like_songs: string[][] = []   // 我的喜欢 列表
 
 // 字符权重池（比较用）
 enum CharType {
@@ -136,157 +134,12 @@ function customCompare(strA: string, strB: string): number {
   // 如果前面字符都一样，短的排在前面 (例如 ".txt" 排在 ".txta" 前面)
   return lenA - lenB;
 }
-// 播放列表处理 //
-async function process_m3u_playlist(path: string, env: string, name:string) {
-
-  // 读取格式化文件
-  let raw_txt: string = ''
-  try {
-    raw_txt = fs.readTextSync(path)
-  } catch {return}
-  const raw_list: string[] = raw_txt.replace(/\r\n/g, '\n').split('\n').filter(Boolean)
-
-  // 读取
-  let play_list: string[] = []
-  for (const i of raw_list) {
-
-    // 文件 //
-    const tmp = env + '/' + i.replaceAll('\\', '/')
-    try {
-      // 获取后缀
-      let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
-      // 后缀解析（普通音乐）
-      if (support_audio_format.includes(file_suffix)) {
-        // 添加
-        play_list.push(tmp)
-      }
-      // 解析后缀（dsd音乐）
-      else if (support_dsd_format.includes(file_suffix)) {
-        console.log('有dsd音频！')
-      }
-    } catch (e) {log(e, 'error')}
-
-  }
-
-}
-
-
-// 歌手分类 //
-function artist_composer_classification(path: string) {}
-// 专辑分类 //
-function album_classification(path: string) {}
-// 专辑作者分类 //
-function album_artist_classification(path: string) {}
-// 流派分类 //
-function genre_classification(path: string) {}
-// 分类 //
-function classification(path: string) {}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 外部函数库 //
-/////////////
-
-// 文件夹扫描 //
-export async function make_music_cache() {
-
-  // 变量集 //
-  let all_song_list: string[] = []
-  let play_list = new HashMap<string, string[]>()
-  let artist_composer_list = new HashMap<string, string[]>()
-  let album_list = new HashMap<string, string[]>()
-  let album_artist = new HashMap<string, string[]>()
-  let genre = new HashMap<string, string[]>()
-
-  // 初始化数据库
-  try {fs.rmdirSync(root_path + '/play_list')} catch {}
-  fs.mkdirSync(root_path + '/play_list')
-  try {fs.rmdirSync(root_path + '/dsd_cache')} catch {}
-  fs.mkdirSync(root_path + '/dsd_cache')
-  try {fs.rmdirSync(root_path + '/artist_composer')} catch {}
-  fs.mkdirSync(root_path + '/artist_composer')
-  try {fs.rmdirSync(root_path + '/album')} catch {}
-  fs.mkdirSync(root_path + '/album')
-  try {fs.rmdirSync(root_path + '/album_artist')} catch {}
-  fs.mkdirSync(root_path + '/album_artist')
-  try {fs.rmdirSync(root_path + '/genre')} catch {}
-  fs.mkdirSync(root_path + '/genre')
-
-  // 扫描download的所有文件
-  for (const i of fs.listFileSync(song_path, { recursion: true })) {
-
-    // 获取后缀
-    let file_suffix = i.substring(i.lastIndexOf('.')).toLowerCase()
-    // 解析（普通音乐）
-    if (support_audio_format.includes(file_suffix)) {
-      // 添加到总列表
-      all_song_list.push(i)
-    }
-    // 解析后缀（dsd音乐）
-    else if (support_dsd_format.includes(file_suffix)) {console.log('有dsd音频！')}
-    // 解析后缀（m3u播放列表）
-    else if (file_suffix === '.m3u') {
-
-      // 读取格式化文件
-      const raw_path = song_path + '/' + i
-      let raw_txt: string = ''
-      try {raw_txt = fs.readTextSync(raw_path)} catch {continue}
-      const raw_list: string[] = raw_txt.replace(/\r\n/g, '\n').split('\n').filter(Boolean)
-      const env = raw_path.substring(0, raw_path.lastIndexOf('/') + 1)
-      let raw_name = nativeModule.extractFilename(raw_path)
-
-      // 读取
-      let raw_play_list: string[] = []
-      for (const e of raw_list) {
-        const tmp = env + '/' + e.replaceAll('\\', '/')
-        console.log(tmp)
-        try {
-          // 获取后缀
-          let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
-          // 后缀解析（普通音乐）
-          if (support_audio_format.includes(file_suffix)) {
-            // 添加
-            raw_play_list.push(tmp)
-          }
-          // 解析后缀（dsd音乐）
-          else if (support_dsd_format.includes(file_suffix)) {
-            console.log('有dsd音频！')
-          }
-        } catch (e) {
-          log(e, 'error')
-        }
-      }
-
-      // 保存
-      while (true) {
-        if (play_list.hasKey(raw_name)) {raw_name = raw_name + ' '} else {break}
-      }
-      play_list.set(raw_name, raw_play_list)
-
-    }
-
-  }
-
-  // 排序
-  all_song_list.sort((a: string, b: string) => {return customCompare(a, b)})
-
-  // 保存
-  array_to_json_save(all_song_list, 'all_songs.json')
-  play_list.forEach((value, key) => {
-    array_to_json_save(value ?? [], root_path + '/play_list/' + key + '.json')
-  })
-
-}
-
-// 读取所有歌曲 //
-export function read_all_songs(): string[] {
-  return read_json_to_array(root_path + 'all_songs.json')
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
 @Observed
-export class file_manager {
+export class files_manager {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
@@ -459,46 +312,50 @@ export class file_manager {
     // 读取文件夹 //
     try {
       fs.statSync(root_path)
+      this.reset_songs_cache()    // 临时加的记得删
+      return                      // 临时加的记得删
+
+      // 加载 //
+      // 加载所有歌曲
+      this.all_songs_list = read_json_to_array(root_path + 'all_songs.json')
+      // 加载歌手 / 艺术家
+      for (const i of fs.listFileSync(root_path + '/artist_composer/', { recursion: false })) {
+        const tmp_path = root_path + '/artist_composer/' + i + '.json'
+        // 获取文件名
+        const tmp_name = nativeModule.extractFilename(tmp_path)
+        // 载入
+        this.artist_composer_list.set(tmp_name, read_json_to_array(tmp_path))
+      }
+      // 加载专辑
+      for (const i of fs.listFileSync(root_path + '/album/', { recursion: false })) {
+        const tmp_path = root_path + '/album/' + i + '.json'
+        const tmp_name = nativeModule.extractFilename(tmp_path)
+        this.album_list.set(tmp_name, read_json_to_array(tmp_path))
+      }
+      // 加载专辑作家
+      for (const i of fs.listFileSync(root_path + '/album_artist/', { recursion: false })) {
+        const tmp_path = root_path + '/album_artist/' + i + '.json'
+        const tmp_name = nativeModule.extractFilename(tmp_path)
+        this.album_artist_list.set(tmp_name, read_json_to_array(tmp_path))
+      }
+      // 加载流派
+      for (const i of fs.listFileSync(root_path + '/genre/', { recursion: false })) {
+        const tmp_path = root_path + '/genre/' + i + '.json'
+        const tmp_name = nativeModule.extractFilename(tmp_path)
+        this.genre_list.set(tmp_name, read_json_to_array(tmp_path))
+      }
+      // 加载列表
+      for (const i of fs.listFileSync(root_path + '/play_list/', { recursion: false })) {
+        const tmp_path = root_path + '/play_list/' + i + '.json'
+        const tmp_name = nativeModule.extractFilename(tmp_path)
+        this.genre_list.set(tmp_name, read_json_to_array(tmp_path))
+      }
+
     } catch (e) {
       // 没有文件夹，扫描
       this.reset_songs_cache()
     }
 
-    // 加载 //
-    // 加载所有歌曲
-    this.all_songs_list = read_json_to_array(root_path + 'all_songs.json')
-    // 加载歌手 / 艺术家
-    for (const i of fs.listFileSync(root_path + '/artist_composer/', { recursion: false })) {
-      const tmp_path = root_path + '/artist_composer/' + i + '.json'
-      // 获取文件名
-      const tmp_name = nativeModule.extractFilename(tmp_path)
-      // 载入
-      this.artist_composer_list.set(tmp_name, read_json_to_array(tmp_path))
-    }
-    // 加载专辑
-    for (const i of fs.listFileSync(root_path + '/album/', { recursion: false })) {
-      const tmp_path = root_path + '/album/' + i + '.json'
-      const tmp_name = nativeModule.extractFilename(tmp_path)
-      this.album_list.set(tmp_name, read_json_to_array(tmp_path))
-    }
-    // 加载专辑作家
-    for (const i of fs.listFileSync(root_path + '/album_artist/', { recursion: false })) {
-      const tmp_path = root_path + '/album_artist/' + i + '.json'
-      const tmp_name = nativeModule.extractFilename(tmp_path)
-      this.album_artist_list.set(tmp_name, read_json_to_array(tmp_path))
-    }
-    // 加载流派
-    for (const i of fs.listFileSync(root_path + '/genre/', { recursion: false })) {
-      const tmp_path = root_path + '/genre/' + i + '.json'
-      const tmp_name = nativeModule.extractFilename(tmp_path)
-      this.genre_list.set(tmp_name, read_json_to_array(tmp_path))
-    }
-    // 加载列表
-    for (const i of fs.listFileSync(root_path + '/play_list/', { recursion: false })) {
-      const tmp_path = root_path + '/play_list/' + i + '.json'
-      const tmp_name = nativeModule.extractFilename(tmp_path)
-      this.genre_list.set(tmp_name, read_json_to_array(tmp_path))
-    }
   }
 
   // 读取文件夹 //

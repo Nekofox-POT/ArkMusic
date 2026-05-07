@@ -77,7 +77,7 @@ export async function reg_bg_run(context: common.UIAbilityContext) {
 
   try {
     let tmpWantAgent = await wantAgent.getWantAgent(wantAgentInfo);
-    await backgroundTaskManager.startBackgroundRunning(context, backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK, tmpWantAgent);
+    await backgroundTaskManager.startBackgroundRunning(getContext(), backgroundTaskManager.BackgroundMode.AUDIO_PLAYBACK, tmpWantAgent);
   } catch (e) {
     console.error(`后台注册失败：${e.message}`);
   }

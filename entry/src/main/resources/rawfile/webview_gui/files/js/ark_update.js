@@ -9,7 +9,7 @@ const BATCH_SIZE = 20 // 每批渲染的元素数量
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 懒加载观察器 //
-///////////////
+////////////////
 
 let imageObserver = null
 
@@ -67,7 +67,7 @@ function create_song_element(tmp, index) {
 
     // 点击事件
     div.addEventListener('click', () => {
-        ark.play_with_all_songs(index)
+        ark.play_song(index)
     })
 
     // 创建图片容器

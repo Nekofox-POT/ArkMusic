@@ -15,9 +15,9 @@ import emitter from '@ohos.events.emitter'
 // 导入自创建模块 //
 /////////////////
 import web_ui from './web_ui'
-import arkmusic_start from './start'
-import ark_music_scan from './scan'
-import { file_manager } from '../package/file_manager'
+import ark_music_start from './start'
+import first_start from './first_start'
+import { files_manager } from '../package/files_manager'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
 
@@ -46,16 +46,16 @@ struct Index {
   ///////////
   // 更新池 //
   //////////
+  @State first_start: boolean = false // 首次启动
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
-  @State scan_ui: boolean = true   // 扫描界面控制
 
   ////////
   // 类 //
   ///////
   @State ark_music_player: audio_player = new audio_player()   // 播放器核心
-  @State ark_file_manager: file_manager = new file_manager()   // 文件管理器核心
+  @State ark_file_manager: files_manager = new files_manager()   // 文件管理器核心
 
   ///////////
   // 初始化 //
@@ -98,13 +98,12 @@ struct Index {
   build() {
     Row() {
 
-      /////////////
-      // 开始页面 //
-      ////////////
-      if (!this.ready) {
-        arkmusic_start({
-          context: this.context,
-          ready: this.ready
+      ////////////////
+      // 首次启动页面 //
+      ///////////////
+      if (this.first_start) {
+        first_start({
+          first_start: this.first_start
         })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(900)
@@ -115,15 +114,16 @@ struct Index {
       }
 
       /////////////
-      // 扫描界面 //
+      // 开始页面 //
       ////////////
-      if (this.scan_ui) {
-        ark_music_scan({
-          scan_ui: this.scan_ui,
-          ready: this.ready
+      if (!this.ready) {
+        ark_music_start({
+          first_start: this.first_start,
+          ready: this.ready,
+          files_manager: this.ark_file_manager
         })
           .width('100%').height('100%')
-          .position({ x: 0, y: 0 }).zIndex(950)
+          .position({ x: 0, y: 0 }).zIndex(800)
           .transition(
             TransitionEffect.opacity(0)
               .animation({ duration: 500 })
@@ -135,12 +135,12 @@ struct Index {
       ////////////
       if (this.ready && this.ui_mode) {
         web_ui({
-          context: this.context,
           ark_music_player: this.ark_music_player,
+          files_manager: this.ark_file_manager,
           volume_level: this.volume_level
         })
           .width('100%').height('100%')
-          .position({ x: 0, y: 0 }).zIndex(500)
+          .position({ x: 0, y: 0 }).zIndex(700)
       }
 
     }

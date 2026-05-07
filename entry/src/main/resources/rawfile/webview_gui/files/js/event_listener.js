@@ -206,7 +206,10 @@ choice_bar_items.forEach((item) => {
         page = type
 
         // 添加点击操作
-        if (type === '文件夹') {
+        if (type === '全部歌曲') {
+            get_all_songs()
+        }
+        else if (type === '文件夹') {
             let tmp = ''
             for (const e of router_list) {
                 tmp += e

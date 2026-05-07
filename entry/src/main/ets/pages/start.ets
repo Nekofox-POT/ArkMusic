@@ -15,6 +15,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 /////////////////
 import { log, notice, vib } from '../package/system_function'
 import { make_music_cache } from '../package/file_manager_old'
+import { files_manager } from '../package/files_manager'
 
 ///////////
 // 变量池 //
@@ -60,7 +61,7 @@ export function getDownloadPathFromPicker(): Promise<string> {
 // 开始界面入口 //
 ///////////////
 @Component
-export default struct arkmusic_start {
+export default struct ark_music_start {
 
   ///////////
   // 变量池 //
@@ -69,48 +70,72 @@ export default struct arkmusic_start {
   ///////////
   // 更新池 //
   //////////
-  @State is_first: boolean = true    // 第一次启动
-  @State dir_ready: boolean = false    // 环境指示器（是否初始化）
-
-  @State cache_ready: boolean = false   // 临时！目录准备指示器
+  @State is_first: boolean = false    // 第一次启动
+  @State @Watch('env_ready')dir_ready: boolean = false    // 环境指示器（下载目录是否初始化）
+  @State @Watch('env_ready')version_ready: boolean = false  // 版本号校验完成器
+  @State @Watch('env_ready')files_manager_ready: boolean = false  // 文件加载器完成
 
   ///////////
   // 继承池 //
   //////////
-  @Prop context: common.UIAbilityContext    // 身份证
+  @Link @Watch('env_ready')first_start: boolean  // 首次启动指示器
   @Link ready: boolean    // 环境准备指示器
 
   ////////
   // 类 //
   ///////
   private ark_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
-  private dir_create_downloader: webview.WebDownloadDelegate = new webview.WebDownloadDelegate();   // 下载器
+  private dir_create_downloader: webview.WebDownloadDelegate = new webview.WebDownloadDelegate()
+
+  ///////////
+  // 继承类 //
+  //////////
+  @ObjectLink files_manager: files_manager  // 类 文件管理器
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+  ////////////
+  // 基础类 //
   //////////
   // 开始 //
-  /////////
-  async aboutToAppear() {
-    // 扫描工作目录
+  aboutToAppear() {
+    // 版本号校验 //
     try {
-      fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.READ_ONLY)
-      this.ready = true
-    } catch {
-      // 没有，进入向导
-      log('目录没有文件。')
-      this.is_first = true
-      // 扫描目录
-      await make_music_cache()
-      // 创建version
-      const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-      fs.writeSync(file.fd, '')
-      fs.closeSync(file)
-      // 结束，放行
-      this.cache_ready = true
+      // 获取版本号
+      let tmp = fs.readTextSync(getContext().filesDir + '/version.json')
     }
+    // 获取失败，视为第一次启动
+    catch {
+      this.first_start = true
+      // 写入版本号
+      try {
+        const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+        fs.writeSync(file.fd, '0.6.0')
+        fs.closeSync(file)
+      } catch (e) {
+        log(`保存文件失败: ${e}`, 'error')
+      }
+    }
+    // 就绪
+    this.version_ready = true
   }
 
+  ////////////
+  // 扩展类 //
+  //////////
+  // files_manager注册 //
+  async reg_files_manager() {
+    this.files_manager.load_data()
+    this.files_manager_ready = true
+  }
+
+  // ready指示 //
+  env_ready() {
+    // 三样素集齐才能放行
+    if (this.version_ready && this.dir_ready && this.files_manager_ready && !this.is_first) {
+      this.ready = true
+    }
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // UI构建 //
@@ -122,31 +147,22 @@ export default struct arkmusic_start {
       // 初始化遮罩 //
       //////////////
       Column() { Image($r('app.media.foreground_backup')).width('256px').height('256px') }
-        .width('100%').height('100%')
-        .position({ x: 0, y: 0 }).zIndex(500)
-        .backgroundColor('#fff').justifyContent(FlexAlign.Center)
-        .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
+      .width('100%').height('100%')
+      .position({ x: 0, y: 0 }).zIndex(500)
+      .backgroundColor('#fff').justifyContent(FlexAlign.Center)
+      .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
 
       //////////////
       // 初始化向导 //
       //////////////
       if (this.is_first) {
         Column() {
-          Image($r('app.media.foreground_backup')).width('512px').height('512px')
-          if (this.cache_ready) {
-            Button('开始使用')
-              .width('144vp')
-              .height('72vp')
-              .backgroundColor('rgba(244, 198, 206, 1.0)')
-              .onClick(() => {
-                this.ready = true
-              })
-          }
+          Image($r('app.media.foreground_backup')).width('64vp').height('64vp')
         }
-          .width('100%').height('100%')
-          .position({ x: 0, y: 0 }).zIndex(900)
-          .backgroundColor('#fff').justifyContent(FlexAlign.SpaceAround)
-          .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
+        .width('100%').height('100%')
+        .position({ x: 0, y: 0 }).zIndex(900)
+        .backgroundColor('#fff').justifyContent(FlexAlign.SpaceAround)
+        .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
       }
 
       ///////////////////////
