@@ -8,8 +8,6 @@
 import { fileIo as fs } from '@kit.CoreFileKit'
 import { log } from './system_function'
 
-const root_path = getContext().filesDir
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
 //////////
@@ -17,14 +15,14 @@ const root_path = getContext().filesDir
 // string[]转json储存（覆盖） //
 export function array_to_json_save(data: string[], path: string): boolean {
 
-  try {fs.rmdirSync(root_path + '/' + path)} catch {}
+  try {fs.rmdirSync(path)} catch {}
 
   // 转换
   const packData = JSON.stringify(data)
 
   // 保存
   try {
-    const file = fs.openSync(root_path + '/' + path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+    const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
     fs.writeSync(file.fd, packData)
     fs.closeSync(file)
   } catch (e) {
@@ -39,7 +37,7 @@ export function array_to_json_save(data: string[], path: string): boolean {
 // json读取转string[] //
 export function read_json_to_array(path: string): string[] {
   try {
-    let json: string = fs.readTextSync(getContext().filesDir + '/' + path)
+    let json: string = fs.readTextSync(path)
 
     const parsed = JSON.parse(json) as string[]
 

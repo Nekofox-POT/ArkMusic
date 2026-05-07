@@ -10,7 +10,7 @@ import emitter from '@ohos.events.emitter'
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { make_music_cache } from '../package/file_manager'
+import { make_music_cache } from '../package/file_manager_old'
 
 ///////////
 // 变量池 //

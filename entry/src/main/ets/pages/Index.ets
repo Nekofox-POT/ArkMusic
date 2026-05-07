@@ -17,7 +17,7 @@ import emitter from '@ohos.events.emitter'
 import web_ui from './web_ui'
 import arkmusic_start from './start'
 import ark_music_scan from './scan'
-
+import { file_manager } from '../package/file_manager'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
 
@@ -49,12 +49,13 @@ struct Index {
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
-  @State scan_ui: boolean = false   // 扫描界面控制
+  @State scan_ui: boolean = true   // 扫描界面控制
 
   ////////
   // 类 //
   ///////
   @State ark_music_player: audio_player = new audio_player()   // 播放器核心
+  @State ark_file_manager: file_manager = new file_manager()   // 文件管理器核心
 
   ///////////
   // 初始化 //

@@ -23,6 +23,7 @@ import { get_image, get_meta } from '../meta_manager'
 ///////////
 // 变量池 //
 //////////
+const root_path = getContext().filesDir   // 工作目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -39,12 +40,12 @@ export class audio_player {
   ////////////
 
   // 变量池 //
-  private context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext   // 身份证记录
   private play_list: string[] = []    // 播放列表
   private play_list_index: number = 0   // 播放列表指针
   private player_choice: number = 0   // 播放器使用 ( 0：avplayer播放器 1：ffmpeg播放器 )
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
   private like_list: string[] = []    // 喜欢列表
+  private like_list_path: string[] = [] // 喜欢列表（路径备份）
 
   // 类 //
   private av_session = new av_session() // 播控服务
@@ -91,7 +92,6 @@ export class audio_player {
     } catch {}
 
   }
-
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 回调函数 //
@@ -163,7 +163,7 @@ export class audio_player {
   // 外部函数 //
   ////////////
 
-  // 设置播放第几首歌 //
+  // 播放歌曲 //
   async set_audio_play(song_index: number = this.play_list_index) {
     if (song_index != this.play_list_index) { this.play_list_index = song_index }
     // 广播序号
@@ -305,27 +305,33 @@ export class audio_player {
       if (index !== -1) {
         log('取消喜欢.')
         this.like_list.splice(index, 1)
+        this.like_list_path.splice(index, 1)
         this.session?.setAVPlaybackState({ isFavorite: false })
         emitter.emit({ eventId: 717 }, { data: { like: false } })
       } else {
         log('喜欢❤~')
         this.like_list.push(tmp)
+        this.like_list_path.push(this.play_list[this.play_list_index])
         this.session?.setAVPlaybackState({ isFavorite: true })
         emitter.emit({ eventId: 717 }, { data: { like: true } })
       }
 
       // 保存
-      array_to_json_save(this.like_list, '/my_like.json')
+      array_to_json_save(this.like_list_path, root_path + '/my_like.json')
 
 
     } catch {}
 
   }
 
-  // 初始化喜欢列表 //
+  // 输出喜欢列表 //
+  get_like_list_path(): string[] {return this.like_list_path}
+
+  // 重置喜欢列表 //
   reset_like_list() {
-    array_to_json_save([], '/my_like.json')
     this.like_list = []
+    this.like_list_path = []
+    array_to_json_save([], root_path + '/my_like.json')
   }
 
   // 销毁 //
@@ -344,8 +350,16 @@ export class audio_player {
     this.player_callback()
     this.av_session_callback()
     // 读取like列表
-    const tmp = read_json_to_array('/my_like.json')
-    if (tmp) {this.like_list = tmp} else {this.reset_like_list()}
+    const tmp = read_json_to_array(root_path + '/my_like.json')
+    if (tmp) {
+      for (const i of tmp) {
+        try {
+          const tmp_ino = `${fs.statSync(fs.openSync(i).fd).ino}`
+          this.like_list.push(tmp_ino)
+          this.like_list_path.push(i)
+        } catch {}
+      }
+    } else {this.reset_like_list()}
     // 就绪
     log('音频管理器就绪.')
   }
