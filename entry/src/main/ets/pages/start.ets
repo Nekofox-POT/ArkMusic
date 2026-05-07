@@ -99,7 +99,10 @@ export default struct ark_music_start {
   //////////
   // 开始 //
   aboutToAppear() {
+    // 加载files_manager //
+    this.reg_files_manager()
     // 版本号校验 //
+    log('校验版本号')
     try {
       // 获取版本号
       let tmp = fs.readTextSync(getContext().filesDir + '/version.json')
@@ -113,7 +116,7 @@ export default struct ark_music_start {
         fs.writeSync(file.fd, '0.6.0')
         fs.closeSync(file)
       } catch (e) {
-        log(`保存文件失败: ${e}`, 'error')
+        log(`版本号保存失败: ${e}`, 'error')
       }
     }
     // 就绪

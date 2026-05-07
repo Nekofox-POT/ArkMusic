@@ -15,7 +15,7 @@ function init() {
     // 颜色更新
     set_background_color()
     // 歌曲更新
-    ark.get_all_songs()
+    get_all_songs()
 }
 
 init()

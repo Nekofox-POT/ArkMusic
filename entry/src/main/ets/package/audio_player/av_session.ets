@@ -6,6 +6,7 @@
 // 导入第三方库 //
 ///////////////
 import { avSession } from '@kit.AVSessionKit'
+import { log } from '../system_function';
 
 //////////////////
 // 导入自创建模块 //
@@ -72,16 +73,18 @@ export class av_session {
   // 初始化 //
   async start_up() {
     // 创建AVSession
+    log('创建avs')
     this.session = await avSession.createAVSession(getContext(this), 'ArkMusic', 'audio')
     // 注册行为
+    log('注册行为')
     this.session.on("play", () => {this.play?.(true)})  // 播放
     this.session.on("pause", () => {this.play?.(false)})  // 暂停
     this.session.on("setLoopMode", (position) => {console.log(`播放模式：${position}`)})
-    this.session.on("playPrevious", () => {this.last_song?.()}) // 上一首
+    this.session.on("playPrevious", () => {console.log('0'); this.last_song?.()}) // 上一首
     this.session.on("playNext", () => {this.next_song?.()}) //下一首
     this.session.on("seek", (position) => {this.seek?.(position)})  // 跳转
     this.session.on("toggleFavorite", () => {this.like?.()})
-    this.session.on("playFromAssetId", (position) => {console.log(`跳转第${position}首`)})
+    // this.session.on("playFromAssetId", (position) => {console.log(`跳转第${position}首`)})
     this.session.on("answer", () => {console.log('avs:接听电话')})
     this.session.on("hangUp", () => {console.log('avs:挂断电话')})
     this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
@@ -110,8 +113,21 @@ export class av_session {
     this.session?.setAVMetadata({ assetId: `${id}`, duration: time })
   }
   // 更新播放时间 //
-  set current_time(time: number) {
+  set_current_time(time: number) {
     this.session?.setAVPlaybackState({ position: { elapsedTime: time, updateTime: new Date().getTime() } })
+  }
+
+  // 设置播放状态 //
+  set_play_status(status: boolean) {
+    if (status) {
+      this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PLAY })
+    } else {
+      this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
+    }
+  }
+  // 设置喜欢 //
+  set_like(status: boolean) {
+    this.session?.setAVPlaybackState({ isFavorite: status })
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

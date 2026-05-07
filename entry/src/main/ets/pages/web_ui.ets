@@ -279,6 +279,12 @@ export default struct web_ui {
       get_all_songs: () => {
         this.play_list = this.files_manager.all_songs_list
         return this.play_list
+      },
+      // 获取文件夹歌曲 //
+      get_folder_songs: (path: string) => {
+        const tmp = this.files_manager.get_dir(path)
+        this.play_list = tmp[1]
+        return tmp
       }
 
 
@@ -291,7 +297,7 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
         'set_vol', 'back_to_player', 'get_song_meta', 'get_song_image', 'play_song',
-        'get_all_songs'
+        'get_all_songs', 'get_folder_songs'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}

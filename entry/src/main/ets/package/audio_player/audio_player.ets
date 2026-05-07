@@ -50,7 +50,6 @@ export class audio_player {
   // 类 //
   private av_session = new av_session() // 播控服务
   private av_player = new av_player()   // 官方av_player播放器
-  private session: avSession.AVSession | null = null; // 元音频
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
@@ -62,6 +61,9 @@ export class audio_player {
     const tmp = get_meta(path)
     // 获取封面
     const tmp_img = await get_image(path)
+    // 同步av_session
+    this.av_session.set_title(this.play_list_index, tmp[1][0], tmp[1][1])
+    this.av_session.set_image(this.play_list_index, tmp_img)
     // 发送
     if (tmp) {emitter.emit({ eventId: 712 }, { data: {
       name: tmp[0][0],
@@ -82,10 +84,10 @@ export class audio_player {
       // 扫描判断
       const index = this.like_list.findIndex(item => item === tmp)
       if (index === -1) {
-        this.session?.setAVPlaybackState({ isFavorite: false })
+        this.av_session.set_like(false)
         emitter.emit({ eventId: 717 }, { data: { like: false } })
       } else {
-        this.session?.setAVPlaybackState({ isFavorite: true })
+        this.av_session.set_like(true)
         emitter.emit({ eventId: 717 }, { data: { like: true } })
       }
 
@@ -106,10 +108,11 @@ export class audio_player {
       emitter.emit({ eventId: 714 }, { data: { status: status } })
       // 更新AVSession
       if (status == 'playing') {
-        this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PLAY })
+        this.av_session.set_play_status(true)
       } else if (status == 'pause') {
-        this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
+        this.av_session.set_play_status(false)
       } else if (status == 'complete') {
+        this.av_session.set_play_status(false)
         // 如果不是末尾，那就下一首
         if (this.play_list_index < this.play_list.length - 1) {
           this.next_song()
@@ -123,14 +126,14 @@ export class audio_player {
       // 广播 //
       emitter.emit({ eventId: 715 }, { data: { duration_time: duration } })
       // 更新时长 //
-      this.session?.setAVMetadata({ assetId: `${this.play_list_index}`, duration: duration })
+      this.av_session.set_duration_time(this.play_list_index, duration)
     }
     // 播放进度更新 //
     const current_time_update = (current: number) => {
       // 广播 //
       emitter.emit({ eventId: 716 }, { data: { current_time: current } })
       // 更新时长 //
-      this.session?.setAVPlaybackState({ position: { elapsedTime: current, updateTime: new Date().getTime() } })
+      this.av_session.set_current_time(current)
     }
 
     // av_player注册 //
@@ -146,7 +149,7 @@ export class audio_player {
     // 更改播放模式 //
     const change_play_mode = (type: string) => {}
     // 上一首 //
-    const last_song = (): void => {this.last_song()}
+    const last_song = (): void => {console.log('1'); this.last_song()}
     // 播放 / 暂停 //
     const play = (status: boolean) => {if (status) {this.playing()} else {this.pause()}}
     // 下一首 //
@@ -306,13 +309,13 @@ export class audio_player {
         log('取消喜欢.')
         this.like_list.splice(index, 1)
         this.like_list_path.splice(index, 1)
-        this.session?.setAVPlaybackState({ isFavorite: false })
+        this.av_session.set_like(false)
         emitter.emit({ eventId: 717 }, { data: { like: false } })
       } else {
         log('喜欢❤~')
         this.like_list.push(tmp)
         this.like_list_path.push(this.play_list[this.play_list_index])
-        this.session?.setAVPlaybackState({ isFavorite: true })
+        this.av_session.set_like(true)
         emitter.emit({ eventId: 717 }, { data: { like: true } })
       }
 
@@ -344,14 +347,14 @@ export class audio_player {
   // 初始化 //
   //////////
   constructor() {
-    // 注册元音频
-    this.av_session.start_up()
     // 注册回调
     this.player_callback()
     this.av_session_callback()
+    // 注册元音频
+    this.av_session.start_up()
     // 读取like列表
     const tmp = read_json_to_array(root_path + '/my_like.json')
-    if (tmp) {
+    if (tmp.length != 0) {
       for (const i of tmp) {
         try {
           const tmp_ino = `${fs.statSync(fs.openSync(i).fd).ino}`
