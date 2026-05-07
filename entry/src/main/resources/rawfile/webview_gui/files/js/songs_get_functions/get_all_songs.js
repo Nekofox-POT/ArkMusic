@@ -50,23 +50,19 @@ async function all_songs_get_song_image(img, path) {
 // 元素创建 //
 /////////////
 
-// 创建单个歌曲元素
-function create_all_songs_element(meta, index, path) {
-    // meta[0] = [file_name, file_type, channels, sample_rate, bit_depth, bit_rate, duration]
-    // meta[1] = [title, artist, album, album_artist, genre]
+// 从路径提取文件名
+function extract_filename(path) {
+    const lastSlash = path.lastIndexOf('/')
+    const fileName = lastSlash >= 0 ? path.substring(lastSlash + 1) : path
+    // 移除扩展名
+    const dotIndex = fileName.lastIndexOf('.')
+    return dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName
+}
 
-    const file_name = meta[0][0]
-    // const file_type = meta[0][1]
-    // const channels = meta[0][2]
-    // const sample_rate = meta[0][3]
-    // const bit_depth = meta[0][4]
-    // const bit_rate = meta[0][5]
-    // const duration = meta[0][6]
-    // const title = meta[1][0]
-    // const artist = meta[1][1]
-    // const album = meta[1][2]
-    // const album_artist = meta[1][3]
-    // const genre = meta[1][4]
+// 创建单个歌曲元素（仅基础信息，不阻塞）
+function create_all_songs_element(index, path) {
+    // 从路径提取文件名作为初始显示
+    const file_name = extract_filename(path)
 
     // 创建元素
     const div = document.createElement('div')
@@ -90,7 +86,7 @@ function create_all_songs_element(meta, index, path) {
     div.appendChild(imgDiv)
     div.appendChild(p)
 
-    return { div, imgDiv }
+    return { div, imgDiv, p }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,8 +115,7 @@ function render_all_songs_batch(songsList, slide, startIndex, elements) {
 
     for (let index = startIndex; index < endIndex; index++) {
         const path = songsList[index]
-        const meta = ark.get_song_meta(path)
-        const { div, imgDiv } = create_all_songs_element(meta, index, path)
+        const { div, imgDiv } = create_all_songs_element(index, path)
         fragment.appendChild(div)
         elements.push(imgDiv) // 收集图片元素用于后续观察
     }
