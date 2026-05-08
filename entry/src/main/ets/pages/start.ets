@@ -128,7 +128,7 @@ export default struct ark_music_start {
   //////////
   // files_manager注册 //
   async reg_files_manager() {
-    this.files_manager.load_data()
+    await this.files_manager.load_data()
     this.files_manager_ready = true
   }
 

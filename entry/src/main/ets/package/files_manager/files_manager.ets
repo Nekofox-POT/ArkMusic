@@ -19,7 +19,7 @@ import { taskpool } from '@kit.ArkTS'
 /////////////////
 import nativeModule from 'libentry.so'
 import { log } from '../system_function'
-import { read_json_to_array, array_to_json_save } from './array_save_load'
+import { read_json_to_array, batch_save_async, array_to_json_save_async, scan_songs_task, parse_scan_result } from './array_save_load'
 import { img_save } from "../cache_image_save"
 import { get_image, get_meta } from '../meta_manager'
 
@@ -136,19 +136,12 @@ function customCompare(strA: string, strB: string): number {
   return lenA - lenB;
 }
 
-// 缓存建立器 //
-function make_songs_cache() {
+// 缓存建立器（异步版） //
+async function make_songs_cache_async() {
 
-  // 初始化变量
-  let all_songs_list: string[] = []
-  let play_list = new Map<string, string[]>()
-  let artist_composer_list = new Map<string, string[]>()
-  let album_list = new Map<string, string[]>()
-  let album_artist_list = new Map<string, string[]>()
-  let genre_list = new Map<string, string[]>()
-  let dsd_list: string[] = []
+  log('初始化数据库目录...')
 
-  // 初始化数据库
+  // 初始化数据库目录（在主线程执行）
   try {fs.rmdirSync(root_path + '/play_list')} catch {}
   fs.mkdirSync(root_path + '/play_list')
   try {fs.rmdirSync(root_path + '/artist_composer')} catch {}
@@ -162,140 +155,89 @@ function make_songs_cache() {
   try {fs.rmdirSync(root_path + '/dsd_cache')} catch {}
   fs.mkdirSync(root_path + '/dsd_cache')
 
-  // 扫描歌曲(普通歌曲) //
-  log('扫描普通歌曲')
-  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
+  log('开始多线程扫描歌曲...')
 
-    // 添加所有歌曲列
-    all_songs_list.push(song_path + '/' + i)
+  // 在 taskpool 中执行扫描任务（不阻塞主线程）
+  const task = new taskpool.Task(
+    scan_songs_task,
+    song_path,
+    root_path,
+    support_audio_format,
+    support_dsd_format
+  )
+  const scanResultJson = await taskpool.execute(task) as string
+  const scanResult = parse_scan_result(scanResultJson)
 
-    // 获取元数据
-    const tmp_meta = get_meta(song_path + '/' + i)
-    // 分类 歌手 / 作曲家
-    if (!artist_composer_list.has(tmp_meta[1][1])) { artist_composer_list.set(tmp_meta[1][1], [])}
-    artist_composer_list.get(tmp_meta[1][1])?.push(song_path + '/' + i)
-    // 分类 专辑
-    if (!album_list.has(tmp_meta[1][2])) { album_list.set(tmp_meta[1][2], [])}
-    album_list.get(tmp_meta[1][2])?.push(song_path + '/' + i)
-    // 分类 专辑作家
-    if (!album_artist_list.has(tmp_meta[1][3])) { album_artist_list.set(tmp_meta[1][3], [])}
-    album_artist_list.get(tmp_meta[1][3])?.push(song_path + '/' + i)
-    // 分类 流派
-    if (!genre_list.has(tmp_meta[1][4])) { genre_list.set(tmp_meta[1][4], [])}
-    genre_list.get(tmp_meta[1][4])?.push(song_path + '/' + i)
+  // 从解析结果中获取数据
+  const all_songs_list = scanResult['all_songs_list'] as string[]
+  const play_list_data = scanResult['play_list_data'] as string[][]
+  const play_list_names = scanResult['play_list_names'] as string[]
+  const artist_composer_data = scanResult['artist_composer_data'] as string[][]
+  const artist_composer_names = scanResult['artist_composer_names'] as string[]
+  const album_data = scanResult['album_data'] as string[][]
+  const album_names = scanResult['album_names'] as string[]
+  const album_artist_data = scanResult['album_artist_data'] as string[][]
+  const album_artist_names = scanResult['album_artist_names'] as string[]
+  const genre_data = scanResult['genre_data'] as string[][]
+  const genre_names = scanResult['genre_names'] as string[]
 
-  }
-  // 扫描歌曲(dsd) //
-  log('扫描dsd')
-  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
-    console.log('有dsd音频！')
-  }
-  // 扫描歌单(m3u) //
-  log('扫描m3u列表')
-  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: ['.m3u'] } })) {
+  log('扫描完成，开始保存...')
 
-    // 尝试读取
-    try {fs.readTextSync(song_path + i)} catch {continue}
+  // 保存数据（使用多线程批量保存）
+  let save_data_list: Array<Array<string>> = new Array<Array<string>>()
+  let save_path_list: Array<string> = new Array<string>()
 
-    // 注册环境
-    let tmp_play_list: string[] = []
-    const tmp_path = song_path + i
-    const tmp_env = tmp_path.substring(0, tmp_path.lastIndexOf('/') + 1)
-    let tmp_name = nativeModule.extractFilename(tmp_path)
-    const tmp_list = fs.readTextSync(tmp_path).replace(/\r\n/g, '\n').split('\n').filter(Boolean)
-
-    // 读取
-    for (const e of tmp_list) {
-
-      // 格式化
-      const tmp = tmp_env + '/' + e.replaceAll('\\', '/')
-
-      // 配置环境
-      try {
-
-        // 后缀解析
-        let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
-        // （普通音乐）
-        if (support_audio_format.includes(file_suffix)) {
-          // 添加
-          tmp_play_list.push(tmp)
-        }
-        // （dsd音乐）
-        else if (support_dsd_format.includes(file_suffix)) {
-          console.log('有dsd音频！')
-        }
-
-      } catch (e) {log(e, 'error')}
-
-    }
-
-    // 载入
-    while (true) {
-      if (play_list.has(tmp_name)) {tmp_name = tmp_name + ' '} else {break}
-    }
-    play_list.set(tmp_name, tmp_play_list)
-
-  }
-
-  // 保存 //
-  let tmp_keys: string[] = []
-  let tmp_values: string[] = []
-  let tick: number = 0
   // 所有歌曲
   log('保存 所有歌曲')
-  all_songs_list.sort((a: string, b: string) => {return customCompare(a, b)})
-  array_to_json_save(all_songs_list, root_path + '/all_songs.json')
+  save_data_list.push(all_songs_list)
+  save_path_list.push(root_path + '/all_songs.json')
+
   // 歌手 / 作曲家
   log('保存 歌手 / 作曲家')
-  tick = 0
-  tmp_keys = Array.from(artist_composer_list.keys())
-  tmp_keys.sort((a: string, b: string) => {return customCompare(a, b)})
-  for (const i of tmp_keys) {
-    tmp_values = artist_composer_list.get(i) ?? []
-    tmp_values.sort((a: string, b: string) => {return customCompare(a, b)})
-    tmp_values.push(i)
-    array_to_json_save(tmp_values, root_path + '/artist_composer/' + tick++ + '.json')
+  for (let i = 0; i < artist_composer_data.length; i++) {
+    let tmp_values = artist_composer_data[i]
+    tmp_values.push(artist_composer_names[i])
+    save_data_list.push(tmp_values)
+    save_path_list.push(root_path + '/artist_composer/' + i + '.json')
   }
+
   // 专辑
   log('保存 专辑')
-  tick = 0
-  tmp_keys = Array.from(album_list.keys())
-  tmp_keys.sort((a: string, b: string) => {return customCompare(a, b)})
-  for (const i of tmp_keys) {
-    tmp_values = album_list.get(i) ?? []
-    tmp_values.sort((a: string, b: string) => {return customCompare(a, b)})
-    tmp_values.push(i)
-    array_to_json_save(tmp_values, root_path + '/album/' + tick++ + '.json')
+  for (let i = 0; i < album_data.length; i++) {
+    let tmp_values = album_data[i]
+    tmp_values.push(album_names[i])
+    save_data_list.push(tmp_values)
+    save_path_list.push(root_path + '/album/' + i + '.json')
   }
+
   // 专辑作家
   log('保存 专辑作家')
-  tick = 0
-  tmp_keys = Array.from(album_artist_list.keys())
-  tmp_keys.sort((a: string, b: string) => {return customCompare(a, b)})
-  for (const i of tmp_keys) {
-    tmp_values = album_artist_list.get(i) ?? []
-    tmp_values.sort((a: string, b: string) => {return customCompare(a, b)})
-    tmp_values.push(i)
-    array_to_json_save(tmp_values, root_path + '/album_artist/' + tick++ + '.json')
+  for (let i = 0; i < album_artist_data.length; i++) {
+    let tmp_values = album_artist_data[i]
+    tmp_values.push(album_artist_names[i])
+    save_data_list.push(tmp_values)
+    save_path_list.push(root_path + '/album_artist/' + i + '.json')
   }
+
   // 流派
   log('保存 流派')
-  tick = 0
-  tmp_keys = Array.from(genre_list.keys())
-  tmp_keys.sort((a: string, b: string) => {return customCompare(a, b)})
-  for (const i of tmp_keys) {
-    tmp_values = genre_list.get(i) ?? []
-    tmp_values.sort((a: string, b: string) => {return customCompare(a, b)})
-    tmp_values.push(i)
-    array_to_json_save(tmp_values, root_path + '/genre/' + tick++ + '.json')
+  for (let i = 0; i < genre_data.length; i++) {
+    let tmp_values = genre_data[i]
+    tmp_values.push(genre_names[i])
+    save_data_list.push(tmp_values)
+    save_path_list.push(root_path + '/genre/' + i + '.json')
   }
+
   // 列表
   log('保存 列表')
-  tmp_keys = Array.from(play_list.keys())
-  tmp_keys.sort((a: string, b: string) => {return customCompare(a, b)})
-  for (const i of tmp_keys) {
-    array_to_json_save(play_list.get(i) ?? [], root_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
+  for (let i = 0; i < play_list_data.length; i++) {
+    save_data_list.push(play_list_data[i])
+    save_path_list.push(root_path + '/play_list/' + nativeModule.base64urlCode(play_list_names[i], true) + '.json')
   }
+
+  // 批量多线程保存
+  log('批量保存中...')
+  await batch_save_async(save_data_list, save_path_list)
   log('保存完毕！')
 
 }
@@ -332,32 +274,34 @@ export class files_manager {
   ////////////
 
   // 歌曲信息缓存（重新缓存） //
-  reset_songs_cache() {
+  async reset_songs_cache() {
 
     // 重置 //
     log('重置数据库')
     try {fs.rmdirSync(root_path)} catch {}
     fs.mkdirSync(root_path)
 
-    make_songs_cache()
+    await make_songs_cache_async()
 
   }
 
   // 载入列表 //
-  load_data() {
+  async load_data() {
 
     // 读取文件夹 //
     try {
       fs.statSync(root_path)
-      this.reset_songs_cache()    // 临时加的记得删
-      return                      // 临时加的记得删
+
+      // 临时测试加载
+      await this.reset_songs_cache()
+      return
 
       // 加载 //
       // 加载所有歌曲
       this.all_songs_list = read_json_to_array(root_path + '/all_songs.json')
       // 加载歌手 / 艺术家
       for (const i of fs.listFileSync(root_path + '/artist_composer/', { recursion: false })) {
-        const tmp_path = root_path + '/artist_composer/' + i + '.json'
+        const tmp_path = root_path + '/artist_composer/' + i
         // 读取
         let tmp_list = read_json_to_array(tmp_path)
         // 获取文件名
@@ -367,35 +311,35 @@ export class files_manager {
       }
       // 加载专辑
       for (const i of fs.listFileSync(root_path + '/album/', { recursion: false })) {
-        const tmp_path = root_path + '/album/' + i + '.json'
+        const tmp_path = root_path + '/album/' + i
         let tmp_list = read_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.album_list.set(tmp_name, read_json_to_array(tmp_path))
+        this.album_list.set(tmp_name, tmp_list)
       }
       // 加载专辑作家
       for (const i of fs.listFileSync(root_path + '/album_artist/', { recursion: false })) {
-        const tmp_path = root_path + '/album_artist/' + i + '.json'
+        const tmp_path = root_path + '/album_artist/' + i
         let tmp_list = read_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.album_artist_list.set(tmp_name, read_json_to_array(tmp_path))
+        this.album_artist_list.set(tmp_name, tmp_list)
       }
       // 加载流派
       for (const i of fs.listFileSync(root_path + '/genre/', { recursion: false })) {
-        const tmp_path = root_path + '/genre/' + i + '.json'
+        const tmp_path = root_path + '/genre/' + i
         let tmp_list = read_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.genre_list.set(tmp_name, read_json_to_array(tmp_path))
+        this.genre_list.set(tmp_name, tmp_list)
       }
       // 加载列表
       for (const i of fs.listFileSync(root_path + '/play_list/', { recursion: false })) {
-        const tmp_path = root_path + '/play_list/' + i + '.json'
+        const tmp_path = root_path + '/play_list/' + i
         const tmp_name = nativeModule.extractFilename(tmp_path)
         this.genre_list.set(nativeModule.base64urlCode(tmp_name, false), read_json_to_array(tmp_path))
       }
 
     } catch (e) {
       // 没有文件夹，扫描
-      this.reset_songs_cache()
+      await this.reset_songs_cache()
     }
 
   }
