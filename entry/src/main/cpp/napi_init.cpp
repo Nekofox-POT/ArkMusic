@@ -4,6 +4,7 @@
 #include "package/image_color_calculate/image_color_calculate.h"
 #include "package/extract_filename/extract_filename.h"
 #include "package/ffmpeg_manager/ffmpeg_manager.h"
+#include "package/base64url_code/base64url_code.h"
 
 // --- 功能1：Base64 编码 (完整代码，请替换原来的省略版本) ---
 static napi_value EncodeImageToBase64(napi_env env, napi_callback_info info) {
@@ -117,15 +118,68 @@ static napi_value ExtractFilename(napi_env env, napi_callback_info info) {
     return result;
 }
 
+// --- 功能4：Base64URL 编码/解码 ---
+static napi_value Base64UrlCode(napi_env env, napi_callback_info info) {
+    // 1. 获取参数
+    size_t argc = 2;
+    napi_value args[2];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc < 2) {
+        napi_throw_error(env, nullptr, "需要传入 string 和 boolean 两个参数");
+        return nullptr;
+    }
+
+    // 2. 校验第一个参数类型
+    napi_valuetype valuetype;
+    napi_typeof(env, args[0], &valuetype);
+    if (valuetype != napi_string) {
+        napi_throw_error(env, nullptr, "第一个参数类型必须是字符串");
+        return nullptr;
+    }
+
+    // 3. 校验第二个参数类型
+    napi_typeof(env, args[1], &valuetype);
+    if (valuetype != napi_boolean) {
+        napi_throw_error(env, nullptr, "第二个参数类型必须是布尔值");
+        return nullptr;
+    }
+
+    // 4. 获取字符串内容
+    size_t strSize = 0;
+    napi_status status = napi_get_value_string_utf8(env, args[0], nullptr, 0, &strSize);
+    if (status != napi_ok || strSize == 0) {
+        napi_throw_error(env, nullptr, "字符串解析失败");
+        return nullptr;
+    }
+
+    std::string inputStr(strSize, '\0');
+    napi_get_value_string_utf8(env, args[0], &inputStr[0], strSize + 1, &strSize);
+
+    // 5. 获取布尔值
+    bool isEncode = false;
+    napi_get_value_bool(env, args[1], &isEncode);
+
+    // 6. 调用 C++ 业务逻辑函数
+    std::string resultStr = ProcessBase64UrlCode(inputStr, isEncode);
+
+    // 7. 将结果转换为 napi_value 返回
+    napi_value result;
+    napi_create_string_utf8(env, resultStr.c_str(), resultStr.length(), &result);
+
+    return result;
+}
+
 // --- 模块初始化 ---
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
-        // 暴露三个函数给 ArkTS
+        // 暴露四个函数给 ArkTS
         {"encodeImageToBase64", nullptr, EncodeImageToBase64, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getImageAverageColor", nullptr, GetImageAverageColor, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"extractFilename", nullptr, ExtractFilename, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"getAudioMetadata", nullptr, GetAudioMetadata, nullptr, nullptr, nullptr, napi_default, nullptr}
+        {"getAudioMetadata", nullptr, GetAudioMetadata, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"base64urlCode", nullptr, Base64UrlCode, nullptr, nullptr, nullptr, napi_default, nullptr}
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

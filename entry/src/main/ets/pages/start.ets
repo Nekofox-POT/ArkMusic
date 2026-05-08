@@ -70,7 +70,7 @@ export default struct ark_music_start {
   ///////////
   // 更新池 //
   //////////
-  @State is_first: boolean = false    // 第一次启动
+  @State msg: string = '准备'    // 第一次启动
   @State @Watch('env_ready')dir_ready: boolean = false    // 环境指示器（下载目录是否初始化）
   @State @Watch('env_ready')version_ready: boolean = false  // 版本号校验完成器
   @State @Watch('env_ready')files_manager_ready: boolean = false  // 文件加载器完成
@@ -98,7 +98,7 @@ export default struct ark_music_start {
   // 基础类 //
   //////////
   // 开始 //
-  aboutToAppear() {
+  async env_load() {
     // 加载files_manager //
     this.reg_files_manager()
     // 版本号校验 //
@@ -135,7 +135,7 @@ export default struct ark_music_start {
   // ready指示 //
   env_ready() {
     // 三样素集齐才能放行
-    if (this.version_ready && this.dir_ready && this.files_manager_ready && !this.is_first) {
+    if (this.version_ready && this.dir_ready && this.files_manager_ready && !this.first_start) {
       this.ready = true
     }
   }
@@ -146,27 +146,29 @@ export default struct ark_music_start {
   build() {
     Row() {
 
-      //////////////
+      ///////////////
       // 初始化遮罩 //
-      //////////////
-      Column() { Image($r('app.media.foreground_backup')).width('256px').height('256px') }
-      .width('100%').height('100%')
-      .position({ x: 0, y: 0 }).zIndex(500)
-      .backgroundColor('#fff').justifyContent(FlexAlign.Center)
-      .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
+      /////////////
+      Column() {
 
-      //////////////
-      // 初始化向导 //
-      //////////////
-      if (this.is_first) {
+        // logo
+        Image($r('app.media.foreground_backup')).width('512px').height('512px')
+        // 加载动画
+        LoadingProgress().width('64vp').height('64vp').color('rgba(0, 0, 0, 0.4)')
+
+        // 文字
         Column() {
-          Image($r('app.media.foreground_backup')).width('64vp').height('64vp')
+          Text(this.msg).fontColor('rgba(0, 0, 0, 0.4)')
+            .fontSize('15vp')
         }
-        .width('100%').height('100%')
-        .position({ x: 0, y: 0 }).zIndex(900)
-        .backgroundColor('#fff').justifyContent(FlexAlign.SpaceAround)
-        .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
+        .width('100%')
+        .position({ x: 0, y: '67%' })
+
       }
+      .width('100%').height('100%')
+      .position({ x: 0, y: 0 }).zIndex(900)
+      .backgroundColor('#fff').justifyContent(FlexAlign.SpaceAround)
+      .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
 
       ///////////////////////
       // 目录初始化页（函数） //
@@ -177,6 +179,8 @@ export default struct ark_music_start {
           .position({ x: 0, y: 0 })
           .zIndex(100)
           .onPageEnd(async () => {
+            // 加载加载程序
+            this.env_load()
             // 尝试读取目录
             try {
               fs.listFileSync(root_path);

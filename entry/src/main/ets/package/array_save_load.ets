@@ -7,16 +7,13 @@
 ///////////////
 import { fileIo as fs } from '@kit.CoreFileKit'
 import { log } from './system_function'
-import { util } from '@kit.ArkTS'
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
 //////////
 
 // string[]转json储存（覆盖） //
-export function array_to_json_save(data: string[], path: string): boolean {
-
-  console.log(`正在保存：${path} 及其数据：[${data}]`)
+export async function array_to_json_save(data: string[], path: string): Promise<boolean> {
 
   try {fs.rmdirSync(path)} catch {}
 
