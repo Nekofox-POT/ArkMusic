@@ -13,14 +13,27 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 //////////////////
 // 导入自创建模块 //
 /////////////////
+import nativeModule from 'libentry.so'
 import { log, notice, vib } from '../package/system_function'
 import { make_music_cache } from '../package/file_manager_old'
 import { files_manager } from '../package/files_manager/files_manager'
+import { get_image, get_meta } from '../package/meta_manager'
 
 ///////////
 // 变量池 //
 //////////
-const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic/').path // 根目录
+const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic/').path // 根目录
+const root_path = getContext().filesDir + '/files_manager'
+const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
+const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
+
+// 字符权重池（比较用）
+enum CharType {
+  PUNCTUATION = 0, // 符号（包含 '.'）
+  DIGIT = 1,       // 数字
+  LETTER = 2,      // 字母
+  CHINESE = 3      // 中文
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -29,7 +42,7 @@ const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Dow
 //////////////////
 // 资源目录创建器 //
 /////////////////
-export function getDownloadPathFromPicker(): Promise<string> {
+function getDownloadPathFromPicker(): Promise<string> {
   return new Promise<string>(resolve => {
     try {
       const documentSaveOptions = new picker.DocumentSaveOptions();
@@ -57,6 +70,209 @@ export function getDownloadPathFromPicker(): Promise<string> {
   })
 }
 
+// 字符比较器 //
+function getCharWeight(char: string): number {
+
+  enum CharType {
+    PUNCTUATION = 0, // 符号（包含 '.'）
+    DIGIT = 1,       // 数字
+    LETTER = 2,      // 字母
+    CHINESE = 3      // 中文
+  }
+
+  if (!char) return CharType.CHINESE; // 兜底空字符串
+
+  const code = char.charCodeAt(0);
+
+  // 1. 符号 (ASCII 0-47, 58-64, 91-96, 123-127 等)
+  // 这里把所有非字母数字中文的常见字符都归为符号
+  if ((code >= 33 && code <= 47) ||
+    (code >= 58 && code <= 64) ||
+    (code >= 91 && code <= 96) ||
+    (code >= 123 && code <= 126)) {
+    return CharType.PUNCTUATION;
+  }
+
+  // 2. 数字 (0-9)
+  if (code >= 48 && code <= 57) {
+    return CharType.DIGIT;
+  }
+
+  // 3. 字母 (A-Z, a-z)
+  if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+    return CharType.LETTER;
+  }
+
+  // 4. 中文 (按照 Unicode 范围，基本涵盖了常用汉字)
+  if ((code >= 0x4E00 && code <= 0x9FFF) ||
+    (code >= 0x3400 && code <= 0x4DBF) ||
+    (code >= 0x20000 && code <= 0x2A6DF)) {
+    return CharType.CHINESE;
+  }
+
+  // 其他未知的罕见字符也当做符号处理，排在前面
+  return CharType.PUNCTUATION;
+}
+// 列表排序器 //
+function customCompare(strA: string, strB: string): number {
+  const lenA = strA.length;
+  const lenB = strB.length;
+  const minLen = Math.min(lenA, lenB);
+
+  // 逐个字符进行比较
+  for (let i = 0; i < minLen; i++) {
+    const charA = strA.charAt(i);
+    const charB = strB.charAt(i);
+
+    const weightA = getCharWeight(charA);
+    const weightB = getCharWeight(charB);
+
+    // 如果类型不同，直接按类型权重排序（符号->数字->字母->中文）
+    if (weightA !== weightB) {
+      return weightA - weightB;
+    }
+
+    // 如果类型相同，进行组内比较
+    if (weightA === CharType.LETTER) {
+      // 字母组：不区分大小写比较
+      const lowerA = charA.toLowerCase();
+      const lowerB = charB.toLowerCase();
+      if (lowerA < lowerB) return -1;
+      if (lowerA > lowerB) return 1;
+    } else if (weightA === CharType.CHINESE) {
+      // 中文组：使用手机系统的本地化排序（通常是拼音排序）
+      // 注意：ArkTS 中使用 Intl.Collator 是安全的
+      const collator = new Intl.Collator('zh-CN');
+      const cmp = collator.compare(charA, charB);
+      if (cmp !== 0) return cmp;
+    } else {
+      // 符号组和数字组：直接按 Unicode 码点比较（符号按ASCII表，数字按0-9）
+      if (charA < charB) return -1;
+      if (charA > charB) return 1;
+    }
+  }
+
+  // 如果前面字符都一样，短的排在前面 (例如 ".txt" 排在 ".txta" 前面)
+  return lenA - lenB;
+}
+
+// 环境注册 //
+async function make_files_env(): Promise<[
+  string[],
+  Map<string, string[]>,
+  Map<string, string[]>,
+  Map<string, string[]>,
+  Map<string, string[]>,
+  Map<string, string[]>
+]> {
+
+  // 初始化变量
+  let all_songs_list: string[] = []
+  let play_list = new Map<string, string[]>()
+  let artist_composer_list = new Map<string, string[]>()
+  let album_list = new Map<string, string[]>()
+  let album_artist_list = new Map<string, string[]>()
+  let genre_list = new Map<string, string[]>()
+  let dsd_list: string[] = []
+
+  // 初始化数据库
+  try {fs.rmdirSync(root_path + '/play_list')} catch {}
+  fs.mkdirSync(root_path + '/play_list')
+  try {fs.rmdirSync(root_path + '/artist_composer')} catch {}
+  fs.mkdirSync(root_path + '/artist_composer')
+  try {fs.rmdirSync(root_path + '/album')} catch {}
+  fs.mkdirSync(root_path + '/album')
+  try {fs.rmdirSync(root_path + '/album_artist')} catch {}
+  fs.mkdirSync(root_path + '/album_artist')
+  try {fs.rmdirSync(root_path + '/genre')} catch {}
+  fs.mkdirSync(root_path + '/genre')
+  try {fs.rmdirSync(root_path + '/dsd_cache')} catch {}
+  fs.mkdirSync(root_path + '/dsd_cache')
+
+  // 扫描歌曲(普通歌曲) //
+  log('扫描普通歌曲')
+  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
+
+    // 添加所有歌曲列
+    log(`正在处理：${i}`)
+    all_songs_list.push(song_path + '/' + i)
+
+    // 获取元数据
+    const tmp_meta = await get_meta(song_path + '/' + i)
+    // 分类 歌手 / 作曲家
+    if (!artist_composer_list.has(tmp_meta[1][1])) { artist_composer_list.set(tmp_meta[1][1], [])}
+    artist_composer_list.get(tmp_meta[1][1])?.push(song_path + '/' + i)
+    // 分类 专辑
+    if (!album_list.has(tmp_meta[1][2])) { album_list.set(tmp_meta[1][2], [])}
+    album_list.get(tmp_meta[1][2])?.push(song_path + '/' + i)
+    // 分类 专辑作家
+    if (!album_artist_list.has(tmp_meta[1][3])) { album_artist_list.set(tmp_meta[1][3], [])}
+    album_artist_list.get(tmp_meta[1][3])?.push(song_path + '/' + i)
+    // 分类 流派
+    if (!genre_list.has(tmp_meta[1][4])) { genre_list.set(tmp_meta[1][4], [])}
+    genre_list.get(tmp_meta[1][4])?.push(song_path + '/' + i)
+
+  }
+  // 扫描歌曲(dsd) //
+  log('扫描dsd')
+  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
+    console.log('有dsd音频！')
+  }
+  // 扫描歌单(m3u) //
+  log('扫描m3u列表')
+  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: ['.m3u'] } })) {
+
+    // 尝试读取
+    try {fs.readTextSync(song_path + i)} catch {continue}
+
+    // 注册环境
+    let tmp_play_list: string[] = []
+    const tmp_path = song_path + i
+    const tmp_env = tmp_path.substring(0, tmp_path.lastIndexOf('/') + 1)
+    let tmp_name = nativeModule.extractFilename(tmp_path)
+    const tmp_list = fs.readTextSync(tmp_path).replace(/\r\n/g, '\n').split('\n').filter(Boolean)
+
+    // 读取
+    for (const e of tmp_list) {
+
+      // 格式化
+      const tmp = tmp_env + '/' + e.replaceAll('\\', '/')
+
+      // 配置环境
+      try {
+
+        // 后缀解析
+        let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
+        // （普通音乐）
+        if (support_audio_format.includes(file_suffix)) {
+          // 添加
+          tmp_play_list.push(tmp)
+        }
+        // （dsd音乐）
+        else if (support_dsd_format.includes(file_suffix)) {
+          console.log('有dsd音频！')
+        }
+
+      } catch (e) {log(e, 'error')}
+
+    }
+
+    // 载入
+    while (true) {
+      if (play_list.has(tmp_name)) {tmp_name = tmp_name + ' '} else {break}
+    }
+    play_list.set(tmp_name, tmp_play_list)
+
+  }
+
+  // 排序
+  all_songs_list.sort((a: string, b: string) => {return customCompare(a, b)})
+
+  // 输出数据
+  return [all_songs_list, play_list, artist_composer_list, album_list, album_artist_list, genre_list]
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 开始界面入口 //
 ///////////////
@@ -71,14 +287,11 @@ export default struct ark_music_start {
   // 更新池 //
   //////////
   @State msg: string = '准备'    // 第一次启动
-  @State @Watch('env_ready')dir_ready: boolean = false    // 环境指示器（下载目录是否初始化）
-  @State @Watch('env_ready')version_ready: boolean = false  // 版本号校验完成器
-  @State @Watch('env_ready')files_manager_ready: boolean = false  // 文件加载器完成
+  @State @Watch('reg_files_manager')dir_ready: boolean = false    // 环境指示器（下载目录是否初始化）
 
   ///////////
   // 继承池 //
   //////////
-  @Link @Watch('env_ready')first_start: boolean  // 首次启动指示器
   @Link ready: boolean    // 环境准备指示器
 
   ////////
@@ -98,29 +311,7 @@ export default struct ark_music_start {
   // 基础类 //
   //////////
   // 开始 //
-  async env_load() {
-    // 加载files_manager //
-    this.reg_files_manager()
-    // 版本号校验 //
-    log('校验版本号')
-    try {
-      // 获取版本号
-      let tmp = fs.readTextSync(getContext().filesDir + '/version.json')
-    }
-    // 获取失败，视为第一次启动
-    catch {
-      this.first_start = true
-      // 写入版本号
-      try {
-        const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-        fs.writeSync(file.fd, '0.6.0')
-        fs.closeSync(file)
-      } catch (e) {
-        log(`版本号保存失败: ${e}`, 'error')
-      }
-    }
-    // 就绪
-    this.version_ready = true
+  async aboutToAppear() {
   }
 
   ////////////
@@ -128,16 +319,30 @@ export default struct ark_music_start {
   //////////
   // files_manager注册 //
   async reg_files_manager() {
-    this.files_manager.load_data()
-    this.files_manager_ready = true
-  }
 
-  // ready指示 //
-  env_ready() {
-    // 三样素集齐才能放行
-    if (this.version_ready && this.dir_ready && this.files_manager_ready && !this.first_start) {
-      this.ready = true
+    let tmp: [
+      string[],
+      Map<string, string[]>,
+      Map<string, string[]>,
+      Map<string, string[]>,
+      Map<string, string[]>,
+      Map<string, string[]>
+    ]
+
+    // 检测文件夹是否存在
+    try {
+      fs.statSync(root_path)
+      tmp = await make_files_env()
+    } catch {
+      // 不存在，扫描文件
+      tmp = await make_files_env()
     }
+
+    // 载入
+    this.files_manager.load_data(tmp)
+
+    // 准备完成
+    this.ready = true
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,11 +384,9 @@ export default struct ark_music_start {
           .position({ x: 0, y: 0 })
           .zIndex(100)
           .onPageEnd(async () => {
-            // 加载加载程序
-            this.env_load()
             // 尝试读取目录
             try {
-              fs.listFileSync(root_path);
+              fs.listFileSync(song_path);
               this.dir_ready = true
             } catch (e) {   // 读取失败，创建目录
               console.log(`目录不存在：${e}`)
@@ -198,7 +401,7 @@ export default struct ark_music_start {
                 this.dir_create_downloader.onDownloadFinish(() => {
                   // 检测
                   try {
-                    fs.listFileSync(root_path);
+                    fs.listFileSync(song_path);
                     log('download初始化完成.')
                     notice('初始化完成.')
                     this.dir_ready = true

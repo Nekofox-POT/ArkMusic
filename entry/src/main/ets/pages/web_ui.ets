@@ -260,7 +260,7 @@ export default struct web_ui {
       back_to_player: () => {this.ark_music_ui.runJavaScript('taskbar_page_update(1)')},
 
       // 获取元数据 //
-      get_song_meta: (path: string) => {return get_meta(path)},
+      get_song_meta: async (path: string) => {return await get_meta(path)},
       // 获取图片编码 //
       get_song_image: async (path: string) => {return await image_to_base64(await get_image(path))},
 

@@ -112,7 +112,7 @@ export class audio_player {
   // 元数据获取发送 //
   private async send_meta(path: string) {
     // 获取基础元数据
-    const tmp = get_meta(path)
+    const tmp = await get_meta(path)
     // 获取封面
     const tmp_img = await get_image(path)
     // 同步av_session
