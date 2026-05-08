@@ -21,7 +21,7 @@ import nativeModule from 'libentry.so';
 /////////////////
 import { log, notice, vib } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
-import { files_manager } from '../package/files_manager'
+import { files_manager } from '../package/files_manager/files_manager'
 import { get_image, get_meta, image_to_base64 } from '../package/meta_manager'
 
 ///////////

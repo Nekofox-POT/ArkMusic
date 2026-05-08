@@ -15,7 +15,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 /////////////////
 import { log, notice, vib } from '../package/system_function'
 import { make_music_cache } from '../package/file_manager_old'
-import { files_manager } from '../package/files_manager'
+import { files_manager } from '../package/files_manager/files_manager'
 
 ///////////
 // 变量池 //

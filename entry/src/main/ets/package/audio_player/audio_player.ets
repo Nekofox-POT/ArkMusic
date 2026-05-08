@@ -17,7 +17,6 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 import { av_session } from './av_session'
 import { av_player } from './by_av_player'
 import { log, notice } from '../system_function'
-import { array_to_json_save, read_json_to_array } from '../array_save_load'
 import { get_image, get_meta } from '../meta_manager'
 
 ///////////
@@ -28,6 +27,61 @@ const root_path = getContext().filesDir   // 工作目录
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
 //////////
+
+// string[]转json储存（覆盖） //
+export async function array_to_json_save(data: string[], path: string): Promise<boolean> {
+
+  try {fs.rmdirSync(path)} catch {}
+
+  // 转换
+  const packData = JSON.stringify(data)
+
+  // 保存
+  try {
+    const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+    fs.writeSync(file.fd, packData)
+    fs.closeSync(file)
+  } catch (e) {
+    log(`保存文件失败: ${e}`, 'error')
+    return false
+  }
+
+  return true
+
+}
+
+// json读取转string[] //
+export function read_json_to_array(path: string): string[] {
+
+  try {
+    console.log(path)
+    let json: string = fs.readTextSync(path)
+
+    const parsed = JSON.parse(json) as string[]
+
+    // 校验：必须是数组
+    if (!Array.isArray(parsed)) {
+      throw new Error("JSON 格式错误：期望数组")
+    }
+
+    const result: string[] = []
+
+    // 遍历每个元素，确保是字符串
+    for (let i = 0; i < parsed.length; i++) {
+      const element = parsed[i]
+      if (typeof element !== 'string') {
+        throw new Error("JSON 格式错误：数组元素必须是字符串")
+      }
+      result.push(element)
+    }
+
+    return result
+
+  } catch (e) {
+    log(`读取文件失败: ${e}`, 'error')
+    return []
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //

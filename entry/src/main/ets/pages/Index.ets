@@ -17,7 +17,7 @@ import emitter from '@ohos.events.emitter'
 import web_ui from './web_ui'
 import ark_music_start from './start'
 import first_start from './first_start'
-import { files_manager } from '../package/files_manager'
+import { files_manager } from '../package/files_manager/files_manager'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
 

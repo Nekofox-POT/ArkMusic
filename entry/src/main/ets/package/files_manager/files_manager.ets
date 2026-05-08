@@ -17,10 +17,10 @@ import { HashMap } from '@kit.ArkTS'
 // 导入自创建模块 //
 /////////////////
 import nativeModule from 'libentry.so'
-import { log } from './system_function'
+import { log } from '../system_function'
 import { read_json_to_array, array_to_json_save } from './array_save_load'
-import { img_save } from "./cache_image_save"
-import { get_image, get_meta } from './meta_manager'
+import { img_save } from "../cache_image_save"
+import { get_image, get_meta } from '../meta_manager'
 
 ///////////
 // 变量池 //
