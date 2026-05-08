@@ -191,52 +191,193 @@ async function make_files_env(): Promise<[
 
   // 扫描歌曲(普通歌曲) //
   log('扫描普通歌曲')
-  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
+  const raw_audio_list = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })
+  for (let i = 0; i < raw_audio_list.length; i++) {
+
+    const full_path = song_path + '/' + raw_audio_list[i]
 
     // 添加所有歌曲列
-    log(`正在处理：${i}`)
-    all_songs_list.push(song_path + '/' + i)
+    log(`正在处理：${raw_audio_list[i]}`)
+    all_songs_list.push(full_path)
 
     // 获取元数据
-    const tmp_meta = await get_meta(song_path + '/' + i)
+    const tmp_meta = await get_meta(full_path)
+    if (!tmp_meta[1] || tmp_meta[1].length === 0) { continue }
     // 分类 歌手 / 作曲家
     if (!artist_composer_list.has(tmp_meta[1][1])) { artist_composer_list.set(tmp_meta[1][1], [])}
-    artist_composer_list.get(tmp_meta[1][1])?.push(song_path + '/' + i)
+    artist_composer_list.get(tmp_meta[1][1])?.push(full_path)
     // 分类 专辑
     if (!album_list.has(tmp_meta[1][2])) { album_list.set(tmp_meta[1][2], [])}
-    album_list.get(tmp_meta[1][2])?.push(song_path + '/' + i)
+    album_list.get(tmp_meta[1][2])?.push(full_path)
     // 分类 专辑作家
     if (!album_artist_list.has(tmp_meta[1][3])) { album_artist_list.set(tmp_meta[1][3], [])}
-    album_artist_list.get(tmp_meta[1][3])?.push(song_path + '/' + i)
+    album_artist_list.get(tmp_meta[1][3])?.push(full_path)
     // 分类 流派
     if (!genre_list.has(tmp_meta[1][4])) { genre_list.set(tmp_meta[1][4], [])}
-    genre_list.get(tmp_meta[1][4])?.push(song_path + '/' + i)
+    genre_list.get(tmp_meta[1][4])?.push(full_path)
+
+    // 分批处理，让主线程喘息
+    if ((i + 1) % 10 === 0 && i + 1 < raw_audio_list.length) {
+      await new Promise<void>(r => setTimeout(r, 1))
+    }
 
   }
+  for (let i = 0; i < raw_audio_list.length; i++) {
+
+    const full_path = song_path + '/' + raw_audio_list[i]
+
+    // 添加所有歌曲列
+    log(`正在处理：${raw_audio_list[i]}`)
+    all_songs_list.push(full_path)
+
+    // 获取元数据
+    const tmp_meta = await get_meta(full_path)
+    if (!tmp_meta[1] || tmp_meta[1].length === 0) { continue }
+    // 分类 歌手 / 作曲家
+    if (!artist_composer_list.has(tmp_meta[1][1])) { artist_composer_list.set(tmp_meta[1][1], [])}
+    artist_composer_list.get(tmp_meta[1][1])?.push(full_path)
+    // 分类 专辑
+    if (!album_list.has(tmp_meta[1][2])) { album_list.set(tmp_meta[1][2], [])}
+    album_list.get(tmp_meta[1][2])?.push(full_path)
+    // 分类 专辑作家
+    if (!album_artist_list.has(tmp_meta[1][3])) { album_artist_list.set(tmp_meta[1][3], [])}
+    album_artist_list.get(tmp_meta[1][3])?.push(full_path)
+    // 分类 流派
+    if (!genre_list.has(tmp_meta[1][4])) { genre_list.set(tmp_meta[1][4], [])}
+    genre_list.get(tmp_meta[1][4])?.push(full_path)
+
+    // 分批处理，让主线程喘息
+    if ((i + 1) % 10 === 0 && i + 1 < raw_audio_list.length) {
+      await new Promise<void>(r => setTimeout(r, 1))
+    }
+
+  }
+  for (let i = 0; i < raw_audio_list.length; i++) {
+
+    const full_path = song_path + '/' + raw_audio_list[i]
+
+    // 添加所有歌曲列
+    log(`正在处理：${raw_audio_list[i]}`)
+    all_songs_list.push(full_path)
+
+    // 获取元数据
+    const tmp_meta = await get_meta(full_path)
+    if (!tmp_meta[1] || tmp_meta[1].length === 0) { continue }
+    // 分类 歌手 / 作曲家
+    if (!artist_composer_list.has(tmp_meta[1][1])) { artist_composer_list.set(tmp_meta[1][1], [])}
+    artist_composer_list.get(tmp_meta[1][1])?.push(full_path)
+    // 分类 专辑
+    if (!album_list.has(tmp_meta[1][2])) { album_list.set(tmp_meta[1][2], [])}
+    album_list.get(tmp_meta[1][2])?.push(full_path)
+    // 分类 专辑作家
+    if (!album_artist_list.has(tmp_meta[1][3])) { album_artist_list.set(tmp_meta[1][3], [])}
+    album_artist_list.get(tmp_meta[1][3])?.push(full_path)
+    // 分类 流派
+    if (!genre_list.has(tmp_meta[1][4])) { genre_list.set(tmp_meta[1][4], [])}
+    genre_list.get(tmp_meta[1][4])?.push(full_path)
+
+    // 分批处理，让主线程喘息
+    if ((i + 1) % 10 === 0 && i + 1 < raw_audio_list.length) {
+      await new Promise<void>(r => setTimeout(r, 1))
+    }
+
+  }
+  for (let i = 0; i < raw_audio_list.length; i++) {
+
+    const full_path = song_path + '/' + raw_audio_list[i]
+
+    // 添加所有歌曲列
+    log(`正在处理：${raw_audio_list[i]}`)
+    all_songs_list.push(full_path)
+
+    // 获取元数据
+    const tmp_meta = await get_meta(full_path)
+    if (!tmp_meta[1] || tmp_meta[1].length === 0) { continue }
+    // 分类 歌手 / 作曲家
+    if (!artist_composer_list.has(tmp_meta[1][1])) { artist_composer_list.set(tmp_meta[1][1], [])}
+    artist_composer_list.get(tmp_meta[1][1])?.push(full_path)
+    // 分类 专辑
+    if (!album_list.has(tmp_meta[1][2])) { album_list.set(tmp_meta[1][2], [])}
+    album_list.get(tmp_meta[1][2])?.push(full_path)
+    // 分类 专辑作家
+    if (!album_artist_list.has(tmp_meta[1][3])) { album_artist_list.set(tmp_meta[1][3], [])}
+    album_artist_list.get(tmp_meta[1][3])?.push(full_path)
+    // 分类 流派
+    if (!genre_list.has(tmp_meta[1][4])) { genre_list.set(tmp_meta[1][4], [])}
+    genre_list.get(tmp_meta[1][4])?.push(full_path)
+
+    // 分批处理，让主线程喘息
+    if ((i + 1) % 10 === 0 && i + 1 < raw_audio_list.length) {
+      await new Promise<void>(r => setTimeout(r, 1))
+    }
+
+  }
+  for (let i = 0; i < raw_audio_list.length; i++) {
+
+    const full_path = song_path + '/' + raw_audio_list[i]
+
+    // 添加所有歌曲列
+    log(`正在处理：${raw_audio_list[i]}`)
+    all_songs_list.push(full_path)
+
+    // 获取元数据
+    const tmp_meta = await get_meta(full_path)
+    if (!tmp_meta[1] || tmp_meta[1].length === 0) { continue }
+    // 分类 歌手 / 作曲家
+    if (!artist_composer_list.has(tmp_meta[1][1])) { artist_composer_list.set(tmp_meta[1][1], [])}
+    artist_composer_list.get(tmp_meta[1][1])?.push(full_path)
+    // 分类 专辑
+    if (!album_list.has(tmp_meta[1][2])) { album_list.set(tmp_meta[1][2], [])}
+    album_list.get(tmp_meta[1][2])?.push(full_path)
+    // 分类 专辑作家
+    if (!album_artist_list.has(tmp_meta[1][3])) { album_artist_list.set(tmp_meta[1][3], [])}
+    album_artist_list.get(tmp_meta[1][3])?.push(full_path)
+    // 分类 流派
+    if (!genre_list.has(tmp_meta[1][4])) { genre_list.set(tmp_meta[1][4], [])}
+    genre_list.get(tmp_meta[1][4])?.push(full_path)
+
+    // 分批处理，让主线程喘息
+    if ((i + 1) % 10 === 0 && i + 1 < raw_audio_list.length) {
+      await new Promise<void>(r => setTimeout(r, 1))
+    }
+
+  }
+
+  // 防kill
+  await new Promise<void>(r => setTimeout(r, 500))
+
   // 扫描歌曲(dsd) //
   log('扫描dsd')
   for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
     console.log('有dsd音频！')
   }
+
+  // 防kill
+  console.log('休息！')
+  await new Promise<void>(r => setTimeout(r, 500))
+
   // 扫描歌单(m3u) //
   log('扫描m3u列表')
-  for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: ['.m3u'] } })) {
+  const raw_song_list = fs.listFileSync(song_path, { recursion: true, filter: { suffix: ['.m3u'] } })
+  for (let i = 0; i < raw_song_list.length; i++) {
 
     // 尝试读取
-    try {fs.readTextSync(song_path + i)} catch {continue}
+    try {fs.readTextSync(song_path + raw_song_list[i])} catch {continue}
 
     // 注册环境
     let tmp_play_list: string[] = []
-    const tmp_path = song_path + i
+    const tmp_path = song_path + raw_song_list[i]
     const tmp_env = tmp_path.substring(0, tmp_path.lastIndexOf('/') + 1)
     let tmp_name = nativeModule.extractFilename(tmp_path)
     const tmp_list = fs.readTextSync(tmp_path).replace(/\r\n/g, '\n').split('\n').filter(Boolean)
 
     // 读取
-    for (const e of tmp_list) {
+    for (let e = 0; e < tmp_list.length; e++) {
 
       // 格式化
-      const tmp = tmp_env + '/' + e.replaceAll('\\', '/')
+      const tmp = tmp_env + '/' + tmp_list[e].replaceAll('\\', '/')
+
+      console.log(`处理 ${i} 的 ${tmp}`)
 
       // 配置环境
       try {
@@ -255,6 +396,12 @@ async function make_files_env(): Promise<[
 
       } catch (e) {log(e, 'error')}
 
+      // 分批处理，让主线程喘息
+      if ((e + 1) % 10 === 0 && e + 1 < tmp_list.length) {
+        console.log('休息！')
+        await new Promise<void>(r => setTimeout(r, 1))
+      }
+
     }
 
     // 载入
@@ -263,10 +410,25 @@ async function make_files_env(): Promise<[
     }
     play_list.set(tmp_name, tmp_play_list)
 
+    // 分批处理，让主线程喘息
+    if ((i + 1) % 10 === 0 && i + 1 < tmp_list.length) {
+      await new Promise<void>(r => setTimeout(r, 1))
+    }
+
   }
+
+  log('扫描完成！')
+
+  // 防kill
+  console.log('休息！')
+  await new Promise<void>(r => setTimeout(r, 500))
 
   // 排序
   all_songs_list.sort((a: string, b: string) => {return customCompare(a, b)})
+
+  // 防kill
+  console.log('休息！')
+  await new Promise<void>(r => setTimeout(r, 500))
 
   // 输出数据
   return [all_songs_list, play_list, artist_composer_list, album_list, album_artist_list, genre_list]
