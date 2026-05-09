@@ -185,6 +185,48 @@ function update_highlight(num) {
     })
 }
 
+// 滚动到指定歌曲位置
+function scroll_to_song(index) {
+    const container = document.querySelector('.slide_frame')
+    const targetElement = document.getElementById(index.toString())
+    
+    if (targetElement) {
+        // 元素已存在，直接滚动
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    } else if (index >= playList_batchState.currentIndex) {
+        // 元素还未渲染，需要先渲染到目标位置
+        const fragment = document.createDocumentFragment()
+        const endIndex = Math.min(
+            Math.ceil((index + 1) / PLAYLIST_BATCH_SIZE) * PLAYLIST_BATCH_SIZE,
+            playList_batchState.list.length
+        )
+        
+        for (let i = playList_batchState.currentIndex; i < endIndex; i++) {
+            const element = playList_create_song_element(
+                playList_batchState.list[i],
+                i,
+                playList_batchState.num
+            )
+            fragment.appendChild(element)
+            playList_imageObserver.observe(element)
+        }
+        
+        slide.appendChild(fragment)
+        playList_batchState.currentIndex = endIndex
+        
+        // 更新色彩后滚动
+        set_background_color()
+        
+        // 使用 requestAnimationFrame 确保 DOM 更新后再滚动
+        requestAnimationFrame(() => {
+            const newTarget = document.getElementById(index.toString())
+            if (newTarget) {
+                newTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }
+        })
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 主函数 //
 ///////////
@@ -231,11 +273,25 @@ function update_playing_songs(data, num) {
         // 注册滚动监听
         container.addEventListener('scroll', playList_handle_scroll)
 
-        // 渲染第一批
-        playList_render_next_batch()
+        // 如果目标歌曲不在第一批，需要渲染到目标位置
+        if (num >= PLAYLIST_BATCH_SIZE) {
+            // 渲染到包含目标歌曲的批次
+            const targetBatch = Math.ceil((num + 1) / PLAYLIST_BATCH_SIZE)
+            for (let i = 0; i < targetBatch; i++) {
+                playList_render_next_batch()
+            }
+        } else {
+            // 渲染第一批
+            playList_render_next_batch()
+        }
 
         // 更新头显
         play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
+
+        // 滚动到当前播放歌曲
+        requestAnimationFrame(() => {
+            scroll_to_song(num)
+        })
 
     } else {
         console.log('数据为空或长度为0, 只更新高亮')
@@ -243,6 +299,8 @@ function update_playing_songs(data, num) {
         update_highlight(num)
         // 更新头显
         play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
+        // 滚动到当前播放歌曲
+        scroll_to_song(num)
     }
 
 }
