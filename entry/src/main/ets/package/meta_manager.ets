@@ -61,7 +61,7 @@ export async function image_to_base64(img: PixelMap) {
 }
 
 // 元数据获取 //
-export async function get_meta(path: string): Promise<string[][]> {
+export function get_meta(path: string): string[][] {
 
   //
   // 获取音频的元数据
