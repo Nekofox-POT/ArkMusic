@@ -8,8 +8,9 @@
 // 导入第三方库 //
 ///////////////
 import { common } from '@kit.AbilityKit'
-import router from '@ohos.router';
+import router from '@ohos.router'
 import emitter from '@ohos.events.emitter'
+import { fileIo as fs } from '@kit.CoreFileKit'
 
 //////////////////
 // 导入自创建模块 //
@@ -47,6 +48,7 @@ struct Index {
   // 更新池 //
   //////////
   @State first_start: boolean = false // 首次启动
+  @State version_ready: boolean = false // 版本检测
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
@@ -65,8 +67,31 @@ struct Index {
   // 进入app操作 //
   ///////////////
   aboutToAppear(): void {
+
     log('程序开始运行...')
-    reg_bg_run(this.context) // 注册后台
+    // 注册后台
+    reg_bg_run(this.context)
+    // 版本号校验
+    log('校验版本号..')
+    try {
+      // 获取版本号
+      let tmp = fs.readTextSync(getContext().filesDir + '/version.json')
+    }
+    // 获取失败，视为第一次启动
+    catch {
+      this.first_start = true
+      // 写入版本号
+      try {
+        const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+        fs.writeSync(file.fd, '0.6.0')
+        fs.closeSync(file)
+      } catch (e) {
+        log(`版本号保存失败: ${e}`, 'error')
+      }
+    }
+    // 就绪
+    this.version_ready = true
+
   }
 
   ////////////////
@@ -116,9 +141,8 @@ struct Index {
       /////////////
       // 开始页面 //
       ////////////
-      if (!this.ready) {
+      if (!this.ready && this.version_ready) {
         ark_music_start({
-          first_start: this.first_start,
           ready: this.ready,
           files_manager: this.ark_file_manager
         })
