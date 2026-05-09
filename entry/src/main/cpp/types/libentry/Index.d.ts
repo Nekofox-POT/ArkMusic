@@ -3,6 +3,7 @@ export const getImageAverageColor: (buffer: ArrayBuffer, width: number, height: 
 export const extractFilename: (path: string) => string
 export const getAudioMetadata: (filePath: string) => AudioMetadata
 export const base64urlCode: (input: string, isEncode: boolean) => string
+export const sortStringArray: (arr: string[]) => string[]
 
 export interface AudioMetadata {
   channels: number

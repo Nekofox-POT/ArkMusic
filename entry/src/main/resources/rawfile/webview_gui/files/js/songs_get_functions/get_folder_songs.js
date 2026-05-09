@@ -29,18 +29,16 @@ function folder_init_image_observer() {
                 const imgDiv = element.querySelector('div')
 
                 if (path) {
-                    // 异步获取元数据
-                    let meta = ark.get_song_meta(path)
-                    if (meta[0] && meta[0][0]) {
-                        p.textContent = meta[0][0]
-                    }
-                    // 异步获取图片
-                    ark.get_song_image(path).then(img => {
-                        if (img) {
-                            imgDiv.style.backgroundImage = `url(${img})`
+                    // 异步加载元数据
+                    ark.get_song_meta(path).then(meta => {
+                        if (meta[1]) {
+                            imgDiv.style.backgroundImage = `url(${meta[1]})`
                         }
+                        if (meta[0][0] && meta[0][0][0]) {
+                            p.textContent = meta[0][0][0]
+                        }
+                        element.dataset.path = '' // 清除标记，避免重复加载
                     })
-                    element.dataset.path = '' // 清除标记，避免重复加载
                 }
 
                 folder_imageObserver.unobserve(element)

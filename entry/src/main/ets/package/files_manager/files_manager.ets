@@ -1,6 +1,6 @@
 //
 // 文件管理器
-// 广播：10
+// 广播：8
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////
@@ -44,55 +44,42 @@ enum CharType {
 
 // 扫描进度上报 //
 function notice(msg: string) {
-  emitter.emit({ eventId: 1010 }, { data: {
+  emitter.emit({ eventId: 812 }, { data: {
     msg: msg
   } })
 }
 
-// 字符比较器 //
+// 字符权重 //
 function getCharWeight(char: string): number {
 
-  enum CharType {
-    PUNCTUATION = 0, // 符号（包含 '.'）
-    DIGIT = 1,       // 数字
-    LETTER = 2,      // 字母
-    CHINESE = 3      // 中文
-  }
+  if (!char) return CharType.CHINESE
 
-  if (!char) return CharType.CHINESE; // 兜底空字符串
+  const code = char.charCodeAt(0)
 
-  const code = char.charCodeAt(0);
-
-  // 1. 符号 (ASCII 0-47, 58-64, 91-96, 123-127 等)
-  // 这里把所有非字母数字中文的常见字符都归为符号
   if ((code >= 33 && code <= 47) ||
     (code >= 58 && code <= 64) ||
     (code >= 91 && code <= 96) ||
     (code >= 123 && code <= 126)) {
-    return CharType.PUNCTUATION;
+    return CharType.PUNCTUATION
   }
 
-  // 2. 数字 (0-9)
   if (code >= 48 && code <= 57) {
-    return CharType.DIGIT;
+    return CharType.DIGIT
   }
 
-  // 3. 字母 (A-Z, a-z)
   if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
-    return CharType.LETTER;
+    return CharType.LETTER
   }
 
-  // 4. 中文 (按照 Unicode 范围，基本涵盖了常用汉字)
   if ((code >= 0x4E00 && code <= 0x9FFF) ||
     (code >= 0x3400 && code <= 0x4DBF) ||
     (code >= 0x20000 && code <= 0x2A6DF)) {
-    return CharType.CHINESE;
+    return CharType.CHINESE
   }
 
-  // 其他未知的罕见字符也当做符号处理，排在前面
-  return CharType.PUNCTUATION;
+  return CharType.PUNCTUATION
 }
-// 列表排序器 //
+// 字符比较器 //
 function customCompare(strA: string, strB: string): number {
   const lenA = strA.length;
   const lenB = strB.length;
@@ -175,6 +162,8 @@ export class files_manager {
     fs.mkdirSync(root_path)
 
     // 初始化数据库
+    log('初始化数据库...')
+    notice('初始化数据库...')
     try {fs.rmdirSync(root_path + '/play_list')} catch {}
     fs.mkdirSync(root_path + '/play_list')
     try {fs.rmdirSync(root_path + '/artist_composer')} catch {}
@@ -215,9 +204,13 @@ export class files_manager {
       this.genre_list.get(tmp_meta[1][4])?.push(tmp_path)
 
       // 防kill
-      if (i % 10 === 0) {await new Promise<void>(r => setTimeout(r, 1))}
+      if (i % 200 === 0) {
+        notice(`正在扫描: ${tmp_audio[i]}`)
+        await new Promise<void>(r => setTimeout(r, 1))
+      }
 
     }
+
     // 防kill
     await new Promise<void>(r => setTimeout(r, 100))
     // 扫描歌曲(dsd) //
@@ -236,6 +229,7 @@ export class files_manager {
     for (let i = 0; i < tmp_m3u_list.length; i++) {
 
       // 尝试读取
+      notice(`正在处理: ${tmp_m3u_list[i]}`)
       try {fs.readTextSync(song_path + tmp_m3u_list[i])} catch {continue}
 
       // 注册环境
@@ -269,7 +263,7 @@ export class files_manager {
         } catch (e) {log(e, 'error')}
 
         // 防kill
-        if (i % 10 === 0) {await new Promise<void>(r => setTimeout(r, 1))}
+        if (i % 50 === 0) {await new Promise<void>(r => setTimeout(r, 1))}
 
       }
 
@@ -290,7 +284,7 @@ export class files_manager {
     let tick: number = 0
     // 所有歌曲
     log('保存 所有歌曲')
-    this.all_songs_list.sort((a: string, b: string) => {return customCompare(a, b)})
+    this.all_songs_list = await this.list_sort(this.all_songs_list)
     // array_to_json_save(this.all_songs_list, root_path + '/all_songs.json')
     // // 歌手 / 作曲家
     // log('保存 歌手 / 作曲家')
@@ -345,7 +339,20 @@ export class files_manager {
     //   array_to_json_save(this.play_list.get(i) ?? [], root_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
     // }
     log('保存完毕！')
+    notice('完成！')
 
+  }
+
+  // 排序（C++ 快速排序，带进度提示）//
+  async list_sort(arr: string[]): Promise<string[]> {
+    const total = arr.length
+    notice(`正在排序 (0 / ${total})`)
+    await new Promise<void>(r => setTimeout(r, 1))
+
+    const result = nativeModule.sortStringArray(arr)
+
+    notice(`正在排序 (${total} / ${total})`)
+    return result
   }
 
   // 载入列表 //

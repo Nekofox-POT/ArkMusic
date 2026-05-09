@@ -16,6 +16,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 import { log, notice, vib } from '../package/system_function'
 import { make_music_cache } from '../package/file_manager_old'
 import { files_manager } from '../package/files_manager/files_manager'
+import { emitter } from '@kit.BasicServicesKit'
 
 ///////////
 // 变量池 //
@@ -71,14 +72,11 @@ export default struct ark_music_start {
   // 更新池 //
   //////////
   @State msg: string = '准备'    // 第一次启动
-  @State @Watch('env_ready')dir_ready: boolean = false    // 环境指示器（下载目录是否初始化）
-  @State @Watch('env_ready')version_ready: boolean = false  // 版本号校验完成器
-  @State @Watch('env_ready')files_manager_ready: boolean = false  // 文件加载器完成
+  @State @Watch('reg_files_manager')dir_ready: boolean = false    // 环境指示器（下载目录是否初始化）
 
   ///////////
   // 继承池 //
   //////////
-  @Link @Watch('env_ready')first_start: boolean  // 首次启动指示器
   @Link ready: boolean    // 环境准备指示器
 
   ////////
@@ -97,30 +95,13 @@ export default struct ark_music_start {
   ////////////
   // 基础类 //
   //////////
-  // 开始 //
-  async env_load() {
-    // 加载files_manager //
-    this.reg_files_manager()
-    // 版本号校验 //
-    log('校验版本号')
-    try {
-      // 获取版本号
-      let tmp = fs.readTextSync(getContext().filesDir + '/version.json')
-    }
-    // 获取失败，视为第一次启动
-    catch {
-      this.first_start = true
-      // 写入版本号
-      try {
-        const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-        fs.writeSync(file.fd, '0.6.0')
-        fs.closeSync(file)
-      } catch (e) {
-        log(`版本号保存失败: ${e}`, 'error')
-      }
-    }
-    // 就绪
-    this.version_ready = true
+  aboutToAppear(): void {
+    // 开启监听
+    emitter.on({ eventId: 812 }, (eventData: emitter.EventData) => {this.msg = eventData.data?.msg})
+  }
+  aboutToDisappear(): void {
+    // 关闭监听
+    emitter.off(812)
   }
 
   ////////////
@@ -129,15 +110,7 @@ export default struct ark_music_start {
   // files_manager注册 //
   async reg_files_manager() {
     await this.files_manager.load_data()
-    this.files_manager_ready = true
-  }
-
-  // ready指示 //
-  env_ready() {
-    // 三样素集齐才能放行
-    if (this.version_ready && this.dir_ready && this.files_manager_ready && !this.first_start) {
-      this.ready = true
-    }
+    this.ready = true
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,8 +152,6 @@ export default struct ark_music_start {
           .position({ x: 0, y: 0 })
           .zIndex(100)
           .onPageEnd(async () => {
-            // 加载加载程序
-            this.env_load()
             // 尝试读取目录
             try {
               fs.listFileSync(root_path);

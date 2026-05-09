@@ -49,7 +49,6 @@ export async function array_to_json_save(data: string[], path: string): Promise<
   return true
 
 }
-
 // json读取转string[] //
 export function read_json_to_array(path: string): string[] {
 

@@ -5,6 +5,7 @@
 #include "package/extract_filename/extract_filename.h"
 #include "package/ffmpeg_manager/ffmpeg_manager.h"
 #include "package/base64url_code/base64url_code.h"
+#include "package/sort_manager/sort_manager.h"
 
 // --- 功能1：Base64 编码 (完整代码，请替换原来的省略版本) ---
 static napi_value EncodeImageToBase64(napi_env env, napi_callback_info info) {
@@ -170,6 +171,63 @@ static napi_value Base64UrlCode(napi_env env, napi_callback_info info) {
     return result;
 }
 
+// --- 功能6：字符串数组排序 ---
+static napi_value SortStringArray(napi_env env, napi_callback_info info) {
+    // 1. 获取参数
+    size_t argc = 1;
+    napi_value args[1];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc < 1) {
+        napi_throw_error(env, nullptr, "需要传入字符串数组参数");
+        return nullptr;
+    }
+
+    // 2. 校验参数类型
+    bool is_array = false;
+    napi_is_array(env, args[0], &is_array);
+    if (!is_array) {
+        napi_throw_error(env, nullptr, "参数类型必须是数组");
+        return nullptr;
+    }
+
+    // 3. 获取数组长度
+    uint32_t length = 0;
+    napi_get_array_length(env, args[0], &length);
+
+    // 4. 提取为 std::vector<std::string>
+    std::vector<std::string> input;
+    input.reserve(length);
+    for (uint32_t i = 0; i < length; i++) {
+        napi_value elem;
+        napi_get_element(env, args[0], i, &elem);
+
+        // 两步法获取字符串：先拿长度，再读内容
+        size_t str_size = 0;
+        napi_status status = napi_get_value_string_utf8(env, elem, nullptr, 0, &str_size);
+        if (status != napi_ok) {
+            continue;
+        }
+        std::string str(str_size, '\0');
+        napi_get_value_string_utf8(env, elem, &str[0], str_size + 1, &str_size);
+        input.push_back(str);
+    }
+
+    // 5. 调用 C++ 排序
+    std::vector<std::string> result = sort_string_array(input);
+
+    // 6. 转换为 napi 数组返回
+    napi_value output;
+    napi_create_array_with_length(env, result.size(), &output);
+    for (size_t i = 0; i < result.size(); i++) {
+        napi_value elem;
+        napi_create_string_utf8(env, result[i].c_str(), result[i].length(), &elem);
+        napi_set_element(env, output, i, elem);
+    }
+
+    return output;
+}
+
 // --- 模块初始化 ---
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
@@ -179,7 +237,8 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"getImageAverageColor", nullptr, GetImageAverageColor, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"extractFilename", nullptr, ExtractFilename, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getAudioMetadata", nullptr, GetAudioMetadata, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"base64urlCode", nullptr, Base64UrlCode, nullptr, nullptr, nullptr, napi_default, nullptr}
+        {"base64urlCode", nullptr, Base64UrlCode, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"sortStringArray", nullptr, SortStringArray, nullptr, nullptr, nullptr, napi_default, nullptr}
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;

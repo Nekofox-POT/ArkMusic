@@ -260,9 +260,7 @@ export default struct web_ui {
       back_to_player: () => {this.ark_music_ui.runJavaScript('taskbar_page_update(1)')},
 
       // 获取元数据 //
-      get_song_meta: async (path: string) => {return await get_meta(path)},
-      // 获取图片编码 //
-      get_song_image: async (path: string) => {return await image_to_base64(await get_image(path))},
+      get_song_meta: async (path: string) => {return [get_meta(path), await image_to_base64(await get_image(path))]},
 
       // 点歌 //
       play_song: (tmp: number) => {this.ark_music_player.set_play_list(this.play_list, tmp)},
@@ -296,7 +294,7 @@ export default struct web_ui {
       [
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
-        'set_vol', 'back_to_player', 'get_song_meta', 'get_song_image', 'play_song',
+        'set_vol', 'back_to_player', 'get_song_meta', 'play_song',
         'get_all_songs', 'get_folder_songs'
       ]
 
