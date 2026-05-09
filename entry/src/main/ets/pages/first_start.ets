@@ -19,15 +19,6 @@ export default struct first_start {
     Row() {
 
       ///////////////
-      // 初始化遮罩 //
-      /////////////
-      Column() { Image($r('app.media.foreground_backup')).width('256px').height('256px') }
-      .width('100%').height('100%')
-      .position({ x: 0, y: 0 }).zIndex(500)
-      .backgroundColor('#fff').justifyContent(FlexAlign.Center)
-      .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
-
-      ///////////////
       // 初始化向导 //
       /////////////
       Column() {

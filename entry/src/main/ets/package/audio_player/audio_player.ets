@@ -6,7 +6,6 @@
 ////////////////
 // 导入第三方库 //
 ///////////////
-import { common } from '@kit.AbilityKit'
 import emitter from '@ohos.events.emitter'
 import { avSession } from '@kit.AVSessionKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
@@ -14,7 +13,6 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 //////////////////
 // 导入自创建模块 //
 ////////////////
-import { av_session } from './av_session'
 import { av_player } from './by_av_player'
 import { log, notice } from '../system_function'
 import { get_image, get_meta } from '../meta_manager'
@@ -101,8 +99,41 @@ export class audio_player {
   private like_list_path: string[] = [] // 喜欢列表（路径备份）
 
   // 类 //
-  private av_session = new av_session() // 播控服务
+  private session: avSession.AVSession | null = null; // 元音频
   private av_player = new av_player()   // 官方av_player播放器
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // av_session专用 //
+  ///////////////////
+
+  // 初始化 //
+  async avs_start_up() {
+    // 创建AVSession
+    log('创建avs')
+    this.session = await avSession.createAVSession(getContext(this), 'ArkMusic', 'audio')
+    // 注册行为
+    log('注册行为')
+    this.session.on("play", () => {this.playing()})  // 播放
+    this.session.on("pause", () => {this.pause()})  // 暂停
+    this.session.on("setLoopMode", (position) => {console.log(`播放模式：${position}`); })
+    this.session.on("playPrevious", () => {this.last_song()}) // 上一首
+    this.session.on("playNext", () => {this.next_song()}) //下一首
+    this.session.on("seek", (position) => {this.seek(position)})  // 跳转
+    this.session.on("toggleFavorite", () => {this.toggle_like()})
+    this.session.on("playFromAssetId", (position) => {console.log(`跳转第${position}首`)})
+    this.session.on("answer", () => {console.log('avs:接听电话')})
+    this.session.on("hangUp", () => {console.log('avs:挂断电话')})
+    this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
+    // 初始化
+    await this.session.setAVMetadata({
+      assetId: '-1',
+      title: '未知歌曲',
+      artist: '未知歌手',
+    })
+    // 激活会话
+    await this.session.activate()
+    log('avs激活完成')
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
@@ -114,16 +145,17 @@ export class audio_player {
     const tmp = await get_meta(path)
     // 获取封面
     const tmp_img = await get_image(path)
-    // 同步av_session
-    this.av_session.set_title(this.play_list_index, tmp[1][0], tmp[1][1])
-    this.av_session.set_image(this.play_list_index, tmp_img)
-    // 发送
+    // 广播
     if (tmp) {emitter.emit({ eventId: 712 }, { data: {
       name: tmp[0][0],
       title: tmp[1][0],
       artist: tmp[1][1],
       image: tmp_img
     } })}
+    // 同步av_session
+    this.session?.setAVMetadata({ assetId: '0', title: tmp[1][0], artist: tmp[1][1] })
+    this.session?.setAVMetadata({ assetId: '0', mediaImage: tmp_img })
+
   }
 
   // 喜欢检测 //
@@ -137,11 +169,11 @@ export class audio_player {
       // 扫描判断
       const index = this.like_list.findIndex(item => item === tmp)
       if (index === -1) {
-        this.av_session.set_like(false)
         emitter.emit({ eventId: 717 }, { data: { like: false } })
+        this.session?.setAVPlaybackState({ isFavorite: false })
       } else {
-        this.av_session.set_like(true)
         emitter.emit({ eventId: 717 }, { data: { like: true } })
+        this.session?.setAVPlaybackState({ isFavorite: true })
       }
 
     } catch {}
@@ -161,11 +193,11 @@ export class audio_player {
       emitter.emit({ eventId: 714 }, { data: { status: status } })
       // 更新AVSession
       if (status == 'playing') {
-        this.av_session.set_play_status(true)
+        this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PLAY })
       } else if (status == 'pause') {
-        this.av_session.set_play_status(false)
+        this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
       } else if (status == 'complete') {
-        this.av_session.set_play_status(false)
+        this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
         // 如果不是末尾，那就下一首
         if (this.play_list_index < this.play_list.length - 1) {
           this.next_song()
@@ -179,39 +211,18 @@ export class audio_player {
       // 广播 //
       emitter.emit({ eventId: 715 }, { data: { duration_time: duration } })
       // 更新时长 //
-      this.av_session.set_duration_time(this.play_list_index, duration)
+      this.session?.setAVMetadata({ assetId: '0', duration: duration })
     }
     // 播放进度更新 //
     const current_time_update = (current: number) => {
       // 广播 //
       emitter.emit({ eventId: 716 }, { data: { current_time: current } })
       // 更新时长 //
-      this.av_session.set_current_time(current)
+      this.session?.setAVPlaybackState({ position: { elapsedTime: current, updateTime: new Date().getTime() } })
     }
 
     // av_player注册 //
     this.av_player.set_callback(play_status_update, duration_time_update, current_time_update)
-
-  }
-
-  // 播控器回调 //
-  private av_session_callback() {
-
-    // 跳转 //
-    const seek = (position: number) => {this.seek(position)}
-    // 更改播放模式 //
-    const change_play_mode = (type: string) => {}
-    // 上一首 //
-    const last_song = (): void => {console.log('1'); this.last_song()}
-    // 播放 / 暂停 //
-    const play = (status: boolean) => {if (status) {this.playing()} else {this.pause()}}
-    // 下一首 //
-    const next_song = () => {this.next_song()}
-    // 喜欢 //
-    const like = () => {this.toggle_like()}
-
-    // AVSession注册 //
-    this.av_session.set_callback(seek, change_play_mode, last_song, play, next_song, like)
 
   }
 
@@ -362,13 +373,13 @@ export class audio_player {
         log('取消喜欢.')
         this.like_list.splice(index, 1)
         this.like_list_path.splice(index, 1)
-        this.av_session.set_like(false)
+        this.session?.setAVPlaybackState({ isFavorite: false })
         emitter.emit({ eventId: 717 }, { data: { like: false } })
       } else {
         log('喜欢❤~')
         this.like_list.push(tmp)
         this.like_list_path.push(this.play_list[this.play_list_index])
-        this.av_session.set_like(true)
+        this.session?.setAVPlaybackState({ isFavorite: true })
         emitter.emit({ eventId: 717 }, { data: { like: true } })
       }
 
@@ -402,9 +413,8 @@ export class audio_player {
   constructor() {
     // 注册回调
     this.player_callback()
-    this.av_session_callback()
     // 注册元音频
-    this.av_session.start_up()
+    this.avs_start_up()
     // 读取like列表
     const tmp = read_json_to_array(root_path + '/my_like.json')
     if (tmp.length != 0) {

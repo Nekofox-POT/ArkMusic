@@ -14,7 +14,9 @@ import { log } from '../system_function';
 
 ///////////
 // 变量池 //
-//////////
+////////////////
+
+const app_context = getContext()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
@@ -74,7 +76,7 @@ export class av_session {
   async start_up() {
     // 创建AVSession
     log('创建avs')
-    this.session = await avSession.createAVSession(getContext(this), 'ArkMusic', 'audio')
+    this.session = await avSession.createAVSession(app_context, 'ArkMusic', 'audio')
     // 注册行为
     log('注册行为')
     this.session.on("play", () => {this.play?.(true)})  // 播放
@@ -94,6 +96,9 @@ export class av_session {
       title: '未知歌曲',
       artist: '未知歌手',
     })
+    // 激活会话
+    await this.session.activate()
+    log('avs激活完成')
   }
 
   // 设置标题 / 歌手 //

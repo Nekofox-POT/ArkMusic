@@ -359,15 +359,14 @@ export class files_manager {
     // 读取文件夹 //
     try {
       fs.statSync(root_path)
-      await this.make_songs_cache()    // 临时加的记得删
-      return                      // 临时加的记得删
 
       // 加载 //
       // 加载所有歌曲
+      notice('读取 所有歌曲')
       this.all_songs_list = read_json_to_array(root_path + '/all_songs.json')
       // 加载歌手 / 艺术家
       for (const i of fs.listFileSync(root_path + '/artist_composer/', { recursion: false })) {
-        const tmp_path = root_path + '/artist_composer/' + i + '.json'
+        const tmp_path = root_path + '/artist_composer/' + i
         // 读取
         let tmp_list = read_json_to_array(tmp_path)
         // 获取文件名
@@ -376,32 +375,38 @@ export class files_manager {
         this.artist_composer_list.set(tmp_name, tmp_list)
       }
       // 加载专辑
+      notice('读取 专辑')
       for (const i of fs.listFileSync(root_path + '/album/', { recursion: false })) {
-        const tmp_path = root_path + '/album/' + i + '.json'
+        const tmp_path = root_path + '/album/' + i
         let tmp_list = read_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
         this.album_list.set(tmp_name, read_json_to_array(tmp_path))
       }
       // 加载专辑作家
+      notice('读取 专辑作家')
       for (const i of fs.listFileSync(root_path + '/album_artist/', { recursion: false })) {
-        const tmp_path = root_path + '/album_artist/' + i + '.json'
+        const tmp_path = root_path + '/album_artist/' + i
         let tmp_list = read_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
         this.album_artist_list.set(tmp_name, read_json_to_array(tmp_path))
       }
       // 加载流派
+      notice('读取 流派')
       for (const i of fs.listFileSync(root_path + '/genre/', { recursion: false })) {
-        const tmp_path = root_path + '/genre/' + i + '.json'
+        const tmp_path = root_path + '/genre/' + i
         let tmp_list = read_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
         this.genre_list.set(tmp_name, read_json_to_array(tmp_path))
       }
       // 加载列表
+      notice('读取 列表')
       for (const i of fs.listFileSync(root_path + '/play_list/', { recursion: false })) {
-        const tmp_path = root_path + '/play_list/' + i + '.json'
+        const tmp_path = root_path + '/play_list/' + i
         const tmp_name = nativeModule.extractFilename(tmp_path)
         this.genre_list.set(nativeModule.base64urlCode(tmp_name, false), read_json_to_array(tmp_path))
       }
+
+      notice('完成.')
 
     } catch (e) {
       // 没有文件夹，扫描

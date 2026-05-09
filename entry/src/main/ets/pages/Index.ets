@@ -87,6 +87,8 @@ struct Index {
         fs.closeSync(file)
       } catch (e) {
         log(`版本号保存失败: ${e}`, 'error')
+        notice(`版本号保存失败: ${e}`)
+        return
       }
     }
     // 就绪
@@ -141,7 +143,7 @@ struct Index {
       /////////////
       // 开始页面 //
       ////////////
-      if (!this.ready && this.version_ready) {
+      if (!this.ready && this.version_ready && !this.first_start) {
         ark_music_start({
           ready: this.ready,
           files_manager: this.ark_file_manager
