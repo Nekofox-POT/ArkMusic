@@ -61,7 +61,7 @@ export async function image_to_base64(img: PixelMap) {
 }
 
 // 元数据获取 //
-export function get_meta(path: string): string[][] {
+export async function get_meta(path: string): Promise<string[][]> {
 
   //
   // 获取音频的元数据
@@ -73,7 +73,7 @@ export function get_meta(path: string): string[][] {
   try {
 
     // 获取元数据集
-    let meta_data = nativeModule.getAudioMetadata(path)
+    let meta_data = await nativeModule.getAudioMetadata(path)
 
     const file_name = nativeModule.extractFilename(path)  // 文件名
     const file_type = path.substring(path.lastIndexOf('.') + 1).toLowerCase() // 文件类型

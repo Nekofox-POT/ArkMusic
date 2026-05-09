@@ -4,8 +4,15 @@
 #include <napi/native_api.h>
 #include <string>
 
-// 获取音频元信息
-// 返回一个 napi_value 对象，包含基础数据和制作数据
+// 获取音频元信息（异步）
+// 参数: 文件路径 (string)
+// 返回: Promise<AudioMetadata>
 napi_value GetAudioMetadata(napi_env env, napi_callback_info info);
+
+// DSD 文件转 WAV（异步）
+// 参数1: DSD 文件路径 (string)
+// 参数2: 输出 WAV 文件路径 (string)
+// 返回: Promise<void>
+napi_value DsdToWav(napi_env env, napi_callback_info info);
 
 #endif // FFMPEG_MANAGER_H

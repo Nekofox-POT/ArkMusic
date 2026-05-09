@@ -200,18 +200,6 @@ export class files_manager {
   // 内部函数 //
   ////////////
 
-  // 排序（C++ 快速排序，带进度提示）//
-  private async list_sort(arr: string[]): Promise<string[]> {
-    const total = arr.length
-    notice(`正在排序 (0 / ${total})`)
-    await new Promise<void>(r => setTimeout(r, 1))
-
-    const result = nativeModule.sortStringArray(arr)
-
-    notice(`正在排序 (${total} / ${total})`)
-    return result
-  }
-
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 外部函数 //
   ////////////
@@ -234,7 +222,10 @@ export class files_manager {
     // 扫描歌曲(普通歌曲) //
     log('扫描普通歌曲')
     let tmp_audio = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })
-    for (let i = 0; i < tmp_audio.length; i++) {
+    const tmp_audio_length = tmp_audio.length
+    for (let i = 0; i < tmp_audio_length; i++) {
+
+      notice(`正在处理(${i}/${tmp_audio_length}): ${tmp_audio[i]}`)
 
       // 建立路径缓存
       let tmp_path = song_path + '/' + tmp_audio[i]
@@ -243,7 +234,7 @@ export class files_manager {
       this.all_songs_list.push(tmp_path)
 
       // 获取元数据
-      const tmp_meta = get_meta(tmp_path)
+      const tmp_meta = await get_meta(tmp_path)
       // 分类 歌手 / 作曲家
       if (!this.artist_composer_list.has(tmp_meta[1][1])) { this.artist_composer_list.set(tmp_meta[1][1], [])}
       this.artist_composer_list.get(tmp_meta[1][1])?.push(tmp_path)
@@ -257,28 +248,19 @@ export class files_manager {
       if (!this.genre_list.has(tmp_meta[1][4])) { this.genre_list.set(tmp_meta[1][4], [])}
       this.genre_list.get(tmp_meta[1][4])?.push(tmp_path)
 
-      // 防kill
-      if (i % 200 === 0) {
-        notice(`正在扫描: ${tmp_audio[i]}`)
-        await new Promise<void>(r => setTimeout(r, 1))
-      }
-
     }
-
-    // 防kill
-    await new Promise<void>(r => setTimeout(r, 100))
     // 扫描歌曲(dsd) //
     log('扫描dsd')
     let tmp_dsd = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })
-    for (let i = 0; i < tmp_dsd.length; i++) {
+    const tmp_dsd_length = tmp_dsd.length
+    for (let i = 0; i < tmp_dsd_length; i++) {
 
       console.log(`正在转换: ${tmp_dsd[i]}`)
-      notice(`正在转换: ${tmp_dsd[i]}`)
+      notice(`正在转换(${i}/${tmp_dsd_length}): ${tmp_dsd[i]}`)
 
       // 获取ino号
       let tmp_dsd_path = song_path + '/' + tmp_dsd[i]
-      let tmp_ino = fs.statSync(fs.openSync(tmp_dsd_path).fd).ino
-      console.log(`${tmp_dsd_path},ino:${tmp_ino}`)
+      let tmp_ino = `${fs.statSync(fs.openSync(tmp_dsd_path).fd).ino}`
 
       // 判断是否有已经转换好的文件（获取ino核对名称。）
       let cached_path = root_path + '/dsd_cache/' + tmp_ino + '.wav'
@@ -298,21 +280,18 @@ export class files_manager {
       }
 
       // 添加到列表
-      this.dsd_list.push(cached_path)
-      this.all_songs_list.push(cached_path)
+      this.dsd_list.push(tmp_ino + '.wav')
+      this.all_songs_list.push(tmp_dsd_path)
 
-      // 防kill
-      if (i % 10 === 0) {await new Promise<void>(r => setTimeout(r, 1))}
     }
-    // 防kill
-    await new Promise<void>(r => setTimeout(r, 100))
     // 扫描歌单(m3u) //
     log('扫描m3u列表')
     let tmp_m3u_list = fs.listFileSync(song_path, { recursion: true, filter: { suffix: ['.m3u'] } })
-    for (let i = 0; i < tmp_m3u_list.length; i++) {
+    const tmp_m3u_list_length = tmp_m3u_list.length
+    for (let i = 0; i < tmp_m3u_list_length; i++) {
 
       // 尝试读取
-      notice(`正在处理: ${tmp_m3u_list[i]}`)
+      notice(`正在处理(${i}/${tmp_m3u_list_length}): ${tmp_m3u_list[i]}`)
       try {fs.readTextSync(song_path + tmp_m3u_list[i])} catch {continue}
 
       // 注册环境
@@ -323,10 +302,10 @@ export class files_manager {
       const tmp_list = fs.readTextSync(tmp_path).replace(/\r\n/g, '\n').split('\n').filter(Boolean)
 
       // 读取
-      for (let e = 0; e < tmp_list.length; e++) {
+      for (const e of tmp_list) {
 
         // 格式化
-        const tmp = tmp_env + '/' + tmp_list[e].replaceAll('\\', '/')
+        const tmp = tmp_env + '/' + e.replaceAll('\\', '/')
 
         // 配置环境
         try {
@@ -340,18 +319,30 @@ export class files_manager {
           }
           // （dsd音乐）
           else if (support_dsd_format.includes(file_suffix)) {
+
+            // 获取ino号
+            let tmp_ino = `${fs.statSync(fs.openSync(tmp).fd).ino}`
+
+            // 判断是否有已经转换好的文件（获取ino核对名称。）
+            let cached_path = root_path + '/dsd_cache/' + tmp_ino + '.wav'
             try {
-              let tmp_ino = fs.statSync(fs.openSync(tmp).fd).ino
-              let cached = root_path + '/dsd_cache/' + tmp_ino + '.wav'
-              fs.statSync(cached)
-              tmp_play_list.push(cached)
-            } catch { console.log('dsd文件未转换: ' + tmp) }
+              fs.statSync(cached_path)
+              console.log('已有缓存，跳过')
+            } catch {
+              // 没有缓存，使用ffmpeg转换
+              console.log('开始转换...')
+              try {
+                await nativeModule.dsdToWav(tmp, cached_path)
+                console.log('转换完成')
+              } catch (e) {
+                log(`dsd转换失败: ${e}`, 'error')
+                continue
+              }
+            }
+
           }
 
         } catch (e) {log(e, 'error')}
-
-        // 防kill
-        if (i % 50 === 0) {await new Promise<void>(r => setTimeout(r, 1))}
 
       }
 
@@ -361,66 +352,64 @@ export class files_manager {
       }
       this.play_list.set(tmp_name, tmp_play_list)
 
-      // 防kill
-      await new Promise<void>(r => setTimeout(r, 1))
-
     }
 
     // 保存 //
     let tmp_keys: string[] = []
+    let tmp_keys_length: number = 0
     let tmp_values: string[] = []
     let tick: number = 0
     // 所有歌曲
     log('保存 所有歌曲')
-    this.all_songs_list = await this.list_sort(this.all_songs_list)
+    this.all_songs_list = nativeModule.sortStringArray(this.all_songs_list)
     array_to_json_save(this.all_songs_list, root_path + '/all_songs.json')
     // 歌手 / 作曲家
     log('保存 歌手 / 作曲家')
     tick = 0
-    tmp_keys = await this.list_sort(Array.from(this.artist_composer_list.keys()))
-    for (let i = 0; i < tmp_keys.length; i++) {
-      // 防kill
-      if (i % 200 === 0) { await new Promise<void>(r => setTimeout(r, 1)) }
-      tmp_values = await this.list_sort(this.artist_composer_list.get(tmp_keys[i]) ?? [])
+    tmp_keys =  nativeModule.sortStringArray(Array.from(this.artist_composer_list.keys()))
+    tmp_keys_length = tmp_keys.length
+    for (let i = 0; i < tmp_keys_length; i++) {
+      notice(`正在保存 (${i}/${tmp_keys_length})`)
+      tmp_values = nativeModule.sortStringArray(this.artist_composer_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
       array_to_json_save(tmp_values, root_path + '/artist_composer/' + tick++ + '.json')
     }
     // 专辑
     log('保存 专辑')
     tick = 0
-    tmp_keys = await this.list_sort(Array.from(this.album_list.keys()))
-    for (let i = 0; i < tmp_keys.length; i++) {
-      // 防kill
-      if (i % 200 === 0) { await new Promise<void>(r => setTimeout(r, 1)) }
-      tmp_values = await this.list_sort(this.album_list.get(tmp_keys[i]) ?? [])
+    tmp_keys = nativeModule.sortStringArray(Array.from(this.album_list.keys()))
+    tmp_keys_length = tmp_keys.length
+    for (let i = 0; i < tmp_keys_length; i++) {
+      notice(`正在保存 (${i}/${tmp_keys_length})`)
+      tmp_values = nativeModule.sortStringArray(this.album_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
       array_to_json_save(tmp_values, root_path + '/album/' + tick++ + '.json')
     }
     // 专辑作家
     log('保存 专辑作家')
     tick = 0
-    tmp_keys = await this.list_sort(Array.from(this.album_artist_list.keys()))
-    for (let i = 0; i < tmp_keys.length; i++) {
-      // 防kill
-      if (i % 200 === 0) { await new Promise<void>(r => setTimeout(r, 1)) }
-      tmp_values = await this.list_sort(this.album_artist_list.get(tmp_keys[i]) ?? [])
+    tmp_keys = nativeModule.sortStringArray(Array.from(this.album_artist_list.keys()))
+    tmp_keys_length = tmp_keys.length
+    for (let i = 0; i < tmp_keys_length; i++) {
+      notice(`正在保存 (${i}/${tmp_keys_length})`)
+      tmp_values = nativeModule.sortStringArray(this.album_artist_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
       array_to_json_save(tmp_values, root_path + '/album_artist/' + tick++ + '.json')
     }
     // 流派
     log('保存 流派')
     tick = 0
-    tmp_keys = await this.list_sort(Array.from(this.genre_list.keys()))
-    for (let i = 0; i < tmp_keys.length; i++) {
-      // 防kill
-      if (i % 200 === 0) { await new Promise<void>(r => setTimeout(r, 1)) }
-      tmp_values = await this.list_sort(this.genre_list.get(tmp_keys[i]) ?? [])
+    tmp_keys = nativeModule.sortStringArray(Array.from(this.genre_list.keys()))
+    tmp_keys_length = tmp_keys.length
+    for (let i = 0; i < tmp_keys_length; i++) {
+      notice(`正在保存 (${i}/${tmp_keys_length})`)
+      tmp_values = nativeModule.sortStringArray(this.genre_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
       array_to_json_save(tmp_values, root_path + '/genre/' + tick++ + '.json')
     }
     // 列表
     log('保存 列表')
-    tmp_keys = await this.list_sort(Array.from(this.play_list.keys()))
+    tmp_keys = nativeModule.sortStringArray(Array.from(this.play_list.keys()))
     for (const i of tmp_keys) {
       array_to_json_save(this.play_list.get(i) ?? [], root_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
     }

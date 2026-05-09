@@ -1,4 +1,4 @@
-#include "dsd_to_wav.h"
+#include "ffmpeg_manager.h"
 
 extern "C" {
 #include <libavformat/avformat.h>

@@ -6,7 +6,6 @@
 #include "package/ffmpeg_manager/ffmpeg_manager.h"
 #include "package/base64url_code/base64url_code.h"
 #include "package/sort_manager/sort_manager.h"
-#include "package/dsd_to_wav/dsd_to_wav.h"
 
 // --- 功能1：Base64 编码 (完整代码，请替换原来的省略版本) ---
 static napi_value EncodeImageToBase64(napi_env env, napi_callback_info info) {
