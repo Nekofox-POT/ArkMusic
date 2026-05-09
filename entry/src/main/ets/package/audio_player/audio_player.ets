@@ -391,9 +391,6 @@ export class audio_player {
 
   }
 
-  // 输出喜欢列表 //
-  get_like_list_path(): string[] {return this.like_list_path}
-
   // 重置喜欢列表 //
   reset_like_list() {
     this.like_list = []
@@ -416,9 +413,9 @@ export class audio_player {
     // 注册元音频
     this.avs_start_up()
     // 读取like列表
-    const tmp = read_json_to_array(root_path + '/my_like.json')
-    if (tmp.length != 0) {
-      for (const i of tmp) {
+    const tmp_like = read_json_to_array(root_path + '/my_like.json')
+    if (tmp_like.length != 0) {
+      for (const i of tmp_like) {
         try {
           const tmp_ino = `${fs.statSync(fs.openSync(i).fd).ino}`
           this.like_list.push(tmp_ino)

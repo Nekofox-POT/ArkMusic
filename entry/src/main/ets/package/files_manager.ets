@@ -222,17 +222,13 @@ export class files_manager {
     // 初始化数据库
     log('初始化数据库...')
     notice('初始化数据库...')
-    try {fs.rmdirSync(root_path + '/play_list')} catch {}
+    try {fs.rmdirSync(root_path)} catch {}
+    fs.mkdirSync(root_path)
     fs.mkdirSync(root_path + '/play_list')
-    try {fs.rmdirSync(root_path + '/artist_composer')} catch {}
     fs.mkdirSync(root_path + '/artist_composer')
-    try {fs.rmdirSync(root_path + '/album')} catch {}
     fs.mkdirSync(root_path + '/album')
-    try {fs.rmdirSync(root_path + '/album_artist')} catch {}
     fs.mkdirSync(root_path + '/album_artist')
-    try {fs.rmdirSync(root_path + '/genre')} catch {}
     fs.mkdirSync(root_path + '/genre')
-    try {fs.rmdirSync(root_path + '/dsd_cache')} catch {}
     fs.mkdirSync(root_path + '/dsd_cache')
 
     // 扫描歌曲(普通歌曲) //
@@ -275,7 +271,36 @@ export class files_manager {
     log('扫描dsd')
     let tmp_dsd = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })
     for (let i = 0; i < tmp_dsd.length; i++) {
-      console.log('有dsd音频！')
+
+      console.log(`正在转换: ${tmp_dsd[i]}`)
+      notice(`正在转换: ${tmp_dsd[i]}`)
+
+      // 获取ino号
+      let tmp_dsd_path = song_path + '/' + tmp_dsd[i]
+      let tmp_ino = fs.statSync(fs.openSync(tmp_dsd_path).fd).ino
+      console.log(`${tmp_dsd_path},ino:${tmp_ino}`)
+
+      // 判断是否有已经转换好的文件（获取ino核对名称。）
+      let cached_path = root_path + '/dsd_cache/' + tmp_ino + '.wav'
+      try {
+        fs.statSync(cached_path)
+        console.log('已有缓存，跳过')
+      } catch {
+        // 没有缓存，使用ffmpeg转换
+        console.log('开始转换...')
+        try {
+          await nativeModule.dsdToWav(tmp_dsd_path, cached_path)
+          console.log('转换完成')
+        } catch (e) {
+          log(`dsd转换失败: ${e}`, 'error')
+          continue
+        }
+      }
+
+      // 添加到列表
+      this.dsd_list.push(cached_path)
+      this.all_songs_list.push(cached_path)
+
       // 防kill
       if (i % 10 === 0) {await new Promise<void>(r => setTimeout(r, 1))}
     }
@@ -315,7 +340,12 @@ export class files_manager {
           }
           // （dsd音乐）
           else if (support_dsd_format.includes(file_suffix)) {
-            console.log('有dsd音频！')
+            try {
+              let tmp_ino = fs.statSync(fs.openSync(tmp).fd).ino
+              let cached = root_path + '/dsd_cache/' + tmp_ino + '.wav'
+              fs.statSync(cached)
+              tmp_play_list.push(cached)
+            } catch { console.log('dsd文件未转换: ' + tmp) }
           }
 
         } catch (e) {log(e, 'error')}
@@ -498,7 +528,12 @@ export class files_manager {
         }
         // （dsd音乐）
         else if (support_dsd_format.includes(file_suffix)) {
-          console.log('有dsd音频！')
+          try {
+            let tmp_ino = fs.statSync(fs.openSync(tmp_path).fd).ino
+            let cached = root_path + '/dsd_cache/' + tmp_ino + '.wav'
+            fs.statSync(cached)
+            file_list.push(cached)
+          } catch {}
         }
         // 播放列表
         else if (file_suffix == '.m3u') {}
