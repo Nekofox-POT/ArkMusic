@@ -17,10 +17,8 @@ import { HashMap } from '@kit.ArkTS'
 // 导入自创建模块 //
 /////////////////
 import nativeModule from 'libentry.so'
-import { log } from '../system_function'
-import { read_json_to_array, array_to_json_save } from './array_save_load'
-import { img_save } from "../cache_image_save"
-import { get_image, get_meta } from '../meta_manager'
+import { log } from './system_function'
+import { get_meta } from './meta_manager'
 
 ///////////
 // 变量池 //
@@ -39,8 +37,8 @@ enum CharType {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 内部函数库 //
-/////////////
+// 函数库 //
+//////////
 
 // 扫描进度上报 //
 function notice(msg: string) {
@@ -122,6 +120,60 @@ function customCompare(strA: string, strB: string): number {
   return lenA - lenB;
 }
 
+// string[]转json储存（覆盖） //
+export async function array_to_json_save(data: string[], path: string): Promise<boolean> {
+
+  try {fs.rmdirSync(path)} catch {}
+
+  // 转换
+  const packData = JSON.stringify(data)
+
+  // 保存
+  try {
+    const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+    fs.writeSync(file.fd, packData)
+    fs.closeSync(file)
+  } catch (e) {
+    log(`保存文件失败: ${e}`, 'error')
+    return false
+  }
+
+  return true
+
+}
+// json读取转string[] //
+export function read_json_to_array(path: string): string[] {
+
+  try {
+    console.log(path)
+    let json: string = fs.readTextSync(path)
+
+    const parsed = JSON.parse(json) as string[]
+
+    // 校验：必须是数组
+    if (!Array.isArray(parsed)) {
+      throw new Error("JSON 格式错误：期望数组")
+    }
+
+    const result: string[] = []
+
+    // 遍历每个元素，确保是字符串
+    for (let i = 0; i < parsed.length; i++) {
+      const element = parsed[i]
+      if (typeof element !== 'string') {
+        throw new Error("JSON 格式错误：数组元素必须是字符串")
+      }
+      result.push(element)
+    }
+
+    return result
+
+  } catch (e) {
+    log(`读取文件失败: ${e}`, 'error')
+    return []
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
@@ -155,11 +207,6 @@ export class files_manager {
 
   // 建立歌曲缓存 //
   async make_songs_cache() {
-
-    // 重置 //
-    log('重置数据库')
-    try {fs.rmdirSync(root_path)} catch {}
-    fs.mkdirSync(root_path)
 
     // 初始化数据库
     log('初始化数据库...')
