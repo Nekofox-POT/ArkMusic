@@ -118,6 +118,7 @@ function createDragClone(element, x, y) {
     dragState.dragClone.style.border = computedStyle.border
     dragState.dragClone.style.boxShadow = computedStyle.boxShadow
     dragState.dragClone.style.backgroundColor = computedStyle.backgroundColor
+    dragState.dragClone.style.backdropFilter = 'blur(10px)'
     
     // 处理子元素样式（专辑封面和文字）
     const childDiv = dragState.dragClone.querySelector('div')
