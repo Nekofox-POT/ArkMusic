@@ -3,47 +3,52 @@
 ////////////////////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 配置常量 //
-/////////////
-
-const FOLDER_BATCH_SIZE = 20 // 每批渲染的元素数量
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 懒加载观察器 //
 /////////////////
 
 let folder_imageObserver = null
 
-// 初始化图片懒加载观察器
+// 从路径提取文件名
+function extract_filename(path) {
+    const lastSlash = path.lastIndexOf('/')
+    const fileName = lastSlash >= 0 ? path.substring(lastSlash + 1) : path
+    const dotIndex = fileName.lastIndexOf('.')
+    return dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName
+}
+
+// 初始化懒加载观察器（元数据 + 图片）
 function folder_init_image_observer() {
-    if (folder_imageObserver) return // 避免重复创建
+    if (folder_imageObserver) return
 
     folder_imageObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const imgDiv = entry.target
-                const imgPath = imgDiv.dataset.imgPath
+                const element = entry.target
+                const path = element.dataset.path
+                const p = element.querySelector('p')
+                const imgDiv = element.querySelector('div')
 
-                if (imgPath) {
-                    folder_get_song_image(imgDiv, imgPath)
-                    imgDiv.dataset.imgPath = '' // 清除标记，避免重复加载
+                if (path) {
+                    // 异步获取元数据
+                    let meta = ark.get_song_meta(path)
+                    if (meta[0] && meta[0][0]) {
+                        p.textContent = meta[0][0]
+                    }
+                    // 异步获取图片
+                    ark.get_song_image(path).then(img => {
+                        if (img) {
+                            imgDiv.style.backgroundImage = `url(${img})`
+                        }
+                    })
+                    element.dataset.path = '' // 清除标记，避免重复加载
                 }
 
-                // 停止观察已加载的元素
-                folder_imageObserver.unobserve(imgDiv)
+                folder_imageObserver.unobserve(element)
             }
         })
     }, {
-        rootMargin: '100px' // 提前100px开始加载
+        rootMargin: '100px'
     })
-}
-
-// 异步更新图片
-async function folder_get_song_image(img, path) {
-    const tmp_img = await ark.get_song_image(path)
-    if (tmp_img) {
-        img.style.backgroundImage = `url(${tmp_img})`
-    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,83 +89,6 @@ function create_folder_element(folderName) {
     return div
 }
 
-// 从路径提取文件名
-function extract_filename(path) {
-    const lastSlash = path.lastIndexOf('/')
-    const fileName = lastSlash >= 0 ? path.substring(lastSlash + 1) : path
-    // 移除扩展名
-    const dotIndex = fileName.lastIndexOf('.')
-    return dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName
-}
-
-// 创建单个歌曲元素（仅基础信息，不阻塞）
-function create_folder_song_element(index, path) {
-    // 从路径提取文件名作为初始显示
-    const file_name = extract_filename(path)
-
-    // 创建元素
-    const div = document.createElement('div')
-
-    // 点击事件
-    div.addEventListener('click', () => {
-        ark.play_song(index)
-    })
-
-    // 创建图片容器
-    const imgDiv = document.createElement('div')
-    imgDiv.dataset.imgPath = path // 存储图片路径供懒加载使用
-
-    // 创建文本
-    const p = document.createElement('p')
-    p.className = 'font_color'
-    p.style.color = background_color
-    p.textContent = file_name
-
-    // 组装元素
-    div.appendChild(imgDiv)
-    div.appendChild(p)
-
-    return { div, imgDiv }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 分批渲染 //
-/////////////
-
-// 启动懒加载观察
-function folder_start_lazy_loading(elements) {
-    // 初始化观察器
-    folder_init_image_observer()
-
-    // 开始观察所有图片元素
-    elements.forEach(imgDiv => {
-        if (imgDiv.dataset.imgPath) {
-            folder_imageObserver.observe(imgDiv)
-        }
-    })
-}
-
-// 分批渲染歌曲
-function render_folder_songs_batch(songsList, slide, startIndex, elements) {
-    const endIndex = Math.min(startIndex + FOLDER_BATCH_SIZE, songsList.length)
-
-    // 使用 DocumentFragment 减少DOM重绘
-    const fragment = document.createDocumentFragment()
-
-    for (let index = startIndex; index < endIndex; index++) {
-        const path = songsList[index]
-        const meta = ark.get_song_meta(path)
-        const { div, imgDiv } = create_folder_song_element(meta, index, path)
-        fragment.appendChild(div)
-        elements.push(imgDiv) // 收集图片元素用于后续观察
-    }
-
-    slide.appendChild(fragment)
-
-    // 返回是否还有更多数据
-    return endIndex < songsList.length
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 主函数 //
 ///////////
@@ -171,18 +99,18 @@ async function get_folder_songs(path = '') {
     const slide = document.querySelector('#folder_frame .slide')
     slide.innerHTML = ''
 
-    // 停止之前观察器对所有元素的关注
+    // 停止之前观察器
     if (folder_imageObserver) {
         folder_imageObserver.disconnect()
     }
+
+    // 初始化观察器
+    folder_init_image_observer()
 
     // 获取数据 [文件夹列表, 歌曲路径列表]
     const data = ark.get_folder_songs(path)
     const folderList = data[0]  // 文件夹名称数组
     const songsList = data[1]   // 歌曲路径数组
-
-    // 收集所有图片元素
-    const imgElements = []
 
     // 使用 DocumentFragment 减少DOM重绘
     const fragment = document.createDocumentFragment()
@@ -195,17 +123,33 @@ async function get_folder_songs(path = '') {
 
     // 处理歌曲
     for (let i = 0; i < songsList.length; i++) {
-        const path = songsList[i]
-        const { div, imgDiv } = create_folder_song_element(i, path)
+        const songPath = songsList[i]
+
+        // 创建元素
+        const div = document.createElement('div')
+        div.dataset.path = songPath
+        div.addEventListener('click', () => { ark.play_song(i) })
+
+        // 创建图片容器
+        const imgDiv = document.createElement('div')
+
+        // 创建文本
+        const p = document.createElement('p')
+        p.className = 'font_color'
+        p.style.color = background_color
+        p.textContent = extract_filename(songPath)
+
+        // 组装元素
+        div.appendChild(imgDiv)
+        div.appendChild(p)
         fragment.appendChild(div)
-        imgElements.push(imgDiv)
+
+        // 注册懒加载观察
+        folder_imageObserver.observe(div)
     }
 
     // 一次性添加所有元素
     slide.appendChild(fragment)
-
-    // 启动懒加载
-    folder_start_lazy_loading(imgElements)
 
     // 更新色彩
     set_background_color()
