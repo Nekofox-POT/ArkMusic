@@ -5,5 +5,4 @@
 715/725：总时长 duration_time
 716/726：当前播放时长 current_time
 717/727：like指示器 like
-718/728：列表 list
-719/729：播放序号 index
+718/728：列表 list 播放序号 index

@@ -135,5 +135,5 @@ player_like_button.addEventListener("touchend", () => {
     player_like_button.style.transform = 'scale(1)'
 })
 player_like_button.addEventListener("click", () => {
-    ark.set_like()
+    ark.toggle_like()
 })

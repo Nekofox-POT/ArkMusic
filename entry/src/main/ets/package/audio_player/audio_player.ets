@@ -96,7 +96,7 @@ export class audio_player {
   private player_choice: number = 0   // 播放器使用 ( 0：avplayer播放器 1：ffmpeg播放器 )
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
   private like_list: string[] = []    // 喜欢列表
-  private like_list_path: string[] = [] // 喜欢列表（路径备份）
+  like_list_path: string[] = [] // 喜欢列表（路径备份）
 
   // 类 //
   private session: avSession.AVSession | null = null; // 元音频
@@ -234,7 +234,7 @@ export class audio_player {
   async set_audio_play(song_index: number = this.play_list_index) {
     if (song_index != this.play_list_index) { this.play_list_index = song_index }
     // 广播序号
-    emitter.emit({ eventId: 719 }, { data: { index: this.play_list_index } })
+    emitter.emit({ eventId: 718 }, { data: { list: [], index: this.play_list_index } })
     // 使用官方播放器
     if (this.player_choice == 0) {
       console.log(this.play_list[this.play_list_index])
@@ -261,7 +261,7 @@ export class audio_player {
     this.play_list = list
     this.play_list_index = index
     // 广播列表
-    emitter.emit({ eventId: 718 }, { data: { list: this.play_list } })
+    emitter.emit({ eventId: 718 }, { data: { list: this.play_list, index: this.play_list_index } })
     // 初始化（播放）
     this.set_audio_play()
   }

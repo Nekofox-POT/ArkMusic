@@ -5,7 +5,7 @@
 // 配置常量 //
 /////////////
 
-const BATCH_SIZE = 20 // 每批渲染的元素数量
+const PLAYLIST_BATCH_SIZE = 200 // 每批渲染的元素数量
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 懒加载观察器 //
@@ -13,27 +13,44 @@ const BATCH_SIZE = 20 // 每批渲染的元素数量
 
 let playList_imageObserver = null
 
-// 初始化图片懒加载观察器
+// 从路径提取文件名
+function playList_extract_filename(path) {
+    const lastSlash = path.lastIndexOf('/')
+    const fileName = lastSlash >= 0 ? path.substring(lastSlash + 1) : path
+    const dotIndex = fileName.lastIndexOf('.')
+    return dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName
+}
+
+// 初始化懒加载观察器（元数据 + 图片）
 function playList_init_image_observer() {
-    if (playList_imageObserver) return // 避免重复创建
+    if (playList_imageObserver) return
 
     playList_imageObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
-                const imgDiv = entry.target
-                const imgPath = imgDiv.dataset.imgPath
+                const element = entry.target
+                const path = element.dataset.path
+                const p = element.querySelector('p')
+                const imgDiv = element.querySelector('div.img-container')
 
-                if (imgPath) {
-                    get_song_image(imgDiv, imgPath)
-                    imgDiv.dataset.imgPath = '' // 清除标记，避免重复加载
+                if (path) {
+                    // 异步加载元数据
+                    ark.get_song_meta(path).then(meta => {
+                        if (meta[1]) {
+                            imgDiv.style.backgroundImage = `url(${meta[1]})`
+                        }
+                        if (meta[0][0] && meta[0][0][0]) {
+                            p.textContent = meta[0][0][0]
+                        }
+                        element.dataset.path = '' // 清除标记，避免重复加载
+                    })
                 }
 
-                // 停止观察已加载的元素
-                playList_imageObserver.unobserve(imgDiv)
+                playList_imageObserver.unobserve(element)
             }
         })
     }, {
-        rootMargin: '100px' // 提前100px开始加载
+        rootMargin: '100px'
     })
 }
 
@@ -41,31 +58,13 @@ function playList_init_image_observer() {
 // 更新函数 //
 /////////////
 
-// 异步更新图片
-async function get_song_image(img, path) {
-    const tmp_img = await ark.get_song_image(path)
-    if (tmp_img) {
-        img.style.backgroundImage = `url(${tmp_img})`
-    }
-}
-
 // 创建单个歌曲元素
-function playList_create_song_element(tmp, index, num) {
-    // tmp[0] = path (路径)
-    // tmp[1] = name (文件名)
-    // tmp[2] = song_title (歌曲标题)
-    // tmp[3] = song_artist (艺术家)
-    // tmp[4] = album (专辑)
-    // tmp[5] = album_artist (专辑艺术家)
-    // tmp[6] = author (作者)
-    // tmp[7] = composer (作曲家)
-    // tmp[8] = img_path (图片路径)
-    // tmp[9] = sample_rate (采样率)
-
+function playList_create_song_element(path, index, num) {
     // 创建元素
     const div = document.createElement('div')
     div.className = 'box_color'
     div.id = index
+    div.dataset.path = path
 
     // 点击事件
     div.addEventListener('click', () => {
@@ -74,7 +73,7 @@ function playList_create_song_element(tmp, index, num) {
 
     // 创建图片容器
     const imgDiv = document.createElement('div')
-    imgDiv.dataset.imgPath = tmp[8] // 存储图片路径供懒加载使用
+    imgDiv.className = 'img-container'
 
     // 创建文本
     const p = document.createElement('p')
@@ -84,45 +83,89 @@ function playList_create_song_element(tmp, index, num) {
     } else {
         p.style.color = background_color
     }
-    p.textContent = tmp[1]
+    p.textContent = playList_extract_filename(path)
 
     // 组装元素
     div.appendChild(imgDiv)
     div.appendChild(p)
 
-    return { div, imgDiv }
+    return div
 }
 
-// 分批渲染歌曲
-function playList_render_songs_batch(data, slide, startIndex, num, elements) {
-    const endIndex = Math.min(startIndex + BATCH_SIZE, data.length)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 分批渲染 //
+/////////////
 
-    // 使用 DocumentFragment 减少DOM重绘
+// 分批渲染状态
+let playList_batchState = {
+    list: [],
+    currentIndex: 0,
+    isRendering: false,
+    num: 0
+}
+
+// 渲染下一批元素
+function playList_render_next_batch() {
+    if (playList_batchState.isRendering) return
+    if (playList_batchState.currentIndex >= playList_batchState.list.length) return
+
+    playList_batchState.isRendering = true
+
     const fragment = document.createDocumentFragment()
 
-    for (let index = startIndex; index < endIndex; index++) {
-        const { div, imgDiv } = playList_create_song_element(data[index], index, num)
-        fragment.appendChild(div)
-        elements.push(imgDiv) // 收集图片元素用于后续观察
+    const endIndex = Math.min(
+        playList_batchState.currentIndex + PLAYLIST_BATCH_SIZE,
+        playList_batchState.list.length
+    )
+
+    for (let i = playList_batchState.currentIndex; i < endIndex; i++) {
+        const element = playList_create_song_element(
+            playList_batchState.list[i],
+            i,
+            playList_batchState.num
+        )
+        fragment.appendChild(element)
+        playList_imageObserver.observe(element)
     }
 
     slide.appendChild(fragment)
+    playList_batchState.currentIndex = endIndex
+    playList_batchState.isRendering = false
 
-    // 返回是否还有更多数据
-    return endIndex < data.length
+    // 更新色彩
+    set_background_color()
+
+    // 渲染完成后检查：如果内容不足以填满容器，继续加载
+    requestAnimationFrame(() => {
+        playList_check_and_fill()
+    })
 }
 
-// 启动懒加载观察
-function playList_start_lazy_loading(elements) {
-    // 初始化观察器
-    playList_init_image_observer()
+// 检查是否需要继续填充内容
+function playList_check_and_fill() {
+    const container = document.querySelector('.slide_frame')
+    if (!container) return
 
-    // 开始观察所有图片元素
-    elements.forEach(imgDiv => {
-        if (imgDiv.dataset.imgPath) {
-            playList_imageObserver.observe(imgDiv)
-        }
-    })
+    const hasScrollbar = container.scrollHeight > container.clientHeight
+    const hasMoreSongs = playList_batchState.currentIndex < playList_batchState.list.length
+
+    if (hasMoreSongs && !hasScrollbar) {
+        playList_render_next_batch()
+    }
+}
+
+// 滚动监听 - 滚动到底部时加载更多
+function playList_handle_scroll() {
+    const container = document.querySelector('.slide_frame')
+    if (!container) return
+
+    const scrollBottom = container.scrollTop + container.clientHeight
+    const threshold = container.scrollHeight - 500
+
+    if (scrollBottom >= threshold &&
+        playList_batchState.currentIndex < playList_batchState.list.length) {
+        playList_render_next_batch()
+    }
 }
 
 // 更新高亮色（独立函数）
@@ -142,8 +185,14 @@ function update_highlight(num) {
     })
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 主函数 //
+///////////
+
 // 更新所有歌曲（优化版）
 function update_playing_songs(data, num) {
+
+    console.log('update_playing_songs 被调用, data:', data, 'num:', num)
 
     // 载入缓存
     playing_index = num
@@ -151,45 +200,45 @@ function update_playing_songs(data, num) {
     // 判断是否需要重新渲染列表
     if (data && data.length !== 0) {
 
+        console.log('开始渲染列表, 长度:', data.length)
+
         // 载入缓存
         all_songs = data.length
 
         // 清空现有内容
         slide.innerHTML = ''
 
-        // 停止之前观察器对所有元素的关注
+        // 停止之前观察器
         if (playList_imageObserver) {
             playList_imageObserver.disconnect()
         }
 
-        // 收集所有图片元素
-        const imgElements = []
+        // 移除之前的滚动监听
+        const container = document.querySelector('.slide_frame')
+        container.removeEventListener('scroll', playList_handle_scroll)
 
-        // 当前渲染索引
-        let currentIndex = 0
+        // 初始化观察器
+        playList_init_image_observer()
 
-        // 分批渲染函数
-        function render_next_batch() {
-            const hasMore = playList_render_songs_batch(data, slide, currentIndex, num, imgElements)
-            currentIndex += BATCH_SIZE
-
-            if (hasMore) {
-                // 使用 requestAnimationFrame 继续渲染下一批
-                requestAnimationFrame(render_next_batch)
-            } else {
-                // 所有元素渲染完成，启动懒加载
-                playList_start_lazy_loading(imgElements)
-                // 更新头显
-                play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
-                // 更新色彩
-                set_background_color()
-            }
+        // 重置分批渲染状态
+        playList_batchState = {
+            list: data,
+            currentIndex: 0,
+            isRendering: false,
+            num: num
         }
 
-        // 开始渲染
-        render_next_batch()
+        // 注册滚动监听
+        container.addEventListener('scroll', playList_handle_scroll)
+
+        // 渲染第一批
+        playList_render_next_batch()
+
+        // 更新头显
+        play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
 
     } else {
+        console.log('数据为空或长度为0, 只更新高亮')
         // 只更新高亮色（不重新渲染列表）
         update_highlight(num)
         // 更新头显
@@ -207,6 +256,7 @@ window.addEventListener('message', function(event) {
 
     // 更新所有歌曲栏目
     if (func === 'update_playing_songs') {
+        console.log('收到播放列表更新:', event.data.arg1, event.data.arg2)
         update_playing_songs(event.data.arg1, event.data.arg2)
     }
 

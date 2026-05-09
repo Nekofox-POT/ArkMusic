@@ -66,16 +66,14 @@ function back_gesture() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ark文件更新池 //
-////////////////
-function songs_update(mode, obj) {
-    files.contentWindow.postMessage({action: mode, arg1: obj}, '*')
-}
+//////////////////
 function playing_update(obj, num) {
+    console.log('playing_update 转发:', obj, num)
     play_list.contentWindow.postMessage({action: 'update_playing_songs', arg1: obj, arg2: num}, '*')
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 喜欢图标更改 //
-///////////////
+/////////////////
 function set_like(is_like) {
     if (is_like) {
         player_like_button.querySelectorAll('.svg_color').forEach(tmp => {

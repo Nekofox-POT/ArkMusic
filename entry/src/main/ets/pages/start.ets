@@ -6,15 +6,13 @@
 // 导入第三方库 //
 ///////////////
 import { webview } from '@kit.ArkWeb'
-import { common } from '@kit.AbilityKit'
 import { picker, fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { log, notice, vib } from '../package/system_function'
-import { make_music_cache } from '../package/file_manager_old'
+import { log, notice } from '../package/system_function'
 import { files_manager } from '../package/files_manager'
 import { emitter } from '@kit.BasicServicesKit'
 

@@ -145,7 +145,6 @@ export async function array_to_json_save(data: string[], path: string): Promise<
 export function read_json_to_array(path: string): string[] {
 
   try {
-    console.log(path)
     let json: string = fs.readTextSync(path)
 
     const parsed = JSON.parse(json) as string[]
@@ -200,6 +199,18 @@ export class files_manager {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
   ////////////
+
+  // 排序（C++ 快速排序，带进度提示）//
+  private async list_sort(arr: string[]): Promise<string[]> {
+    const total = arr.length
+    notice(`正在排序 (0 / ${total})`)
+    await new Promise<void>(r => setTimeout(r, 1))
+
+    const result = nativeModule.sortStringArray(arr)
+
+    notice(`正在排序 (${total} / ${total})`)
+    return result
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 外部函数 //
@@ -388,18 +399,6 @@ export class files_manager {
 
   }
 
-  // 排序（C++ 快速排序，带进度提示）//
-  async list_sort(arr: string[]): Promise<string[]> {
-    const total = arr.length
-    notice(`正在排序 (0 / ${total})`)
-    await new Promise<void>(r => setTimeout(r, 1))
-
-    const result = nativeModule.sortStringArray(arr)
-
-    notice(`正在排序 (${total} / ${total})`)
-    return result
-  }
-
   // 载入列表 //
   async load_data() {
 
@@ -450,7 +449,7 @@ export class files_manager {
       for (const i of fs.listFileSync(root_path + '/play_list/', { recursion: false })) {
         const tmp_path = root_path + '/play_list/' + i
         const tmp_name = nativeModule.extractFilename(tmp_path)
-        this.genre_list.set(nativeModule.base64urlCode(tmp_name, false), read_json_to_array(tmp_path))
+        this.play_list.set(nativeModule.base64urlCode(tmp_name, false), read_json_to_array(tmp_path))
       }
 
       notice('完成.')

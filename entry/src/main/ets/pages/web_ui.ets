@@ -146,14 +146,13 @@ export default struct web_ui {
     emitter.on({ eventId: 716 }, (eventData: emitter.EventData) => {
       this.ark_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
     })
-    // 播放列表监听 //
-    // emitter.on({eventId: 820}, (eventData: emitter.EventData) => {
-    //   // 转发js
-    //   this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.play_list)}, ${eventData.data?.play_number})`)
-    // })
     // 喜欢监听 //
     emitter.on({eventId: 717}, (eventData: emitter.EventData) => {
       this.ark_music_ui.runJavaScript(`set_like(${eventData.data?.like})`)
+    })
+    // 播放列表监听 //
+    emitter.on({eventId: 718}, (eventData: emitter.EventData) => {
+      this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.list)}, ${eventData.data?.index})`)
     })
     // 返回手势监听 //
     emitter.on({eventId: 912}, async () => {
@@ -265,10 +264,6 @@ export default struct web_ui {
       // 点歌 //
       play_song: (tmp: number) => {this.ark_music_player.set_play_list(this.play_list, tmp)},
 
-      ///////////////////
-      // play_list页用 //
-      //////////////////
-
       ///////////////
       // files页用 //
       /////////////
@@ -283,8 +278,22 @@ export default struct web_ui {
         const tmp = this.files_manager.get_dir(path)
         this.play_list = tmp[1]
         return tmp
+      },
+      // 获取播放列表歌曲 //
+      get_play_list_songs: (name: string) => {
+        // 如果没有传歌单名称，返回歌单列表
+        if (!name) {
+          let tmp: string[] = []
+          for (const i of Array.from(this.files_manager.play_list.keys())) {
+            tmp.push(i)
+          }
+          return tmp
+        } else {
+          // 传了歌单名称，返回该歌单的歌曲路径
+          this.play_list = this.files_manager.play_list.get(name) ?? []
+          return this.play_list
+        }
       }
-
 
     },
       /////////////
@@ -295,7 +304,7 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
         'set_vol', 'back_to_player', 'get_song_meta', 'play_song',
-        'get_all_songs', 'get_folder_songs'
+        'get_all_songs', 'get_folder_songs', 'get_play_list_songs'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}
