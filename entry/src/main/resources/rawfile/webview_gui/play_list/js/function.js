@@ -121,46 +121,38 @@ function createDragClone(element, x, y) {
     dragState.dragClone.style.backdropFilter = 'blur(10px)'
     
     // 处理子元素样式（专辑封面和文字）
-    const childDiv = dragState.dragClone.querySelector('div')
+    const childDiv = dragState.dragClone.querySelector('.song_cover')
     if (childDiv) {
-        const originalDiv = element.querySelector('div')
+        const originalDiv = element.querySelector('.song_cover')
         const divStyle = originalDiv ? window.getComputedStyle(originalDiv) : null
         
-        childDiv.style.height = '50%'
-        childDiv.style.aspectRatio = '1/1'
+        childDiv.style.height = '25px'
+        childDiv.style.width = '25px'
         childDiv.style.marginLeft = '12.5px'
         childDiv.style.borderRadius = '25%'
         childDiv.style.boxShadow = '0 4px 8px rgba(71, 71, 71, 0.2)'
-        // 使用计算后的背景图，避免相对路径问题
+        childDiv.style.backgroundSize = 'cover'
         if (divStyle && divStyle.backgroundImage && divStyle.backgroundImage !== 'none') {
             childDiv.style.backgroundImage = divStyle.backgroundImage
         } else {
             childDiv.style.backgroundImage = 'url(../files/CD.png)'
         }
-        childDiv.style.backgroundSize = 'cover'
     }
     
-    const childP = dragState.dragClone.querySelector('p')
+    const childP = dragState.dragClone.querySelector('.song_item_title')
     if (childP) {
-        const originalP = element.querySelector('p')
+        const originalP = element.querySelector('.song_item_title')
         const pStyle = originalP ? window.getComputedStyle(originalP) : null
         
-        childP.style.width = 'auto'
-        childP.style.border = '0'
-        childP.style.margin = '0'
-        childP.style.marginLeft = '12.5px'
-        childP.style.display = 'flex'
-        childP.style.alignItems = 'center'
-        childP.style.justifyContent = 'center'
-        // 从 p 元素本身获取样式
+        childP.style.margin = '0 0 1px 0'
+        childP.style.lineHeight = '1.15'
         if (pStyle) {
             childP.style.fontSize = pStyle.fontSize
             childP.style.fontWeight = pStyle.fontWeight
             childP.style.color = pStyle.color
-            childP.style.fontFamily = pStyle.fontFamily
         } else {
-            childP.style.fontSize = '0.8rem'
-            childP.style.fontWeight = '750'
+            childP.style.fontSize = '0.82rem'
+            childP.style.fontWeight = '700'
             childP.style.color = computedStyle.color
         }
     }

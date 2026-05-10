@@ -19,7 +19,7 @@ function song_detail_click(path, index, btnEl) {
         close_detail_panel()
     }
 
-    const frame = document.querySelector('#all_song_frame')
+    const frame = btnEl.closest('.files_main_bar')
 
     const backdrop = document.createElement('div')
     backdrop.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;z-index:500;backdrop-filter:blur(10px);opacity:0;transition:opacity 0.3s ease;border-radius:25px;'

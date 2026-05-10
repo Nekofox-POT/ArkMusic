@@ -30,19 +30,40 @@ function playList_init_image_observer() {
             if (entry.isIntersecting) {
                 const element = entry.target
                 const path = element.dataset.path
-                const p = element.querySelector('p')
-                const imgDiv = element.querySelector('div.img-container')
+                const imgDiv = element.querySelector('.song_cover')
+                const titleWrap = element.querySelector('.song_item_title_wrap')
+                const titleP = element.querySelector('.song_item_title')
+                const artistWrap = element.querySelector('.song_item_artist_wrap')
+                const artistP = element.querySelector('.song_item_artist')
+                const sampleP = element.querySelector('.song_meta_sample')
+                const depthP = element.querySelector('.song_meta_depth')
+                const rateP = element.querySelector('.song_meta_rate')
 
                 if (path) {
-                    // 异步加载元数据
                     ark.get_song_meta(path).then(meta => {
                         if (meta[1]) {
                             imgDiv.style.backgroundImage = `url(${meta[1]})`
                         }
-                        if (meta[0][0] && meta[0][0][0]) {
-                            p.textContent = meta[0][0][0]
+                        if (meta[0][1] && meta[0][1][0]) {
+                            titleP.textContent = meta[0][1][0]
                         }
-                        element.dataset.path = '' // 清除标记，避免重复加载
+                        if (meta[0][1] && meta[0][1][1]) {
+                            artistP.textContent = meta[0][1][1]
+                        }
+                        if (meta[0][0]) {
+                            sampleP.textContent = meta[0][0][3]
+                            depthP.textContent = meta[0][0][4]
+                            rateP.textContent = meta[0][0][5]
+                        }
+                        void titleWrap.offsetWidth
+                        void artistWrap.offsetWidth
+                        if (titleP.scrollWidth > titleWrap.clientWidth) {
+                            titleWrap.classList.add('marquee')
+                        }
+                        if (artistP.scrollWidth > artistWrap.clientWidth) {
+                            artistWrap.classList.add('marquee')
+                        }
+                        element.dataset.path = ''
                     })
                 }
 
@@ -60,36 +81,66 @@ function playList_init_image_observer() {
 
 // 创建单个歌曲元素
 function playList_create_song_element(path, index, num) {
-    // 创建元素
-    const div = document.createElement('div')
-    div.className = 'box_color'
-    div.id = index
-    div.dataset.path = path
+    const wrapper = document.createElement('div')
+    wrapper.className = 'box_color'
+    wrapper.id = index
+    wrapper.dataset.path = path
+    wrapper.style.cssText = 'height:50px;display:flex;border-radius:50px;'
+    
+    const mainArea = document.createElement('div')
+    mainArea.style.cssText = 'flex:1;display:flex;align-items:center;overflow:hidden;border-radius:50px;min-width:0;height:auto;background-image:none;box-shadow:none;margin-left:0;padding:0 10px;'
+    mainArea.addEventListener('click', () => { ark.seek_song(index) })
 
-    // 点击事件
-    div.addEventListener('click', () => {
-        ark.seek_song(index)
-    })
-
-    // 创建图片容器
     const imgDiv = document.createElement('div')
-    imgDiv.className = 'img-container'
+    imgDiv.className = 'song_cover'
 
-    // 创建文本
-    const p = document.createElement('p')
-    p.className = (index === num) ? 'font_color font_active_color' : 'font_color'
-    if (index === num) {
-        p.style.color = active_color
-    } else {
-        p.style.color = background_color
-    }
-    p.textContent = playList_extract_filename(path)
+    const infoDiv = document.createElement('div')
+    infoDiv.style.cssText = 'display:flex;flex-direction:column;justify-content:center;flex:1;margin:0 6px;min-width:0;max-width:55%;height:auto;'
 
-    // 组装元素
-    div.appendChild(imgDiv)
-    div.appendChild(p)
+    const titleWrap = document.createElement('div')
+    titleWrap.className = 'song_item_title_wrap'
+    const titleP = document.createElement('p')
+    titleP.className = (index === num) ? 'font_color song_item_title font_active_color' : 'font_color song_item_title'
+    titleP.style.cssText = `${index === num ? 'color:' + active_color + ';' : 'color:' + background_color + ';'}font-size:0.82rem;font-weight:700;margin:0 0 1px 0;line-height:1.15;`
 
-    return div
+    const artistWrap = document.createElement('div')
+    artistWrap.className = 'song_item_artist_wrap'
+    const artistP = document.createElement('p')
+    artistP.className = 'font_color song_item_artist'
+    artistP.style.cssText = `color:${background_color};font-size:0.62rem;font-weight:400;margin:0;line-height:1.15;`
+
+    titleP.textContent = ''
+    titleWrap.appendChild(titleP)
+    artistWrap.appendChild(artistP)
+    infoDiv.appendChild(titleWrap)
+    infoDiv.appendChild(artistWrap)
+
+    const metaDiv = document.createElement('div')
+    metaDiv.style.cssText = 'display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:50px;margin-left:auto;margin-right:8px;height:auto;'
+
+    const sampleP = document.createElement('p')
+    sampleP.className = 'font_color song_meta_sample'
+    sampleP.style.cssText = `color:${background_color};font-size:0.5rem;font-weight:500;margin:0;`
+
+    const depthP = document.createElement('p')
+    depthP.className = 'font_color song_meta_depth'
+    depthP.style.cssText = `color:${background_color};font-size:0.5rem;font-weight:500;margin:0;`
+
+    const rateP = document.createElement('p')
+    rateP.className = 'font_color song_meta_rate'
+    rateP.style.cssText = `color:${background_color};font-size:0.5rem;font-weight:500;margin:0;`
+
+    metaDiv.appendChild(sampleP)
+    metaDiv.appendChild(depthP)
+    metaDiv.appendChild(rateP)
+
+    mainArea.appendChild(imgDiv)
+    mainArea.appendChild(infoDiv)
+    mainArea.appendChild(metaDiv)
+
+    wrapper.appendChild(mainArea)
+
+    return wrapper
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,14 +223,14 @@ function playList_handle_scroll() {
 function update_highlight(num) {
     const items = slide.querySelectorAll('div.box_color')
     items.forEach(item => {
-        const p = item.querySelector('p')
-        if (p) {
+        const titleP = item.querySelector('.song_item_title')
+        if (titleP) {
             if (parseInt(item.id) === num) {
-                p.className = 'font_color font_active_color'
-                p.style.color = active_color
+                titleP.className = 'font_color song_item_title font_active_color'
+                titleP.style.color = active_color
             } else {
-                p.className = 'font_color'
-                p.style.color = background_color
+                titleP.className = 'font_color song_item_title'
+                titleP.style.color = background_color
             }
         }
     })

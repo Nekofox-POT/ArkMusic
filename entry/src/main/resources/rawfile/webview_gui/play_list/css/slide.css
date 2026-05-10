@@ -132,3 +132,57 @@
                 opacity 0.25s ease,
                 box-shadow 0.25s ease;
 }
+
+@keyframes marquee_playlist {
+    to { transform: translateX(-110%); }
+}
+
+.song_item_title_wrap {
+    overflow: hidden;
+    border-radius: 50px;
+}
+.song_item_title_wrap p {
+    white-space: nowrap;
+    padding: 0 12px;
+}
+.song_item_title_wrap.marquee {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+}
+.song_item_title_wrap.marquee p {
+    display: inline-block;
+    width: max-content;
+    padding-left: 120%;
+    animation: marquee_playlist 8s linear infinite;
+}
+
+.song_item_artist_wrap {
+    overflow: hidden;
+    border-radius: 50px;
+}
+.song_item_artist_wrap p {
+    white-space: nowrap;
+    padding: 0 12px;
+}
+.song_item_artist_wrap.marquee {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+}
+.song_item_artist_wrap.marquee p {
+    display: inline-block;
+    width: max-content;
+    padding-left: 120%;
+    animation: marquee_playlist 8s linear infinite;
+}
+
+.song_cover {
+    height: 25px;
+    width: 25px;
+    margin-left: 0;
+    border-radius: 25%;
+    box-shadow: 0 4px 8px rgba(71, 71, 71, 0.2);
+    background-image: url(../files/CD.png);
+    background-size: cover;
+    overflow: hidden;
+    flex-shrink: 0;
+}

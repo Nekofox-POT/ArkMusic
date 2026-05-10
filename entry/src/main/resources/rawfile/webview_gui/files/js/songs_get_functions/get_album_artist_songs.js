@@ -16,16 +16,38 @@ function album_artist_init_image_observer() {
             if (entry.isIntersecting) {
                 const element = entry.target
                 const path = element.dataset.path
-                const p = element.querySelector('p')
-                const imgDiv = element.querySelector('div')
+                const imgDiv = element.querySelector('.song_cover')
+                const titleWrap = element.querySelector('.song_item_title_wrap')
+                const titleP = element.querySelector('.song_item_title')
+                const artistWrap = element.querySelector('.song_item_artist_wrap')
+                const artistP = element.querySelector('.song_item_artist')
+                const sampleP = element.querySelector('.song_meta_sample')
+                const depthP = element.querySelector('.song_meta_depth')
+                const rateP = element.querySelector('.song_meta_rate')
 
                 if (path) {
                     ark.get_song_meta(path).then(meta => {
                         if (meta[1]) {
                             imgDiv.style.backgroundImage = `url(${meta[1]})`
                         }
-                        if (meta[0][0] && meta[0][0][0]) {
-                            p.textContent = meta[0][0][0]
+                        if (meta[0][1] && meta[0][1][0]) {
+                            titleP.textContent = meta[0][1][0]
+                        }
+                        if (meta[0][1] && meta[0][1][1]) {
+                            artistP.textContent = meta[0][1][1]
+                        }
+                        if (meta[0][0]) {
+                            sampleP.textContent = meta[0][0][3]
+                            depthP.textContent = meta[0][0][4]
+                            rateP.textContent = meta[0][0][5]
+                        }
+                        void titleWrap.offsetWidth
+                        void artistWrap.offsetWidth
+                        if (titleP.scrollWidth > titleWrap.clientWidth) {
+                            titleWrap.classList.add('marquee')
+                        }
+                        if (artistP.scrollWidth > artistWrap.clientWidth) {
+                            artistWrap.classList.add('marquee')
                         }
                         element.dataset.path = ''
                     })
@@ -113,21 +135,94 @@ function album_artist_create_list_element(name) {
 }
 
 function album_artist_create_song_element(path, index) {
-    const div = document.createElement('div')
-    div.dataset.path = path
-    div.addEventListener('click', () => { ark.play_song(index) })
+    const wrapper = document.createElement('div')
+    wrapper.dataset.path = path
+    wrapper.style.cssText = 'height:62px;margin-bottom:3px;display:flex;'
+
+    const mainArea = document.createElement('div')
+    mainArea.className = 'song_main'
+    mainArea.style.cssText = 'flex:1;display:flex;align-items:center;overflow:hidden;border-radius:12.5px;min-width:0;height:auto;background-image:none;box-shadow:none;margin-left:0;'
+    mainArea.addEventListener('click', () => { ark.play_song(index) })
 
     const imgDiv = document.createElement('div')
+    imgDiv.className = 'song_cover'
 
-    const p = document.createElement('p')
-    p.className = 'font_color'
-    p.style.color = background_color
-    p.textContent = extract_filename(path)
+    const infoDiv = document.createElement('div')
+    infoDiv.style.cssText = 'display:flex;flex-direction:column;justify-content:center;flex:1;margin:0 6px;min-width:0;max-width:55%;height:auto;'
 
-    div.appendChild(imgDiv)
-    div.appendChild(p)
+    const titleWrap = document.createElement('div')
+    titleWrap.className = 'song_item_title_wrap'
+    const titleP = document.createElement('p')
+    titleP.className = 'font_color song_item_title'
+    titleP.style.cssText = `color:${background_color};font-size:0.82rem;font-weight:700;margin:0 0 1px 0;line-height:1.15;`
 
-    return div
+    const artistWrap = document.createElement('div')
+    artistWrap.className = 'song_item_artist_wrap'
+    const artistP = document.createElement('p')
+    artistP.className = 'font_color song_item_artist'
+    artistP.style.cssText = `color:${background_color};font-size:0.62rem;font-weight:400;margin:0;line-height:1.15;`
+
+    titleWrap.appendChild(titleP)
+    artistWrap.appendChild(artistP)
+    infoDiv.appendChild(titleWrap)
+    infoDiv.appendChild(artistWrap)
+
+    const metaDiv = document.createElement('div')
+    metaDiv.style.cssText = 'display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:50px;margin-right:6px;height:auto;'
+
+    const sampleP = document.createElement('p')
+    sampleP.className = 'font_color song_meta_sample'
+    sampleP.style.cssText = `color:${background_color};font-size:0.5rem;font-weight:500;margin:0;`
+
+    const depthP = document.createElement('p')
+    depthP.className = 'font_color song_meta_depth'
+    depthP.style.cssText = `color:${background_color};font-size:0.5rem;font-weight:500;margin:0;`
+
+    const rateP = document.createElement('p')
+    rateP.className = 'font_color song_meta_rate'
+    rateP.style.cssText = `color:${background_color};font-size:0.5rem;font-weight:500;margin:0;`
+
+    metaDiv.appendChild(sampleP)
+    metaDiv.appendChild(depthP)
+    metaDiv.appendChild(rateP)
+
+    mainArea.appendChild(imgDiv)
+    mainArea.appendChild(infoDiv)
+    mainArea.appendChild(metaDiv)
+
+    const detailArea = document.createElement('div')
+    detailArea.style.cssText = 'flex-shrink:0;display:flex;align-items:center;padding-right:4px;height:auto;background-image:none;box-shadow:none;border-radius:0;margin-left:0;'
+
+    const detailBtn = document.createElement('div')
+    detailBtn.className = 'box_color song_item_detail_btn'
+    detailBtn.style.cssText = 'width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background-image:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s ease;flex-shrink:0;'
+    detailBtn.addEventListener('pointerdown', () => {
+        wrapper.classList.add('no_active')
+    })
+    detailBtn.addEventListener('pointerup', () => {
+        wrapper.classList.remove('no_active')
+    })
+    detailBtn.addEventListener('pointercancel', () => {
+        wrapper.classList.remove('no_active')
+    })
+    detailBtn.addEventListener('click', (e) => {
+        e.stopPropagation()
+        song_detail_click(path, index, detailBtn)
+    })
+
+    const detailSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    detailSvg.setAttribute('width', '14')
+    detailSvg.setAttribute('height', '14')
+    detailSvg.setAttribute('viewBox', '0 0 14 14')
+    detailSvg.innerHTML = '<rect width="14" height="14" opacity="0"></rect><circle class="svg_color" cx="7" cy="3" r="1.3"></circle><circle class="svg_color" cx="7" cy="7" r="1.3"></circle><circle class="svg_color" cx="7" cy="11" r="1.3"></circle>'
+
+    detailBtn.appendChild(detailSvg)
+    detailArea.appendChild(detailBtn)
+
+    wrapper.appendChild(mainArea)
+    wrapper.appendChild(detailArea)
+
+    return wrapper
 }
 
 function album_artist_list_render_next_batch() {
