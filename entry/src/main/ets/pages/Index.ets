@@ -146,7 +146,8 @@ struct Index {
       if (!this.ready && this.version_ready && !this.first_start) {
         ark_music_start({
           ready: this.ready,
-          files_manager: this.ark_file_manager
+          files_manager: this.ark_file_manager,
+          ark_music_player: this.ark_music_player
         })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(800)

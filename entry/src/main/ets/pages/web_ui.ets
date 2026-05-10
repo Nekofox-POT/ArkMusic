@@ -293,7 +293,20 @@ export default struct web_ui {
           this.play_list = this.files_manager.play_list.get(name) ?? []
           return this.play_list
         }
-      }
+      },
+      // 获取喜欢的歌曲 //
+      get_like_songs: () => {
+        this.play_list = this.ark_music_player.like_list_path
+        return this.play_list
+      },
+      // 获取 歌手/艺术家 分类
+      // get_artist_composer_list: (name: string = '') => {
+      //   // 如果有传入歌手参数
+      //   if (name) {
+      //     // 获取歌手列表
+      //
+      //   }
+      // }
 
     },
       /////////////
@@ -304,7 +317,7 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
         'set_vol', 'back_to_player', 'get_song_meta', 'play_song',
-        'get_all_songs', 'get_folder_songs', 'get_play_list_songs'
+        'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}

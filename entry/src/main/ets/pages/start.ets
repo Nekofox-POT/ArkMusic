@@ -14,6 +14,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 /////////////////
 import { log, notice } from '../package/system_function'
 import { files_manager } from '../package/files_manager'
+import { audio_player } from '../package/audio_player/audio_player'
 import { emitter } from '@kit.BasicServicesKit'
 
 ///////////
@@ -87,6 +88,7 @@ export default struct ark_music_start {
   // 继承类 //
   //////////
   @ObjectLink files_manager: files_manager  // 类 文件管理器
+  @ObjectLink ark_music_player: audio_player  // 播放器
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -108,6 +110,7 @@ export default struct ark_music_start {
   // files_manager注册 //
   async reg_files_manager() {
     await this.files_manager.load_data()
+    this.ark_music_player.load_dsd()
     this.ready = true
   }
 
@@ -152,7 +155,7 @@ export default struct ark_music_start {
           .onPageEnd(async () => {
             // 尝试读取目录
             try {
-              fs.listFileSync(root_path);
+              fs.listFileSync(root_path)
               this.dir_ready = true
             } catch (e) {   // 读取失败，创建目录
               console.log(`目录不存在：${e}`)
@@ -161,13 +164,13 @@ export default struct ark_music_start {
                 // 调用创建器
                 this.dir_create_downloader.onBeforeDownload((webDownloadItem: webview.WebDownloadItem) => {
                   getDownloadPathFromPicker().then((downloadPath) => {
-                    webDownloadItem.start(downloadPath + '/' + webDownloadItem.getSuggestedFileName());
+                    webDownloadItem.start(downloadPath + '/' + webDownloadItem.getSuggestedFileName())
                   });
                 })
                 this.dir_create_downloader.onDownloadFinish(() => {
                   // 检测
                   try {
-                    fs.listFileSync(root_path);
+                    fs.listFileSync(root_path)
                     log('download初始化完成.')
                     notice('初始化完成.')
                     this.dir_ready = true
@@ -176,9 +179,9 @@ export default struct ark_music_start {
                     notice(`初始化失败：${e}`)
                   }
                 })
-                this.ark_music_ui.setDownloadDelegate(this.dir_create_downloader);
+                this.ark_music_ui.setDownloadDelegate(this.dir_create_downloader)
               } catch (error) {
-                console.error(`创建出错: ${error}`);
+                console.error(`创建出错: ${error}`)
               }
               this.ark_music_ui.runJavaScript('download()')
 

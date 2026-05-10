@@ -27,6 +27,7 @@ const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', 
 const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic').path   // 文件目录
 const root_path = getContext().filesDir + '/files_manager'
+const dsd_path = getContext().filesDir + '/dsd_cache'
 
 // 字符权重池（比较用）
 enum CharType {
@@ -194,7 +195,6 @@ export class files_manager {
   album_list = new Map<string, string[]>()
   album_artist_list = new Map<string, string[]>()
   genre_list = new Map<string, string[]>()
-  dsd_list: string[] = []
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
@@ -255,7 +255,6 @@ export class files_manager {
     const tmp_dsd_length = tmp_dsd.length
     for (let i = 0; i < tmp_dsd_length; i++) {
 
-      console.log(`正在转换: ${tmp_dsd[i]}`)
       notice(`正在转换(${i}/${tmp_dsd_length}): ${tmp_dsd[i]}`)
 
       // 获取ino号
@@ -263,16 +262,13 @@ export class files_manager {
       let tmp_ino = `${fs.statSync(fs.openSync(tmp_dsd_path).fd).ino}`
 
       // 判断是否有已经转换好的文件（获取ino核对名称。）
-      let cached_path = root_path + '/dsd_cache/' + tmp_ino + '.wav'
+      let cached_path = dsd_path + '/' + tmp_ino + '.wav'
       try {
         fs.statSync(cached_path)
-        console.log('已有缓存，跳过')
       } catch {
         // 没有缓存，使用ffmpeg转换
-        console.log('开始转换...')
         try {
           await nativeModule.dsdToWav(tmp_dsd_path, cached_path)
-          console.log('转换完成')
         } catch (e) {
           log(`dsd转换失败: ${e}`, 'error')
           continue
@@ -280,7 +276,6 @@ export class files_manager {
       }
 
       // 添加到列表
-      this.dsd_list.push(tmp_ino + '.wav')
       this.all_songs_list.push(tmp_dsd_path)
 
     }
@@ -320,20 +315,19 @@ export class files_manager {
           // （dsd音乐）
           else if (support_dsd_format.includes(file_suffix)) {
 
+            tmp_play_list.push(tmp)
             // 获取ino号
             let tmp_ino = `${fs.statSync(fs.openSync(tmp).fd).ino}`
 
             // 判断是否有已经转换好的文件（获取ino核对名称。）
-            let cached_path = root_path + '/dsd_cache/' + tmp_ino + '.wav'
+            let cached_path = dsd_path + '/' + tmp_ino + '.wav'
             try {
               fs.statSync(cached_path)
-              console.log('已有缓存，跳过')
+
             } catch {
               // 没有缓存，使用ffmpeg转换
-              console.log('开始转换...')
               try {
                 await nativeModule.dsdToWav(tmp, cached_path)
-                console.log('转换完成')
               } catch (e) {
                 log(`dsd转换失败: ${e}`, 'error')
                 continue
@@ -470,6 +464,8 @@ export class files_manager {
         const tmp_name = nativeModule.extractFilename(tmp_path)
         this.play_list.set(nativeModule.base64urlCode(tmp_name, false), read_json_to_array(tmp_path))
       }
+      // 加载dsd文件
+
 
       notice('完成.')
 
@@ -517,12 +513,7 @@ export class files_manager {
         }
         // （dsd音乐）
         else if (support_dsd_format.includes(file_suffix)) {
-          try {
-            let tmp_ino = fs.statSync(fs.openSync(tmp_path).fd).ino
-            let cached = root_path + '/dsd_cache/' + tmp_ino + '.wav'
-            fs.statSync(cached)
-            file_list.push(cached)
-          } catch {}
+          file_list.push(tmp_path)
         }
         // 播放列表
         else if (file_suffix == '.m3u') {}
@@ -531,11 +522,8 @@ export class files_manager {
 
     }
 
-    // 排序
-    dir_list.sort((a: string, b: string) => {return customCompare(a, b)})
-    file_list.sort((a: string, b: string) => {return customCompare(a, b)})
     // 返回
-    return [dir_list, file_list]
+    return [nativeModule.sortStringArray(dir_list), nativeModule.sortStringArray(file_list)]
 
   }
 

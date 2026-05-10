@@ -13,6 +13,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 //////////////////
 // 导入自创建模块 //
 ////////////////
+import nativeModule from 'libentry.so'
 import { av_player } from './by_av_player'
 import { log, notice } from '../system_function'
 import { get_image, get_meta } from '../meta_manager'
@@ -21,6 +22,7 @@ import { get_image, get_meta } from '../meta_manager'
 // 变量池 //
 //////////
 const root_path = getContext().filesDir   // 工作目录
+const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -97,6 +99,7 @@ export class audio_player {
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
   private like_list: string[] = []    // 喜欢列表
   like_list_path: string[] = [] // 喜欢列表（路径备份）
+  private dsd_list = new Map<string, string>
 
   // 类 //
   private session: avSession.AVSession | null = null; // 元音频
@@ -237,8 +240,16 @@ export class audio_player {
     emitter.emit({ eventId: 718 }, { data: { list: [], index: this.play_list_index } })
     // 使用官方播放器
     if (this.player_choice == 0) {
-      console.log(this.play_list[this.play_list_index])
-      const result = await this.av_player.audio_set(this.play_list[this.play_list_index])
+      let result: [boolean, string]
+      // 如果是dsd
+      if (support_dsd_format.includes(this.play_list[this.play_list_index].substring(this.play_list[this.play_list_index].lastIndexOf('.')).toLowerCase())) {
+        // 拉取转换后的wav
+        result = await this.av_player.audio_set(await this.call_dsd(this.play_list[this.play_list_index]))
+      } else {
+        // 普通歌曲
+        result = await this.av_player.audio_set(this.play_list[this.play_list_index])
+      }
+
       // 加载失败，报错
       if (!result[0]) {
         log(`歌曲加载失败：${result[1]}`, 'error')
@@ -398,6 +409,43 @@ export class audio_player {
     array_to_json_save([], root_path + '/my_like.json')
   }
 
+  // dsd加载 //
+  async call_dsd(dsd_path: string): Promise<string> {
+
+    // 检测可读性
+    try {
+
+      // 获取ino号
+      let tmp_ino = `${fs.statSync(fs.openSync(dsd_path).fd).ino}`
+      // 如果有
+      let tmp_path = this.dsd_list.get(tmp_ino)
+      if (tmp_path) {
+        // 返回样品
+        return tmp_path
+      }
+    } catch {}
+    // 没有，解码
+    notice('这首歌需要加载一下，请耐心等待^v^.')
+    try {
+      let tmp_ino = `${fs.statSync(fs.openSync(dsd_path).fd).ino}`
+      await nativeModule.dsdToWav(dsd_path, root_path + '/dsd_cache/' + tmp_ino + '.wav')
+      this.dsd_list.set(`${tmp_ino}`, root_path + '/dsd_cache/' + tmp_ino + '.wav')
+      return root_path + '/dsd_cache/' + tmp_ino + '.wav'
+    } catch (e) {
+      log(`dsd转换失败: ${e}`, 'error')
+      return ''
+    }
+  }
+  // dsd重加载 //
+  load_dsd() {
+    // 加载dsd表
+    try {fs.statSync(root_path + '/dsd_cache')} catch {fs.mkdirSync(root_path + '/dsd_cache')}
+    for (const i of fs.listFileSync(root_path + '/dsd_cache', { recursion: true })) {
+      // 传入
+      this.dsd_list.set(nativeModule.extractFilename(root_path + '/dsd_cache/' + i), root_path + '/dsd_cache/' + i)
+    }
+  }
+
   // 销毁 //
   drop_it() {
     // 销毁av_player
@@ -412,7 +460,7 @@ export class audio_player {
     this.player_callback()
     // 注册元音频
     this.avs_start_up()
-    // 读取like列表
+    // 加载like表
     const tmp_like = read_json_to_array(root_path + '/my_like.json')
     if (tmp_like.length != 0) {
       for (const i of tmp_like) {
@@ -423,6 +471,8 @@ export class audio_player {
         } catch {}
       }
     } else {this.reset_like_list()}
+    // 加载dsd表
+    this.load_dsd()
     // 就绪
     log('音频管理器就绪.')
   }
