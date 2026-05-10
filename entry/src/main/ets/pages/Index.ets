@@ -101,6 +101,7 @@ struct Index {
   ///////////////
   aboutToDisappear(): void {
     log('程序结束运行...')
+    // 销毁播放器
     this.ark_music_player.drop_it()
     log('再见.')
   }

@@ -60,8 +60,9 @@ export class av_player {
         case 'prepared': // audio准备就绪
           console.log('audio准备就绪。')
           callback(this.avPlayer)
-          console.log('callback设置成功，等待audio播放。')
           this.avPlayer.seek(0)
+          console.log('callback设置成功，等待audio播放。')
+          this.set_player_ready?.()
           if (this.auto_play) {
             this.avPlayer.play()
           } else {
@@ -171,16 +172,19 @@ export class av_player {
   // 回调函数 //
   ////////////
   // 函数头 //
+  private set_player_ready?: () => void
   private play_status_update?: (status: string) => void
   private duration_time_update?: (duration: number) => void
   private current_time_update?: (position: number) => void
 
   // 注册机 //
   set_callback(
+    set_player_ready?: () => void,
     play_status_update?: (status: string) => void,
     duration_time_update?: (duration: number) => void,
     current_time_update?: (position: number) => void
   ): void {
+    this.set_player_ready = set_player_ready
     this.play_status_update = play_status_update
     this.duration_time_update = duration_time_update
     this.current_time_update = current_time_update

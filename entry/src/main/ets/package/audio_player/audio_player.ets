@@ -93,10 +93,12 @@ export class audio_player {
   ////////////
 
   // 变量池 //
-  private play_list: string[] = []    // 播放列表
-  private play_list_index: number = 0   // 播放列表指针
+  private player_ready = false
+  play_list: string[] = []    // 播放列表
+  play_list_index: number = 0   // 播放列表指针
   private player_choice: number = 0   // 播放器使用 ( 0：avplayer播放器 1：ffmpeg播放器 )
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
+  private current_backup: number = 0  // 播放时长备份
   private like_list: string[] = []    // 喜欢列表
   like_list_path: string[] = [] // 喜欢列表（路径备份）
   private dsd_list = new Map<string, string>
@@ -190,6 +192,8 @@ export class audio_player {
   // 播放器回调 //
   private player_callback() {
 
+    // 准备就绪提示 //
+    const set_player_ready = () => {this.player_ready = true}
     // 播放状态更新 //
     const play_status_update = (status: string) => {
       // 广播状态
@@ -222,10 +226,11 @@ export class audio_player {
       emitter.emit({ eventId: 716 }, { data: { current_time: current } })
       // 更新时长 //
       this.session?.setAVPlaybackState({ position: { elapsedTime: current, updateTime: new Date().getTime() } })
+      this.current_backup = current
     }
 
     // av_player注册 //
-    this.av_player.set_callback(play_status_update, duration_time_update, current_time_update)
+    this.av_player.set_callback(set_player_ready, play_status_update, duration_time_update, current_time_update)
 
   }
 
@@ -267,14 +272,14 @@ export class audio_player {
   }
 
   // 设置播放列表（初始化） //
-  set_play_list(list: string[], index: number) {
+  async set_play_list(list: string[], index: number) {
     // 设置
     this.play_list = list
     this.play_list_index = index
     // 广播列表
     emitter.emit({ eventId: 718 }, { data: { list: this.play_list, index: this.play_list_index } })
     // 初始化（播放）
-    this.set_audio_play()
+    await this.set_audio_play()
   }
 
   // 播放 //
@@ -362,11 +367,6 @@ export class audio_player {
     this.av_player.audio_seek(time)
   }
 
-  // 读取播放列表 //
-  get_play_list(): [number, string[]] {
-    return [this.play_list_index, this.play_list]
-  }
-
   // 更新播放列表排序 //
   update_play_list_index(list_index: number[]) {}
 
@@ -446,8 +446,32 @@ export class audio_player {
     }
   }
 
+  // 播放数据注入 //
+  async play_data_load() {
+    log('加载播放数据')
+    try {
+      // 打开播放列表
+      let tmp_list = read_json_to_array(root_path + '/playing_data_list.json')
+      let tmp = read_json_to_array(root_path + '/playing_data_other.json')
+      // 加载
+      await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
+      while (!this.player_ready) {await new Promise<void>(r => setTimeout(r, 1))}
+      this.seek(Number.parseInt(tmp[1]))
+    } catch {}
+  }
+  // 播放数据保存 //
+  play_data_save() {
+    // 保存播放列表
+    array_to_json_save(this.play_list, root_path + '/playing_data_list.json')
+    // 保存其他元数据
+    array_to_json_save([`${this.play_list_index}`, `${this.current_backup}`], root_path + '/playing_data_other.json')
+    log('数据保存完成.')
+  }
+
   // 销毁 //
   drop_it() {
+    // 保存数据
+    this.play_data_save()
     // 销毁av_player
     this.av_player.drop_it()
   }

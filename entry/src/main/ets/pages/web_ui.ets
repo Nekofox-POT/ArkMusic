@@ -203,6 +203,8 @@ export default struct web_ui {
         console.log('页面准备完成')
         this.listen_broadcast()  // 监听广播
         this.ready = true
+        // 加载audio
+        this.ark_music_player.play_data_load()
       },
 
       ///////////////
