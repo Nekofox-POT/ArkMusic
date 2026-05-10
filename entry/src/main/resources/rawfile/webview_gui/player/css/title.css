@@ -20,6 +20,10 @@
 .player_title.active {
     transform: scale(0.9);
 }
+.player_title.marquee {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
+}
 .player_title p {
 
     height: 100%;
@@ -65,6 +69,10 @@
 }
 .player_sub_title.active {
     transform: scale(0.9);
+}
+.player_sub_title.marquee {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 30px, black calc(100% - 30px), transparent);
 }
 .player_sub_title p {
 

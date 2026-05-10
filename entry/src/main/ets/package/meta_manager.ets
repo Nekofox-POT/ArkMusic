@@ -97,7 +97,7 @@ export async function get_meta(path: string): Promise<string[][]> {
     const file_name = nativeModule.extractFilename(path)  // 文件名
     const file_type = path.substring(path.lastIndexOf('.') + 1).toLowerCase() // 文件类型
     const channels = meta_data.channels                   // 声道
-    const sample_rate = meta_data.sampleRate              // 采样率
+    const sample_rate = meta_data.sampleRate / 1000       // 采样率
     const bit_depth = meta_data.bitDepth                  // 位深
     const bit_rate = (meta_data.bitrate / 1000).toFixed(1)// 比特率
     const duration = translate_second(meta_data.duration) // 时长
@@ -122,7 +122,7 @@ export async function get_meta(path: string): Promise<string[][]> {
     if (meta_data.genre) {genre = meta_data.genre}
 
     return [[
-      file_name, file_type, `${channels}`, `${sample_rate}hz`, `${bit_depth}bit`, `${bit_rate}kbps`, duration
+      file_name, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, duration
     ], [
       title, artist, album, album_artist, genre
     ]]

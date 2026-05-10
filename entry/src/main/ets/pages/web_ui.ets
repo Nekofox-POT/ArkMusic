@@ -242,7 +242,12 @@ export default struct web_ui {
       back_to_player: () => {this.ark_music_ui.runJavaScript('taskbar_page_update(1)')},
 
       // 获取元数据 //
-      get_song_meta: async (path: string) => {return [await get_meta(path), await image_to_base64(await get_image(path))]},
+      get_song_meta: async (path: string) => {
+        let tmp = [await get_meta(path), await image_to_base64(await get_image(path))]
+        console.log(`[${tmp[0][0]}]`)
+        console.log(`[${tmp[0][1]}]`)
+        return tmp
+      },
       // 制作图片框 //
       get_meta_list_image: async (mode_name: string, meta_name: string): Promise<string> => {
 

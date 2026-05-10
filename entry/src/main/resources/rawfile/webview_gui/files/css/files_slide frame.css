@@ -45,6 +45,9 @@
 .slide > div:active {
     transform: scale(0.95);
 }
+.slide > div.no_active:active {
+    transform: none;
+}
 .slide > div > div {
 
     height: 50%;
@@ -58,6 +61,18 @@
     background-size: cover;
     overflow: hidden;
 
+}
+
+.song_cover {
+    height: 31px;
+    width: 31px;
+    margin-left: 12.5px;
+    border-radius: 25%;
+    box-shadow: 0 4px 8px rgba(71, 71, 71, 0.2);
+    background-image: url(../files/CD.png);
+    background-size: cover;
+    overflow: hidden;
+    flex-shrink: 0;
 }
 .slide > div > p {
 
@@ -98,4 +113,49 @@
 .slide > div:not(.dragging) {
     /* 这里继承了你原有的 transition，为了确保交换位置时平滑，可以加上 transition-property */
     transition: transform 0.2s ease, top 0.2s ease;
+}
+
+@keyframes marquee {
+    to { transform: translateX(-110%); }
+}
+
+.song_item_title_wrap {
+    overflow: hidden;
+}
+.song_item_title_wrap p {
+    white-space: nowrap;
+}
+.song_item_title_wrap.marquee {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+}
+.song_item_title_wrap.marquee p {
+    display: inline-block;
+    width: max-content;
+    padding-left: 120%;
+    animation: marquee 8s linear infinite;
+}
+
+.song_item_artist_wrap {
+    overflow: hidden;
+}
+.song_item_artist_wrap p {
+    white-space: nowrap;
+}
+.song_item_artist_wrap.marquee {
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+    mask-image: linear-gradient(to right, transparent, black 8px, black calc(100% - 8px), transparent);
+}
+.song_item_artist_wrap.marquee p {
+    display: inline-block;
+    width: max-content;
+    padding-left: 120%;
+    animation: marquee 8s linear infinite;
+}
+
+.song_item_detail_btn {
+    -webkit-tap-highlight-color: transparent;
+}
+.song_item_detail_btn:active {
+    transform: scale(0.85) !important;
 }
