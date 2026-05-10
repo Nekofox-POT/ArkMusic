@@ -218,6 +218,8 @@ choice_bar_items.forEach((item) => {
             get_folder_songs(tmp)
         } else if (type === '播放列表') {
             get_play_list_songs(play_list_backup)
+        } else if (type === '我的喜欢') {
+            get_favorite_songs()
         }
 
     })

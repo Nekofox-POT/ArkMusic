@@ -45,11 +45,15 @@
             <div class="choice_bar_separator"></div>
             <div class="choice_bar_item" data-type="我的喜欢"><p class="font_color">我的喜欢</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item" data-type="专辑"><p class="font_color">专辑</p></div>
-            <div class="choice_bar_separator"></div>
             <div class="choice_bar_item" data-type="歌手"><p class="font_color">歌手</p></div>
             <div class="choice_bar_separator"></div>
-            <div class="choice_bar_item" data-type="播放最多"><p class="font_color">播放最多</p></div>
+            <div class="choice_bar_item" data-type="专辑"><p class="font_color">专辑</p></div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item" data-type="专辑作者"><p class="font_color">专辑作者</p></div>
+            <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item" data-type="流派"><p class="font_color">流派</p></div>
+            <!-- <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item" data-type="播放最多"><p class="font_color">播放最多</p></div> -->
         </div>
     </div>
         </div>
@@ -104,12 +108,27 @@
 
     </div>
     <div class="files_main_bar box_color hide" id="favorite_frame">
-    </div>
-    <div class="files_main_bar box_color hide" id="album_frame">
+
+        <!-- 滑动框架 -->
+        <div class="slide_frame">
+            <!-- 占位符 -->
+            <div style="height: 25px; position: relative; top: 0;"></div>
+            <div class="slide" id="slide">
+
+                <!-- 滑块内容(会实时变动) -->
+                <div><div></div><p class="font_color">我的喜欢</p></div>
+
+            </div>
+        </div>
+
     </div>
     <div class="files_main_bar box_color hide" id="artist_frame">
     </div>
-    <div class="files_main_bar box_color hide" id="most_played_frame">
+    <div class="files_main_bar box_color hide" id="album_frame">
+    </div>
+    <div class="files_main_bar box_color hide" id="album_artist_frame">
+    </div>
+    <div class="files_main_bar box_color hide" id="genre_frame">
     </div>
     
     <!-- 函数块 -->
@@ -122,6 +141,7 @@
     <script src="js/songs_get_functions/get_all_songs.js"></script>
     <script src="js/songs_get_functions/get_folder_songs.js"></script>
     <script src="js/songs_get_functions/get_play_list_songs.js"></script>
+    <script src="js/songs_get_functions/get_favorite_songs.js"></script>
 
     <script src="js/start.js"></script>
 

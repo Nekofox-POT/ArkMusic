@@ -37,5 +37,8 @@ function router_back() {
             get_play_list_songs('')
         }
     }
+    else if (page === '我的喜欢') {
+        ark.back_to_player()
+    }
 
 }
