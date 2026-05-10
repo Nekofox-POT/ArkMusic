@@ -22,7 +22,7 @@ import nativeModule from 'libentry.so';
 import { log, notice, vib } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
 import { files_manager } from '../package/files_manager'
-import { get_image, get_meta, image_to_base64 } from '../package/meta_manager'
+import { get_image, get_meta, image_to_base64, check_meta_image } from '../package/meta_manager'
 
 ///////////
 // 变量池 //
@@ -58,25 +58,6 @@ async function pixel_light_count(metadata: image.PixelMap): Promise<number> {
   return colorValue
 
 }
-
-////////////////
-// web图片处理 //
-///////////////
-async function pixel_to_base(metadata: image.PixelMap): Promise<string> {
-
-  // 1. 准备图片数据
-  let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 }
-  // 注意：packing 是耗时操作，这里得到 ArrayBuffer
-  let arrayBuffer = await image.createImagePacker().packing(metadata, packOpts)
-
-  // 2. 调用 C++ 进行 Base64 编码
-  // C++ 返回的是完整的 "data:image/jpeg;base64,xxxx" 字符串
-  let dataURL = nativeModule.encodeImageToBase64(arrayBuffer)
-
-  return dataURL
-
-}
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // web_ui入口 //
@@ -121,7 +102,7 @@ export default struct web_ui {
       // 载入
       this.ark_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.name, eventData.data?.title, eventData.data?.artist])})`)
       // 图片编码发送
-      const base_img: string = await pixel_to_base(eventData.data?.image)
+      const base_img: string = await image_to_base64(eventData.data?.image)
       this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)
       // 颜色值调整
       if (await pixel_light_count(eventData.data?.image) > 128) {
@@ -260,6 +241,38 @@ export default struct web_ui {
 
       // 获取元数据 //
       get_song_meta: async (path: string) => {return [await get_meta(path), await image_to_base64(await get_image(path))]},
+      // 制作图片框 //
+      get_meta_list_image: async (mode_name: string, meta_name: string): Promise<string> => {
+
+        // 分类
+        let tmp_map: Map<string, string[]>
+        if (mode_name === '歌手') {
+          tmp_map = this.files_manager.artist_composer_list
+        } else if (mode_name === '专辑') {
+          tmp_map = this.files_manager.album_list
+        } else if (mode_name === '专辑作者') {
+          tmp_map = this.files_manager.album_artist_list
+        } else if (mode_name === '歌流派') {
+          tmp_map = this.files_manager.genre_list
+        } else {
+          // 直接返回默认封面
+          return await image_to_base64(await get_image())
+        }
+
+        // 查找
+        let tmp_image = ''
+        for (const i of tmp_map.get(meta_name) ?? []) {
+          // 查询是否有专辑
+          if (await check_meta_image(i)) {
+            // 有，返回
+            tmp_image = await image_to_base64(await get_image(i))
+            break
+          }
+        }
+        // 如果有封面则返回
+        if (tmp_image) {return tmp_image} else {return await image_to_base64(await get_image())}
+
+      },
 
       // 点歌 //
       play_song: (tmp: number) => {this.ark_music_player.set_play_list(this.play_list, tmp)},
@@ -283,11 +296,7 @@ export default struct web_ui {
       get_play_list_songs: (name: string) => {
         // 如果没有传歌单名称，返回歌单列表
         if (!name) {
-          let tmp: string[] = []
-          for (const i of Array.from(this.files_manager.play_list.keys())) {
-            tmp.push(i)
-          }
-          return tmp
+          return Array.from(this.files_manager.play_list.keys())
         } else {
           // 传了歌单名称，返回该歌单的歌曲路径
           this.play_list = this.files_manager.play_list.get(name) ?? []
@@ -300,13 +309,18 @@ export default struct web_ui {
         return this.play_list
       },
       // 获取 歌手/艺术家 分类
-      // get_artist_composer_list: (name: string = '') => {
-      //   // 如果有传入歌手参数
-      //   if (name) {
-      //     // 获取歌手列表
-      //
-      //   }
-      // }
+      get_artist_composer_list: (name: string) => {
+        // 如果有传入歌手参数
+        if (name) {
+          // 获取歌手的歌曲列表
+          this.play_list = this.files_manager.artist_composer_list.get(name)
+          return this.play_list
+        }
+        // 是来查询歌手列表的
+        else {
+          return Array.from(this.files_manager.artist_composer_list.keys())
+        }
+      }
 
     },
       /////////////
@@ -316,8 +330,8 @@ export default struct web_ui {
       [
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
-        'set_vol', 'back_to_player', 'get_song_meta', 'play_song',
-        'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs'
+        'set_vol', 'back_to_player', 'get_song_meta', 'get_meta_list_image', 'play_song',
+        'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs', 'get_artist_composer_list'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}

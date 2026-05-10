@@ -34,11 +34,19 @@ function router_back() {
             ark.back_to_player()
         } else {
             play_list_backup = ''
-            get_play_list_songs('')
+            get_play_list_songs(play_list_backup)
         }
     }
     else if (page === '我的喜欢') {
         ark.back_to_player()
+    }
+    else if (page === '歌手') {
+        if (artist_composer_backup === '') {
+            ark.back_to_player()
+        } else {
+            artist_composer_backup = ''
+            get_artist_composer_list(artist_composer_backup)
+        }
     }
 
 }

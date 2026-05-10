@@ -220,6 +220,8 @@ choice_bar_items.forEach((item) => {
             get_play_list_songs(play_list_backup)
         } else if (type === '我的喜欢') {
             get_favorite_songs()
+        } else if (type === '歌手') {
+            get_artist_composer_list(artist_composer_backup)
         }
 
     })

@@ -27,17 +27,17 @@ function translate_second(duration: number): string {
 ////////////
 
 // 封面获取 //
-export async function get_image(path: string): Promise<image.PixelMap> {
+export async function get_image(path: string = ''): Promise<image.PixelMap> {
 
   let meta_img: image.PixelMap | null = null
 
   // 创建对象
   let avMetadataExtractor = await media.createAVMetadataExtractor()
-  let tmp = fs.openSync(path)
-  avMetadataExtractor.fdSrc = tmp
 
   // 获取专辑封面
   try {
+    let tmp = fs.openSync(path)
+    avMetadataExtractor.fdSrc = tmp
     meta_img = await avMetadataExtractor.fetchAlbumCover()
   } catch {
     // 使用默认封面
@@ -51,13 +51,32 @@ export async function get_image(path: string): Promise<image.PixelMap> {
   return meta_img
 }
 
-// 封面获取（返回base64）
-export async function image_to_base64(img: PixelMap) {
+// 封面获取（返回base64）//
+export async function image_to_base64(img: PixelMap): Promise<string> {
   // 获取封面
   let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 }
   let arrayBuffer = await image.createImagePacker().packing(img, packOpts)
   let dataURL = nativeModule.encodeImageToBase64(arrayBuffer)
   return dataURL
+}
+
+// 检测是否有封面
+export async function check_meta_image(path: string): Promise<boolean> {
+
+  // 创建对象
+  let avMetadataExtractor = await media.createAVMetadataExtractor()
+
+  // 尝试获取专辑封面
+  try {
+    avMetadataExtractor.fdSrc = fs.openSync(path)
+    await avMetadataExtractor.fetchAlbumCover()
+    avMetadataExtractor.release()
+    return true
+  } catch {
+    avMetadataExtractor.release()
+    return false
+  }
+
 }
 
 // 元数据获取 //

@@ -14,9 +14,11 @@ const frame_map = {
     '文件夹': document.getElementById("folder_frame"),
     '播放列表': document.getElementById("playlist_frame"),
     '我的喜欢': document.getElementById("favorite_frame"),
+    '歌手': document.getElementById("artist_composer_frame"),
     '专辑': document.getElementById("album_frame"),
-    '歌手': document.getElementById("artist_frame"),
-    '播放最多': document.getElementById("most_played_frame")
+    '专辑作者': document.getElementById("album_artist_frame"),
+    '流派': document.getElementById("genre_frame"),
+    // '播放最多': document.getElementById("most_played_frame")
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -25,3 +27,7 @@ const frame_map = {
 let page = '所有歌曲'   // 当前页面
 let router_list = []    // 当前dir位置
 let play_list_backup = ''   // 播放列表备份（返回手势用）
+let artist_composer_backup = ''
+let album_backup = ''
+let album_artist_backup = ''
+let genre_backup = ''
