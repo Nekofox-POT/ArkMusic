@@ -92,6 +92,9 @@ let artist_list_batchState = {
     isRendering: false
 }
 
+// 滚动位置记忆
+let artist_list_pendingScrollTop = -1
+
 // 创建歌手列表元素
 function artist_create_list_element(name) {
     const div = document.createElement('div')
@@ -168,10 +171,25 @@ function artist_list_render_next_batch() {
     // 更新色彩
     set_background_color()
 
+    // 尝试恢复滚动位置
+    artist_list_restore_scroll()
+
     // 渲染完成后检查：如果内容不足以填满容器，继续加载
     requestAnimationFrame(() => {
         artist_list_check_and_fill()
     })
+}
+
+// 尝试恢复滚动位置（在每批渲染后调用）
+function artist_list_restore_scroll() {
+    if (artist_list_pendingScrollTop < 0) return
+    const scrollFrame = document.querySelector('#artist_composer_frame .slide_frame')
+    if (!scrollFrame) return
+
+    scrollFrame.scrollTop = artist_list_pendingScrollTop
+    if (scrollFrame.scrollTop >= artist_list_pendingScrollTop) {
+        artist_list_pendingScrollTop = -1
+    }
 }
 
 // 歌手列表 check_and_fill
@@ -273,6 +291,14 @@ async function get_artist_composer_list(name) {
 
     // 初始化环境
     const slide = document.querySelector('#artist_composer_frame .slide')
+    const container = document.querySelector('#artist_composer_frame')
+
+    // 进入子视图前：保存根列表滚动位置（实际滚动在 .slide_frame 上）
+    if (name) {
+        const scrollFrame = document.querySelector('#artist_composer_frame .slide_frame')
+        artist_list_pendingScrollTop = scrollFrame ? scrollFrame.scrollTop : 0
+    }
+
     slide.innerHTML = ''
 
     // 停止之前的观察器和滚动监听
@@ -283,7 +309,6 @@ async function get_artist_composer_list(name) {
         artist_list_imageObserver.disconnect()
     }
 
-    const container = document.querySelector('#artist_composer_frame')
     container.removeEventListener('scroll', artist_handle_scroll)
     container.removeEventListener('scroll', artist_list_handle_scroll)
 
