@@ -48,5 +48,29 @@ function router_back() {
             get_artist_composer_list(artist_composer_backup)
         }
     }
+    else if (page === '专辑') {
+        if (album_backup === '') {
+            ark.back_to_player()
+        } else {
+            album_backup = ''
+            get_album_list(album_backup)
+        }
+    }
+    else if (page === '专辑作者') {
+        if (album_artist_backup === '') {
+            ark.back_to_player()
+        } else {
+            album_artist_backup = ''
+            get_album_artist_list(album_artist_backup)
+        }
+    }
+    else if (page === '流派') {
+        if (genre_backup === '') {
+            ark.back_to_player()
+        } else {
+            genre_backup = ''
+            get_genre_list(genre_backup)
+        }
+    }
 
 }

@@ -222,6 +222,12 @@ choice_bar_items.forEach((item) => {
             get_favorite_songs()
         } else if (type === '歌手') {
             get_artist_composer_list(artist_composer_backup)
+        } else if (type === '专辑') {
+            get_album_list(album_backup)
+        } else if (type === '专辑作者') {
+            get_album_artist_list(album_artist_backup)
+        } else if (type === '流派') {
+            get_genre_list(genre_backup)
         }
 
     })

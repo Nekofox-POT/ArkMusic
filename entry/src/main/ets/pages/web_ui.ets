@@ -320,6 +320,45 @@ export default struct web_ui {
         else {
           return Array.from(this.files_manager.artist_composer_list.keys())
         }
+      },
+      // 获取 专辑 分类
+      get_album_list: (name: string) => {
+        // 如果有传入歌手参数
+        if (name) {
+          // 获取歌手的歌曲列表
+          this.play_list = this.files_manager.album_list.get(name)
+          return this.play_list
+        }
+        // 是来查询歌手列表的
+        else {
+          return Array.from(this.files_manager.album_list.keys())
+        }
+      },
+      // 获取 专辑作者 分类
+      get_album_artist_list: (name: string) => {
+        // 如果有传入歌手参数
+        if (name) {
+          // 获取歌手的歌曲列表
+          this.play_list = this.files_manager.album_artist_list.get(name)
+          return this.play_list
+        }
+        // 是来查询歌手列表的
+        else {
+          return Array.from(this.files_manager.album_artist_list.keys())
+        }
+      },
+      // 获取 流派 分类
+      get_genre_list: (name: string) => {
+        // 如果有传入歌手参数
+        if (name) {
+          // 获取歌手的歌曲列表
+          this.play_list = this.files_manager.genre_list.get(name)
+          return this.play_list
+        }
+        // 是来查询歌手列表的
+        else {
+          return Array.from(this.files_manager.genre_list.keys())
+        }
       }
 
     },
@@ -331,7 +370,8 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
         'set_vol', 'back_to_player', 'get_song_meta', 'get_meta_list_image', 'play_song',
-        'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs', 'get_artist_composer_list'
+        'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
+        'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}
