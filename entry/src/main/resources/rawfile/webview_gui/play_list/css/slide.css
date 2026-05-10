@@ -48,7 +48,7 @@
 .slide > div > div {
 
     height: 50%;
-    aspect-ratio: 1/1;
+    aspect-ratio: 1;
 
     margin-left: 12.5px;
     border-radius: 25%;
@@ -178,7 +178,7 @@
 .song_cover {
     height: 25px;
     width: 25px;
-    margin-left: 0;
+    margin-left: 6px;
     border-radius: 25%;
     box-shadow: 0 4px 8px rgba(71, 71, 71, 0.2);
     background-image: url(../files/CD.png);

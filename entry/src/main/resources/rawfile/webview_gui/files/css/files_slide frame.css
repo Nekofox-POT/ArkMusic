@@ -11,6 +11,9 @@
     overflow-y: auto;
     overflow-x: hidden;
 
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 25px, black calc(100% - 25px), transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 25px, black calc(100% - 25px), transparent);
+
 }
 .slide {
 

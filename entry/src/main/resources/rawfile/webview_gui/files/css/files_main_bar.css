@@ -2,10 +2,10 @@
 
     position: absolute;
     width: calc(90vw - 50px);
-    height: calc(100vh - 400px);
+    height: calc(100vh - 375px);
     border: 0;
     left: 5vw;
-    top: 225px;
+    top: 185px;
     border-radius: 25px;
     overflow: hidden;
     z-index: 100;
@@ -20,5 +20,5 @@
 
 }
 .files_main_bar.hide {
-    transform: translateY(calc(100vh - 200px));
+    transform: translateY(calc(100vh - 180px));
 }

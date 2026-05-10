@@ -32,19 +32,30 @@ export default class EntryAbility extends UIAbility {
 
     windowStage.loadContent('pages/Index', (err, data) => {
       if (err.code) {
-        console.log('有错误！')
+        console.error('加载失败: ' + JSON.stringify(err));
         return;
       }
 
-      let windowClass: window.Window = windowStage.getMainWindowSync(); // 获取应用主窗口
-      // 1. 设置窗口全屏
-      let isLayoutFullScreen = true;
-      windowClass.setWindowLayoutFullScreen(isLayoutFullScreen).then(() => {
-        console.info('设置沉浸');
-      }).catch((err: BusinessError) => {
-        console.error('设置沉浸失败：' + JSON.stringify(err));
-      });
-      // 进行后续步骤2-3中的操作
+      let windowClass: window.Window = windowStage.getMainWindowSync();
+
+      // 1. 设置全屏布局
+      windowClass.setWindowLayoutFullScreen(true)
+        .then(() => {
+          console.info('沉浸式布局已开启');
+          // 2. 设置状态栏透明 + 文字颜色
+          let sysBarProps: window.SystemBarProperties = {
+            statusBarColor: '#00000000',       // 状态栏背景透明
+            statusBarContentColor: '#FFFFFF',  // 文字白色（适合深色背景）
+            // 如果背景是浅色（如白色），这里改为 '#000000'
+          };
+          return windowClass.setWindowSystemBarProperties(sysBarProps);
+        })
+        .then(() => {
+          console.info('状态栏颜色已设置');
+        })
+        .catch((err: BusinessError) => {
+          console.error('设置失败: ' + JSON.stringify(err));
+        });
     });
 
   }

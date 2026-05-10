@@ -15,6 +15,7 @@ import { common, FailureCode } from '@kit.AbilityKit';
 import emitter from '@ohos.events.emitter'
 import { router } from '@kit.ArkUI';
 import nativeModule from 'libentry.so';
+import { window } from '@kit.ArkUI';
 
 //////////////////
 // 导入自创建模块 //
@@ -107,8 +108,10 @@ export default struct web_ui {
       // 颜色值调整
       if (await pixel_light_count(eventData.data?.image) > 128) {
         this.ark_music_ui.runJavaScript(`set_background_color('rgba(0, 0, 0, 0.4)')`)
+        this.set_window_color(false)
       } else {
         this.ark_music_ui.runJavaScript(`set_background_color('rgba(255, 255, 255, 0.6)')`)
+        this.set_window_color(true)
       }
     })
     // 播放状态监听 //
@@ -188,6 +191,25 @@ export default struct web_ui {
     emitter.off(716)
     emitter.off(717)
     emitter.off(912)
+  }
+
+  // 设置沉浸颜色 //
+  set_window_color(value: boolean) {
+    if (value) {
+      window.getLastWindow(getContext(this)).then((win) => {
+        let props: window.SystemBarProperties = {
+          statusBarContentColor: '#ffffff' // 根据当前页面背景设置
+        }
+        win.setWindowSystemBarProperties(props)
+      })
+    } else {
+      window.getLastWindow(getContext(this)).then((win) => {
+        let props: window.SystemBarProperties = {
+          statusBarContentColor: '#000000' // 根据当前页面背景设置
+        }
+        win.setWindowSystemBarProperties(props)
+      })
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
