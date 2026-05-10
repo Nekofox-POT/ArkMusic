@@ -149,7 +149,7 @@ function all_songs_create_song_element(path, index) {
 
     const detailBtn = document.createElement('div')
     detailBtn.className = 'box_color song_item_detail_btn'
-    detailBtn.style.cssText = 'width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background-image:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s ease;'
+    detailBtn.style.cssText = 'width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;background-image:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s ease;flex-shrink:0;'
     detailBtn.addEventListener('pointerdown', () => {
         wrapper.classList.add('no_active')
     })
@@ -161,7 +161,7 @@ function all_songs_create_song_element(path, index) {
     })
     detailBtn.addEventListener('click', (e) => {
         e.stopPropagation()
-        song_detail_click(path, index)
+        song_detail_click(path, index, detailBtn)
     })
 
     const detailSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')

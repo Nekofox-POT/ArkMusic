@@ -157,5 +157,5 @@
     -webkit-tap-highlight-color: transparent;
 }
 .song_item_detail_btn:active {
-    transform: scale(0.85) !important;
+    transform: scale(0.85);
 }
