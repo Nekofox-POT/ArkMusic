@@ -17,6 +17,7 @@ import nativeModule from 'libentry.so'
 import { av_player } from './by_av_player'
 import { log, notice } from '../system_function'
 import { get_image, get_meta } from '../meta_manager'
+import { av_session } from './av_session'
 
 ///////////
 // 变量池 //
@@ -120,7 +121,12 @@ export class audio_player {
     log('注册行为')
     this.session.on("play", () => {this.playing()})  // 播放
     this.session.on("pause", () => {this.pause()})  // 暂停
-    this.session.on("setLoopMode", (position) => {console.log(`播放模式：${position}`); })
+    this.session.on("setLoopMode", (position) => {
+      if (position === 0) {this.set_play_mode(3)}
+      else if (position === 1) {this.set_play_mode(2)}
+      else if (position === 2) {this.set_play_mode(0)}
+      else if (position === 3) {this.set_play_mode(1)}
+    })  // 播放模式设置
     this.session.on("playPrevious", () => {this.last_song()}) // 上一首
     this.session.on("playNext", () => {this.next_song()}) //下一首
     this.session.on("seek", (position) => {this.seek(position)})  // 跳转
@@ -206,7 +212,7 @@ export class audio_player {
       } else if (status == 'complete') {
         this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
         // 如果不是末尾，那就下一首
-        if (this.play_list_index < this.play_list.length - 1) {
+        if ((this.play_list_index < this.play_list.length - 1) && (this.play_mode === 2)) {
           this.next_song()
         } else {
           notice('最后一首播放完了哦！ξ( ✿＞◡❛)')
@@ -366,6 +372,31 @@ export class audio_player {
   seek(time: number) {
     this.av_player.audio_seek(time)
   }
+  // 更改播放模式
+  set_play_mode(index: number) {
+    emitter.emit({ eventId: 713 }, { data: { play_mode: index } })
+    this.play_mode = index
+    if (index === 0) {
+      log('单曲循环')
+      this.session?.setAVPlaybackState({loopMode: avSession.LoopMode.LOOP_MODE_SINGLE})
+      if (this.player_ready) {notice('单曲循环')}
+    }
+    else if (index === 1) {
+      log('列表循环')
+      this.session?.setAVPlaybackState({loopMode: avSession.LoopMode.LOOP_MODE_LIST})
+      if (this.player_ready) {notice('列表循环')}
+    }
+    else if (index === 2) {
+      log('列表停止')
+      this.session?.setAVPlaybackState({loopMode: avSession.LoopMode.LOOP_MODE_SEQUENCE})
+      if (this.player_ready) {notice('列表停止')}
+    }
+    else if (index === 3) {
+      log('随机')
+      this.session?.setAVPlaybackState({loopMode: avSession.LoopMode.LOOP_MODE_SHUFFLE})
+      if (this.player_ready) {notice('随机')}
+    }
+  }
 
   // 更新播放列表排序 //
   update_play_list_index(list_index: number[]) {}
@@ -454,6 +485,7 @@ export class audio_player {
       let tmp_list = read_json_to_array(root_path + '/playing_data_list.json')
       let tmp = read_json_to_array(root_path + '/playing_data_other.json')
       // 加载
+      this.set_play_mode(Number.parseInt(tmp[2]))
       await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
       while (!this.player_ready) {await new Promise<void>(r => setTimeout(r, 1))}
       this.seek(Number.parseInt(tmp[1]))
@@ -464,7 +496,7 @@ export class audio_player {
     // 保存播放列表
     array_to_json_save(this.play_list, root_path + '/playing_data_list.json')
     // 保存其他元数据
-    array_to_json_save([`${this.play_list_index}`, `${this.current_backup}`], root_path + '/playing_data_other.json')
+    array_to_json_save([`${this.play_list_index}`, `${this.current_backup}`, `${this.play_mode}`], root_path + '/playing_data_other.json')
     log('数据保存完成.')
   }
 

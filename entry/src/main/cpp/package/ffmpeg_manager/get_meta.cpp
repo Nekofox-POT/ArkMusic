@@ -80,7 +80,15 @@ static void ExecuteGetMeta(napi_env env, void* data) {
     ctx->filename = extract_filename(ctx->file_path);
     ctx->channels = codecPar->ch_layout.nb_channels;
     ctx->sample_rate = codecPar->sample_rate;
-    ctx->bit_depth = av_get_bytes_per_sample(static_cast<AVSampleFormat>(codecPar->format)) * 8;
+    // 获取位深：优先使用原始样本位深，其次编码位深，最后用解码格式推算
+    int bits = codecPar->bits_per_raw_sample;
+    if (bits <= 0) {
+        bits = codecPar->bits_per_coded_sample;
+    }
+    if (bits <= 0) {
+        bits = av_get_bytes_per_sample(static_cast<AVSampleFormat>(codecPar->format)) * 8;
+    }
+    ctx->bit_depth = bits;
 
     ctx->bitrate = 0;
     if (codecPar->bit_rate > 0) {

@@ -15,22 +15,22 @@ function set_vol(value = null) {
 // 播放方式更改 //
 ///////////////
 function set_play_mode(value) {
-    if (value === "play_only") {
+    if (value === 0) {
         play_forlist_button.classList.add('hidden')
         play_order_button.classList.add('hidden')
         play_disorder_button.classList.add('hidden')
         play_only_button.classList.remove('hidden')
-    } else if (value === "play_forlist") {
+    } else if (value === 1) {
         play_only_button.classList.add('hidden')
         play_order_button.classList.add('hidden')
         play_disorder_button.classList.add('hidden')
         play_forlist_button.classList.remove('hidden')
-    } else if (value === "play_order") {
+    } else if (value === 2) {
         play_only_button.classList.add('hidden')
         play_forlist_button.classList.add('hidden')
         play_disorder_button.classList.add('hidden')
         play_order_button.classList.remove('hidden')
-    } else if (value === "play_disorder") {
+    } else if (value === 3) {
         play_only_button.classList.add('hidden')
         play_forlist_button.classList.add('hidden')
         play_order_button.classList.add('hidden')

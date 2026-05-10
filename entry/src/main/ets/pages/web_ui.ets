@@ -94,9 +94,7 @@ export default struct web_ui {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  /////////////
   // 广播监听 //
-  ////////////
   listen_broadcast() {
     // 元数据监听 //
     emitter.on({ eventId: 712 }, async (eventData: emitter.EventData) => {
@@ -113,6 +111,10 @@ export default struct web_ui {
         this.ark_music_ui.runJavaScript(`set_background_color('rgba(255, 255, 255, 0.6)')`)
         this.set_window_color(true)
       }
+    })
+    // 设置播放模式
+    emitter.on({ eventId: 713 }, async (eventData: emitter.EventData) => {
+      this.ark_music_ui.runJavaScript(`set_play_mode(${eventData.data?.play_mode})`)
     })
     // 播放状态监听 //
     emitter.on({ eventId: 714 }, (eventData: emitter.EventData) => {
@@ -149,9 +151,7 @@ export default struct web_ui {
     })
   }
 
-  /////////////
   // 音量监听 //
-  ////////////
   listen_system_volume() {
     if (this.show_volume) {
       log('音量条打开')
@@ -173,19 +173,15 @@ export default struct web_ui {
     }
   }
 
-  /////////////
   // 载入操作 //
-  ////////////
   aboutToAppear(): void {
   }
-
-  /////////////
   // 退出操作 //
-  ////////////
   aboutToDisappear(): void {
     log('web_ui销毁.')
     // 销毁监听
     emitter.off(712)
+    emitter.off(713)
     emitter.off(714)
     emitter.off(715)
     emitter.off(716)
@@ -246,6 +242,10 @@ export default struct web_ui {
       seek_song: (index: number) => {this.ark_music_player.seek_song(index)},
       // 喜欢切换 //
       toggle_like: () => {this.ark_music_player.toggle_like()},
+      // 设置播放模式 //
+      set_play_mode: (index: number) => {
+        this.ark_music_player.set_play_mode(index)
+      },
 
       ///////////////
       // 扩展功能类 //
@@ -266,8 +266,6 @@ export default struct web_ui {
       // 获取元数据 //
       get_song_meta: async (path: string) => {
         let tmp = [await get_meta(path), await image_to_base64(await get_image(path))]
-        console.log(`[${tmp[0][0]}]`)
-        console.log(`[${tmp[0][1]}]`)
         return tmp
       },
       // 制作图片框 //
@@ -397,7 +395,7 @@ export default struct web_ui {
       "ark",
       [
         'ready',
-        'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like',
+        'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like', 'set_play_mode',
         'set_vol', 'back_to_player', 'get_song_meta', 'get_meta_list_image', 'play_song',
         'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
         'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list'

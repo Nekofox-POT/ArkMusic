@@ -14,7 +14,7 @@ function init() {
     change_song_range_duration(0)
     change_song_range(0)
     // 播放方式归位
-    set_play_mode("play_order")
+    set_play_mode(0)
     // 暂停
     set_play_status(false)
 

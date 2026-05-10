@@ -22,6 +22,16 @@ function translate_second(duration: number): string {
   return formattedDuration
 }
 
+// 位深修正 // 由于 nativeModule 返回的位深有时不准确（如 MP3 解码为 S32P、FLAC 24bit 容器为 S32 等），根据文件类型二次修正
+function fix_bit_depth(file_type: string, bit_depth: number): number {
+  // 有损格式无原生位深概念，上报常见标称位深 16bit
+  const lossy_types: string[] = ['mp3', 'mp2', 'aac', 'ogg', 'opus', 'wma', 'ra', 'rm']
+  if (lossy_types.includes(file_type)) {
+    return 16
+  }
+  return bit_depth
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 外部函数 //
 ////////////
@@ -98,7 +108,7 @@ export async function get_meta(path: string): Promise<string[][]> {
     const file_type = path.substring(path.lastIndexOf('.') + 1).toLowerCase() // 文件类型
     const channels = meta_data.channels                   // 声道
     const sample_rate = meta_data.sampleRate / 1000       // 采样率
-    const bit_depth = meta_data.bitDepth                  // 位深
+    const bit_depth = fix_bit_depth(file_type, meta_data.bitDepth) // 位深（修正后）
     const bit_rate = (meta_data.bitrate / 1000).toFixed(1)// 比特率
     const duration = translate_second(meta_data.duration) // 时长
 
