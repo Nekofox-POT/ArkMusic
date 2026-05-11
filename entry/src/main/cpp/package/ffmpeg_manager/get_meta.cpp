@@ -81,14 +81,23 @@ static void ExecuteGetMeta(napi_env env, void* data) {
     ctx->channels = codecPar->ch_layout.nb_channels;
     ctx->sample_rate = codecPar->sample_rate;
     // 获取位深：优先使用原始样本位深，其次编码位深，最后用解码格式推算
-    int bits = codecPar->bits_per_raw_sample;
-    if (bits <= 0) {
-        bits = codecPar->bits_per_coded_sample;
+    // DSD 特殊处理：avformat_find_stream_info 解码探测时可能覆写 bits_per_raw_sample，
+    // 导致报成解码输出格式的位深（如 U8=8bit），而 DSD 本身是 1bit
+    if (codecPar->codec_id == AV_CODEC_ID_DSD_LSBF ||
+        codecPar->codec_id == AV_CODEC_ID_DSD_MSBF ||
+        codecPar->codec_id == AV_CODEC_ID_DSD_LSBF_PLANAR ||
+        codecPar->codec_id == AV_CODEC_ID_DSD_MSBF_PLANAR) {
+        ctx->bit_depth = 1;
+    } else {
+        int bits = codecPar->bits_per_raw_sample;
+        if (bits <= 0) {
+            bits = codecPar->bits_per_coded_sample;
+        }
+        if (bits <= 0) {
+            bits = av_get_bytes_per_sample(static_cast<AVSampleFormat>(codecPar->format)) * 8;
+        }
+        ctx->bit_depth = bits;
     }
-    if (bits <= 0) {
-        bits = av_get_bytes_per_sample(static_cast<AVSampleFormat>(codecPar->format)) * 8;
-    }
-    ctx->bit_depth = bits;
 
     ctx->bitrate = 0;
     if (codecPar->bit_rate > 0) {

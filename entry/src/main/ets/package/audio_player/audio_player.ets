@@ -212,10 +212,10 @@ export class audio_player {
       } else if (status == 'complete') {
         this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
         // 如果不是末尾，那就下一首
-        if ((this.play_list_index < this.play_list.length - 1) && (this.play_mode === 2)) {
-          this.next_song()
-        } else {
+        if ((this.play_list_index >= this.play_list.length - 1) && (this.play_mode === 2)) {
           notice('最后一首播放完了哦！ξ( ✿＞◡❛)')
+        } else {
+          this.next_song()
         }
       }
     }
