@@ -18,9 +18,12 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 import web_ui from './web_ui'
 import ark_music_start from './start'
 import first_start from './first_start'
-import { files_manager } from '../package/files_manager'
+import { class_files_manager } from '../package/class_files_manager'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
-import { audio_player } from '../package/audio_player/audio_player'
+import { class_audio_player } from '../package/class_audio_player/class_audio_player'
+
+// 导入类 //
+import { class_global_config } from '../package/class_global_config'
 
 ///////////
 // 变量池 //
@@ -36,36 +39,32 @@ import { audio_player } from '../package/audio_player/audio_player'
 @Entry
 @Component
 struct Index {
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  ///////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 环境准备 //
+  ////////////
+
   // 变量池 //
-  //////////
   private context = getContext(this) as common.UIAbilityContext   // 身份证
   status: Boolean = false   // 状态
 
-  ///////////
   // 更新池 //
-  //////////
   @State first_start: boolean = false // 首次启动
   @State version_ready: boolean = false // 版本检测
   @State ready: boolean = false   // 环境准备指示器
   @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
 
-  ////////
   // 类 //
-  ///////
-  @State ark_music_player: audio_player = new audio_player()   // 播放器核心
-  @State ark_file_manager: files_manager = new files_manager()   // 文件管理器核心
+  @State global_config: class_global_config = new class_global_config()   // 全局变量管理
+  @State ark_music_player: class_audio_player = new class_audio_player(this.global_config)   // 播放器核心
+  @State ark_file_manager: class_files_manager = new class_files_manager(this.global_config)   // 文件管理器核心
 
-  ///////////
-  // 初始化 //
-  //////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 基础函数 //
+  ////////////
 
-  ////////////////
   // 进入app操作 //
-  ///////////////
   aboutToAppear(): void {
 
     log('程序开始运行...')
@@ -96,19 +95,17 @@ struct Index {
 
   }
 
-  ////////////////
   // 退出app操作 //
-  ///////////////
   aboutToDisappear(): void {
     log('程序结束运行...')
+    // 全局变量保存
+    this.global_config.save()
     // 销毁播放器
     this.ark_music_player.drop_it()
     log('再见.')
   }
 
-  /////////////
   // 返回操作 //
-  ////////////
   onBackPress(): boolean {
 
     // ---- 在这里执行你指定的任务 ----
@@ -163,9 +160,11 @@ struct Index {
       ////////////
       if (this.ready && this.ui_mode) {
         web_ui({
+          global_config: this.global_config,
           ark_music_player: this.ark_music_player,
           files_manager: this.ark_file_manager,
-          volume_level: this.volume_level
+          volume_level: this.volume_level,
+          start_ui: this.ready
         })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(700)

@@ -13,8 +13,8 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 // 导入自创建模块 //
 /////////////////
 import { log, notice } from '../package/system_function'
-import { files_manager } from '../package/files_manager'
-import { audio_player } from '../package/audio_player/audio_player'
+import { class_files_manager } from '../package/class_files_manager'
+import { class_audio_player } from '../package/class_audio_player/class_audio_player'
 import { emitter } from '@kit.BasicServicesKit'
 
 ///////////
@@ -87,8 +87,8 @@ export default struct ark_music_start {
   ///////////
   // 继承类 //
   //////////
-  @ObjectLink files_manager: files_manager  // 类 文件管理器
-  @ObjectLink ark_music_player: audio_player  // 播放器
+  @ObjectLink files_manager: class_files_manager  // 类 文件管理器
+  @ObjectLink ark_music_player: class_audio_player  // 播放器
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -109,7 +109,7 @@ export default struct ark_music_start {
   //////////
   // files_manager注册 //
   async reg_files_manager() {
-    await this.files_manager.load_data(this.ark_music_player.enable_dsd_support)
+    await this.files_manager.load_data()
     this.ark_music_player.load_dsd()
     this.ready = true
   }

@@ -23,10 +23,9 @@ export async function array_to_json_save(data: string[], path: string): Promise<
 
 }
 // json读取转string[] //
-export function read_json_to_array(path: string): string[] {
+export function load_json_to_array(path: string): string[] {
 
   try {
-    console.log(path)
     let json: string = fs.readTextSync(path)
 
     const parsed = JSON.parse(json) as string[]

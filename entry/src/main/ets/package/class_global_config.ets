@@ -1,0 +1,94 @@
+//
+// 变量共享池
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////
+// 导入第三方库 //
+///////////////
+import common from '@ohos.app.ability.common'
+import { fileIo as fs } from '@kit.CoreFileKit'
+
+//////////////////
+// 导入自创建模块 //
+/////////////////
+import { array_to_json_save, load_json_to_array } from './array_save_load'
+
+///////////
+// 变量池 //
+//////////
+const root_path = getContext().filesDir   // 工作目录
+const global_config_json = getContext().filesDir + '/config.json'    // 配置文件
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 类框架 //
+//////////
+@Observed
+export class class_global_config {
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 环境准备 //
+  ////////////
+
+  // 公共变量池 //
+  reset: boolean = false    // 清理卡
+  dsd_support: boolean = true   // dsd播放支持
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 外部函数 //
+  ////////////
+
+  // 重置app //
+  reset_app() {
+    this.reset = true
+    // 删除所有文件
+    for (const i of fs.listFileSync(root_path)) {
+      const tmp = `${root_path}/${i}`
+      const stat = fs.statSync(tmp)
+      if (stat.isDirectory()) {
+        fs.rmdirSync(tmp)
+      } else {
+        fs.unlinkSync(tmp)
+      }
+    }
+    // 关机
+    const context = getContext() as common.UIAbilityContext
+    context.terminateSelf()
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 保存文件 //
+  ////////////
+  save() {
+    if (!this.reset) {
+      // 保存文件
+      array_to_json_save([
+
+        (this.dsd_support) ? '1' : '0',   // dsd播放支持
+
+      ], global_config_json)
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 打开文件 //
+  ////////////
+
+  constructor() {
+    console.log(`dsd支持：${this.dsd_support}`)
+    // 检测文件存在性
+    const tmp = load_json_to_array(global_config_json)
+    if (tmp.length != 0) {
+
+      // 加载文件
+      this.dsd_support = (tmp[0] === '1') ? true : false
+
+    } else {
+
+
+
+    }
+    console.log(`dsd支持：${this.dsd_support}`)
+  }
+
+}

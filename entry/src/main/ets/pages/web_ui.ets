@@ -2,36 +2,30 @@
 // web_ui 界面
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////
-// 导入第三方库 //
-///////////////
-import { webview } from '@kit.ArkWeb';
-import { picker, fileUri } from  '@kit.CoreFileKit';
-import { fileIo as fs } from '@kit.CoreFileKit';
-import { AVVolumePanel } from '@kit.AudioKit';
-import { audio } from '@kit.AudioKit';
-import { image } from '@kit.ImageKit';
-import { common, FailureCode } from '@kit.AbilityKit';
-import emitter from '@ohos.events.emitter'
-import { router } from '@kit.ArkUI';
-import nativeModule from 'libentry.so';
-import { window } from '@kit.ArkUI';
-import { photoAccessHelper } from '@kit.MediaLibraryKit';
-import { BusinessError } from '@kit.BasicServicesKit';
-import { resourceManager } from '@kit.LocalizationKit';
 
-//////////////////
+// 导入第三方库 //
+import { webview } from '@kit.ArkWeb'
+import { AVVolumePanel } from '@kit.AudioKit'
+import { audio } from '@kit.AudioKit'
+import { image } from '@kit.ImageKit'
+import emitter from '@ohos.events.emitter'
+import { router } from '@kit.ArkUI'
+import nativeModule from 'libentry.so'
+import { window } from '@kit.ArkUI'
+import { fileIo as fs } from '@kit.CoreFileKit'
+
 // 导入自创建模块 //
-/////////////////
 import { log, notice, vib } from '../package/system_function'
-import { audio_player } from '../package/audio_player/audio_player'
-import { array_to_json_save, read_json_to_array, files_manager } from '../package/files_manager'
+import { array_to_json_save, load_json_to_array } from '../package/array_save_load'
 import { get_image, get_meta, image_to_base64, check_meta_image } from '../package/meta_manager'
 
-///////////
+// 导入类 //
+import { class_audio_player } from '../package/class_audio_player/class_audio_player'
+import { class_files_manager } from '../package/class_files_manager'
+import { class_global_config } from '../package/class_global_config'
+
 // 变量池 //
-//////////
-const root_path = getContext().filesDir
+const web_ui_path = getContext().filesDir + '/web_ui/'    // web_ui目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -68,35 +62,60 @@ async function pixel_light_count(metadata: image.PixelMap): Promise<number> {
 @Component
 export default struct web_ui {
 
-  ///////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 环境准备 //
+  ////////////
+
   // 变量池 //
-  //////////
   private play_list: string[] = []  // 列表记录器
   private active_color: string = 'rgba(244, 198, 206, 1.0)'   // 默认高亮色
   private enable_active_color: boolean = true  // 是否支持按钮高亮色
   private setting_head_image: string = ''   // 设置头像的base64
 
-  ///////////
   // 更新池 //
-  //////////
   @State @Watch('listen_system_volume') show_volume: boolean = false    // 显示音量条
   @State ready: boolean = false    // 页面准备指示器
 
-  ///////////
   // 继承池 //
-  //////////
-  @ObjectLink ark_music_player: audio_player  // 类 播放器
-  @ObjectLink files_manager: files_manager    // 类 文件管理器
+  @ObjectLink global_config: class_global_config    // 全局管理器
+  @ObjectLink ark_music_player: class_audio_player  // 类 播放器
+  @ObjectLink files_manager: class_files_manager    // 类 文件管理器
   @Link volume_level: number    // 音量大小
+  @Link start_ui: boolean    // 环境准备指示器(为false就是重新扫描数据库)
 
-  ////////
   // 类 //
-  ///////
   private ark_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
   private audioVolumeManager = audio.getAudioManager().getVolumeManager()   // 音量条监听
   private volumeCallback: ((streamVolumeEvent: audio.StreamVolumeEvent) => void) | null = null    // 音量条监听函数
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 基础函数 //
+  ////////////
+
+  // 进入操作 //
+  aboutToAppear(): void {
+    // 检查目录 //
+    try {fs.statSync(web_ui_path)} catch {fs.mkdirSync(web_ui_path)}
+  }
+
+  // 退出操作 //
+  aboutToDisappear(): void {
+    // 保存数据
+    this.save_data()
+    log('web_ui销毁.')
+    // 销毁监听
+    emitter.off(712)
+    emitter.off(713)
+    emitter.off(714)
+    emitter.off(715)
+    emitter.off(716)
+    emitter.off(717)
+    emitter.off(912)
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 扩展函数 //
+  ////////////
 
   // 广播监听 //
   listen_broadcast() {
@@ -154,7 +173,6 @@ export default struct web_ui {
       }
     })
   }
-
   // 音量监听 //
   listen_system_volume() {
     if (this.show_volume) {
@@ -175,24 +193,6 @@ export default struct web_ui {
       log('音量条关闭')
       this.audioVolumeManager.off('streamVolumeChange', this.volumeCallback)
     }
-  }
-
-  // 载入操作 //
-  aboutToAppear(): void {
-  }
-  // 退出操作 //
-  aboutToDisappear(): void {
-    // 保存数据
-    this.save_data()
-    log('web_ui销毁.')
-    // 销毁监听
-    emitter.off(712)
-    emitter.off(713)
-    emitter.off(714)
-    emitter.off(715)
-    emitter.off(716)
-    emitter.off(717)
-    emitter.off(912)
   }
 
   // 设置沉浸颜色 //
@@ -216,24 +216,26 @@ export default struct web_ui {
 
   // 加载数据 //
   load_data() {
-    let tmp = read_json_to_array(root_path + '/' + 'web_ui.json')
+    let tmp = load_json_to_array(web_ui_path + '/' + 'web_ui.json')
     if (tmp.length != 0) {
       this.active_color = tmp[0]
       this.enable_active_color = (tmp[1] === '1') ? true : false
     }
-    console.log(`${this.active_color} ${this.enable_active_color} ${this.ark_music_player.enable_dsd_support}`)
+    console.log(`${this.active_color} ${this.enable_active_color} ${this.global_config.dsd_support}`)
     this.ark_music_ui.runJavaScript(`set_active_color('${this.active_color}')`)
     this.ark_music_ui.runJavaScript(`set_button_enable_active_color(${this.enable_active_color})`)
-    this.ark_music_ui.runJavaScript(`set_dsd(${this.ark_music_player.enable_dsd_support})`)
+    this.ark_music_ui.runJavaScript(`set_dsd(${this.global_config.dsd_support})`)
   }
   // 保存数据 //
   save_data() {
-    let tmp = [
-      this.active_color,
-      (this.enable_active_color) ? '1' : '0',
-      this.setting_head_image,
-    ]
-    array_to_json_save(tmp, root_path + '/' + 'web_ui.json')
+    if (!this.global_config.reset) {
+      let tmp = [
+        this.active_color,
+        (this.enable_active_color) ? '1' : '0',
+        this.setting_head_image,
+      ]
+      array_to_json_save(tmp, web_ui_path + '/' + 'web_ui.json')
+    }
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -245,13 +247,13 @@ export default struct web_ui {
       ////////////
       // ready //
       //////////
-      ready: () => {
+      ready: async () => {
         console.log('页面准备完成')
         this.listen_broadcast()  // 监听广播
+        // 加载audio
+        await this.ark_music_player.play_data_load()
         // 加载数据
         this.load_data()
-        // 加载audio
-        this.ark_music_player.play_data_load()
         this.ready = true
       },
 
@@ -344,7 +346,7 @@ export default struct web_ui {
       },
       // 获取文件夹歌曲 //
       get_folder_songs: (path: string) => {
-        const tmp = this.files_manager.get_dir(path, this.ark_music_player.enable_dsd_support)
+        const tmp = this.files_manager.get_dir(path)
         this.play_list = tmp[1]
         return tmp
       },
@@ -445,16 +447,27 @@ export default struct web_ui {
       },
       // 允许加载dsd歌曲 //
       enable_dsd_play: (status: boolean) => {
-        this.ark_music_player.enable_dsd_support = status
+        this.global_config.dsd_support = status
         this.ark_music_ui.runJavaScript(`set_dsd(${status})`)
+        if (status) {
+          this.ark_music_player.pause()
+          this.ark_music_player.drop_it()
+          this.files_manager.reset_song_data()
+          this.start_ui = false
+        }
       },
       // 重新扫描媒体库 //
       rescan_data: () => {
         console.log('重新扫描')
+        this.ark_music_player.pause()
+        this.ark_music_player.drop_it()
+        this.files_manager.reset_song_data()
+        this.start_ui = false
       },
       // 重置软件 //
       reset_app: () => {
         console.log('软件重置')
+        this.global_config.reset_app()
       },
 
     },

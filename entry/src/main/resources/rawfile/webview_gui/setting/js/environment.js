@@ -11,9 +11,6 @@ const setting_page_container = document.getElementById('setting_page_container')
 // 设置图标框架
 const setting_icon_frame = document.getElementById('setting_icon_frame')
 
-// 设置标题
-const setting_title = document.getElementById('setting_title')
-
 // 配置卡片框架
 const setting_config = document.getElementById('setting_config')
 

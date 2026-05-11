@@ -3,39 +3,27 @@
 // 广播：8
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////
-// 导入第三方库 //
-///////////////
-import media from '@ohos.multimedia.media'
-import { image } from '@kit.ImageKit'
-import { picker, fileUri } from  '@kit.CoreFileKit'
-import { fileIo as fs, ListFileOptions } from '@kit.CoreFileKit'
-import emitter from '@ohos.events.emitter'
-import { HashMap } from '@kit.ArkTS'
 
-//////////////////
+// 导入第三方库 //
+import { fileUri } from  '@kit.CoreFileKit'
+import { fileIo as fs } from '@kit.CoreFileKit'
+import emitter from '@ohos.events.emitter'
+
 // 导入自创建模块 //
-/////////////////
 import nativeModule from 'libentry.so'
 import { log } from './system_function'
 import { get_meta } from './meta_manager'
+import { array_to_json_save, load_json_to_array } from './array_save_load'
 
-///////////
+// 导入类
+import { class_global_config } from './class_global_config'
+
 // 变量池 //
-//////////
 const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
 const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic').path   // 文件目录
-const root_path = getContext().filesDir + '/files_manager'
-const dsd_path = getContext().filesDir + '/dsd_cache'
-
-// 字符权重池（比较用）
-enum CharType {
-  PUNCTUATION = 0, // 符号（包含 '.'）
-  DIGIT = 1,       // 数字
-  LETTER = 2,      // 字母
-  CHINESE = 3      // 中文
-}
+const audio_player_path = getContext().filesDir + '/audio_player/'    // 音频播放器目录
+const files_manager_path = getContext().filesDir + '/files_manager/'    // 文件管理器目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -48,137 +36,11 @@ function notice(msg: string) {
   } })
 }
 
-// 字符权重 //
-function getCharWeight(char: string): number {
-
-  if (!char) return CharType.CHINESE
-
-  const code = char.charCodeAt(0)
-
-  if ((code >= 33 && code <= 47) ||
-    (code >= 58 && code <= 64) ||
-    (code >= 91 && code <= 96) ||
-    (code >= 123 && code <= 126)) {
-    return CharType.PUNCTUATION
-  }
-
-  if (code >= 48 && code <= 57) {
-    return CharType.DIGIT
-  }
-
-  if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
-    return CharType.LETTER
-  }
-
-  if ((code >= 0x4E00 && code <= 0x9FFF) ||
-    (code >= 0x3400 && code <= 0x4DBF) ||
-    (code >= 0x20000 && code <= 0x2A6DF)) {
-    return CharType.CHINESE
-  }
-
-  return CharType.PUNCTUATION
-}
-// 字符比较器 //
-function customCompare(strA: string, strB: string): number {
-  const lenA = strA.length;
-  const lenB = strB.length;
-  const minLen = Math.min(lenA, lenB);
-
-  // 逐个字符进行比较
-  for (let i = 0; i < minLen; i++) {
-    const charA = strA.charAt(i);
-    const charB = strB.charAt(i);
-
-    const weightA = getCharWeight(charA);
-    const weightB = getCharWeight(charB);
-
-    // 如果类型不同，直接按类型权重排序（符号->数字->字母->中文）
-    if (weightA !== weightB) {
-      return weightA - weightB;
-    }
-
-    // 如果类型相同，进行组内比较
-    if (weightA === CharType.LETTER) {
-      // 字母组：不区分大小写比较
-      const lowerA = charA.toLowerCase();
-      const lowerB = charB.toLowerCase();
-      if (lowerA < lowerB) return -1;
-      if (lowerA > lowerB) return 1;
-    } else if (weightA === CharType.CHINESE) {
-      // 中文组：使用手机系统的本地化排序（通常是拼音排序）
-      // 注意：ArkTS 中使用 Intl.Collator 是安全的
-      const collator = new Intl.Collator('zh-CN');
-      const cmp = collator.compare(charA, charB);
-      if (cmp !== 0) return cmp;
-    } else {
-      // 符号组和数字组：直接按 Unicode 码点比较（符号按ASCII表，数字按0-9）
-      if (charA < charB) return -1;
-      if (charA > charB) return 1;
-    }
-  }
-
-  // 如果前面字符都一样，短的排在前面 (例如 ".txt" 排在 ".txta" 前面)
-  return lenA - lenB;
-}
-
-// string[]转json储存（覆盖） //
-export async function array_to_json_save(data: string[], path: string): Promise<boolean> {
-
-  try {fs.rmdirSync(path)} catch {}
-
-  // 转换
-  const packData = JSON.stringify(data)
-
-  // 保存
-  try {
-    const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-    fs.writeSync(file.fd, packData)
-    fs.closeSync(file)
-  } catch (e) {
-    log(`保存文件失败: ${e}`, 'error')
-    return false
-  }
-
-  return true
-
-}
-// json读取转string[] //
-export function read_json_to_array(path: string): string[] {
-
-  try {
-    let json: string = fs.readTextSync(path)
-
-    const parsed = JSON.parse(json) as string[]
-
-    // 校验：必须是数组
-    if (!Array.isArray(parsed)) {
-      throw new Error("JSON 格式错误：期望数组")
-    }
-
-    const result: string[] = []
-
-    // 遍历每个元素，确保是字符串
-    for (let i = 0; i < parsed.length; i++) {
-      const element = parsed[i]
-      if (typeof element !== 'string') {
-        throw new Error("JSON 格式错误：数组元素必须是字符串")
-      }
-      result.push(element)
-    }
-
-    return result
-
-  } catch (e) {
-    log(`读取文件失败: ${e}`, 'error')
-    return []
-  }
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
 @Observed
-export class files_manager {
+export class class_files_manager {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
@@ -187,6 +49,7 @@ export class files_manager {
   // 变量池 //
 
   // 类 //
+  global_config: class_global_config | null = null
 
   // 共享变量池 //
   all_songs_list: string[] = []
@@ -205,24 +68,24 @@ export class files_manager {
   ////////////
 
   // 重置表 //
-  reset_song_data() {fs.rmdirSync(root_path)}
-  // 重置app //
-
+  reset_song_data() {
+    try {fs.rmdirSync(files_manager_path)} catch {}
+  }
 
   // 建立歌曲缓存 //
-  async make_songs_cache(dsd_support: boolean) {
+  async make_songs_cache() {
 
     // 初始化数据库
     log('初始化数据库...')
     notice('初始化数据库...')
-    try {fs.rmdirSync(root_path)} catch {}
-    fs.mkdirSync(root_path)
-    fs.mkdirSync(root_path + '/play_list')
-    fs.mkdirSync(root_path + '/artist_composer')
-    fs.mkdirSync(root_path + '/album')
-    fs.mkdirSync(root_path + '/album_artist')
-    fs.mkdirSync(root_path + '/genre')
-    fs.mkdirSync(root_path + '/dsd_cache')
+    try {fs.rmdirSync(files_manager_path)} catch {}
+    fs.mkdirSync(files_manager_path)
+    fs.mkdirSync(files_manager_path + '/play_list')
+    fs.mkdirSync(files_manager_path + '/artist_composer')
+    fs.mkdirSync(files_manager_path + '/album')
+    fs.mkdirSync(files_manager_path + '/album_artist')
+    fs.mkdirSync(files_manager_path + '/genre')
+    fs.mkdirSync(files_manager_path + '/dsd_cache')
 
     // 扫描歌曲(普通歌曲) //
     log('扫描普通歌曲')
@@ -256,7 +119,7 @@ export class files_manager {
     }
     // 扫描歌曲(dsd) //
     log('扫描dsd')
-    if (dsd_support) {
+    if (this.global_config?.dsd_support) {
       let tmp_dsd = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })
       const tmp_dsd_length = tmp_dsd.length
       for (let i = 0; i < tmp_dsd_length; i++) {
@@ -268,7 +131,7 @@ export class files_manager {
         let tmp_ino = `${fs.statSync(fs.openSync(tmp_dsd_path).fd).ino}`
 
         // 判断是否有已经转换好的文件（获取ino核对名称。）
-        let cached_path = dsd_path + '/' + tmp_ino + '.wav'
+        let cached_path =audio_player_path + '/dsd_cache/' + tmp_ino + '.wav'
         try {
           fs.statSync(cached_path)
         } catch {
@@ -322,14 +185,14 @@ export class files_manager {
           // （dsd音乐）
           else if (support_dsd_format.includes(file_suffix)) {
 
-            if (dsd_support) {
+            if (this.global_config?.dsd_support) {
 
               tmp_play_list.push(tmp)
               // 获取ino号
               let tmp_ino = `${fs.statSync(fs.openSync(tmp).fd).ino}`
 
               // 判断是否有已经转换好的文件（获取ino核对名称。）
-              let cached_path = dsd_path + '/' + tmp_ino + '.wav'
+              let cached_path =audio_player_path + '/dsd_cache/' + tmp_ino + '.wav'
               try {
                 fs.statSync(cached_path)
 
@@ -367,7 +230,7 @@ export class files_manager {
     // 所有歌曲
     log('保存 所有歌曲')
     this.all_songs_list = nativeModule.sortStringArray(this.all_songs_list)
-    array_to_json_save(this.all_songs_list, root_path + '/all_songs.json')
+    array_to_json_save(this.all_songs_list, files_manager_path + '/all_songs.json')
     // 歌手 / 作曲家
     log('保存 歌手 / 作曲家')
     tick = 0
@@ -377,7 +240,7 @@ export class files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.artist_composer_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, root_path + '/artist_composer/' + tick++ + '.json')
+      array_to_json_save(tmp_values, files_manager_path + '/artist_composer/' + tick++ + '.json')
     }
     // 专辑
     log('保存 专辑')
@@ -388,7 +251,7 @@ export class files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.album_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, root_path + '/album/' + tick++ + '.json')
+      array_to_json_save(tmp_values, files_manager_path + '/album/' + tick++ + '.json')
     }
     // 专辑作家
     log('保存 专辑作家')
@@ -399,7 +262,7 @@ export class files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.album_artist_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, root_path + '/album_artist/' + tick++ + '.json')
+      array_to_json_save(tmp_values, files_manager_path + '/album_artist/' + tick++ + '.json')
     }
     // 流派
     log('保存 流派')
@@ -410,13 +273,13 @@ export class files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.genre_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, root_path + '/genre/' + tick++ + '.json')
+      array_to_json_save(tmp_values, files_manager_path + '/genre/' + tick++ + '.json')
     }
     // 列表
     log('保存 列表')
     tmp_keys = nativeModule.sortStringArray(Array.from(this.play_list.keys()))
     for (const i of tmp_keys) {
-      array_to_json_save(this.play_list.get(i) ?? [], root_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
+      array_to_json_save(this.play_list.get(i) ?? [], files_manager_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
     }
     log('保存完毕！')
     notice('完成！')
@@ -424,21 +287,21 @@ export class files_manager {
   }
 
   // 载入列表 //
-  async load_data(dsd_support: boolean) {
+  async load_data() {
 
     // 读取文件夹 //
     try {
-      fs.statSync(root_path)
+      fs.statSync(files_manager_path)
 
       // 加载 //
       // 加载所有歌曲
       notice('读取 所有歌曲')
-      this.all_songs_list = read_json_to_array(root_path + '/all_songs.json')
+      this.all_songs_list = load_json_to_array(files_manager_path + '/all_songs.json')
       // 加载歌手 / 艺术家
-      for (const i of fs.listFileSync(root_path + '/artist_composer/', { recursion: false })) {
-        const tmp_path = root_path + '/artist_composer/' + i
+      for (const i of fs.listFileSync(files_manager_path + '/artist_composer/', { recursion: false })) {
+        const tmp_path = files_manager_path + '/artist_composer/' + i
         // 读取
-        let tmp_list = read_json_to_array(tmp_path)
+        let tmp_list = load_json_to_array(tmp_path)
         // 获取文件名
         const tmp_name = tmp_list.pop() ?? ''
         // 载入
@@ -446,34 +309,34 @@ export class files_manager {
       }
       // 加载专辑
       notice('读取 专辑')
-      for (const i of fs.listFileSync(root_path + '/album/', { recursion: false })) {
-        const tmp_path = root_path + '/album/' + i
-        let tmp_list = read_json_to_array(tmp_path)
+      for (const i of fs.listFileSync(files_manager_path + '/album/', { recursion: false })) {
+        const tmp_path = files_manager_path + '/album/' + i
+        let tmp_list = load_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.album_list.set(tmp_name, read_json_to_array(tmp_path))
+        this.album_list.set(tmp_name, load_json_to_array(tmp_path))
       }
       // 加载专辑作家
       notice('读取 专辑作家')
-      for (const i of fs.listFileSync(root_path + '/album_artist/', { recursion: false })) {
-        const tmp_path = root_path + '/album_artist/' + i
-        let tmp_list = read_json_to_array(tmp_path)
+      for (const i of fs.listFileSync(files_manager_path + '/album_artist/', { recursion: false })) {
+        const tmp_path = files_manager_path + '/album_artist/' + i
+        let tmp_list = load_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.album_artist_list.set(tmp_name, read_json_to_array(tmp_path))
+        this.album_artist_list.set(tmp_name, load_json_to_array(tmp_path))
       }
       // 加载流派
       notice('读取 流派')
-      for (const i of fs.listFileSync(root_path + '/genre/', { recursion: false })) {
-        const tmp_path = root_path + '/genre/' + i
-        let tmp_list = read_json_to_array(tmp_path)
+      for (const i of fs.listFileSync(files_manager_path + '/genre/', { recursion: false })) {
+        const tmp_path = files_manager_path + '/genre/' + i
+        let tmp_list = load_json_to_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.genre_list.set(tmp_name, read_json_to_array(tmp_path))
+        this.genre_list.set(tmp_name, load_json_to_array(tmp_path))
       }
       // 加载列表
       notice('读取 列表')
-      for (const i of fs.listFileSync(root_path + '/play_list/', { recursion: false })) {
-        const tmp_path = root_path + '/play_list/' + i
+      for (const i of fs.listFileSync(files_manager_path + '/play_list/', { recursion: false })) {
+        const tmp_path = files_manager_path + '/play_list/' + i
         const tmp_name = nativeModule.extractFilename(tmp_path)
-        this.play_list.set(nativeModule.base64urlCode(tmp_name, false), read_json_to_array(tmp_path))
+        this.play_list.set(nativeModule.base64urlCode(tmp_name, false), load_json_to_array(tmp_path))
       }
       // 加载dsd文件
 
@@ -482,13 +345,13 @@ export class files_manager {
 
     } catch (e) {
       // 没有文件夹，扫描
-      await this.make_songs_cache(dsd_support)
+      await this.make_songs_cache()
     }
 
   }
 
   // 读取文件夹 //
-  get_dir(path: string = '', dsd_support: boolean): string[][] {
+  get_dir(path: string = ''): string[][] {
 
     let dir_list: string[] = []
     let file_list: string[] = []
@@ -524,7 +387,7 @@ export class files_manager {
         }
         // （dsd音乐）
         else if (support_dsd_format.includes(file_suffix)) {
-          if (dsd_support) {
+          if (this.global_config?.dsd_support) {
             file_list.push(tmp_path)
           }
         }
@@ -543,6 +406,11 @@ export class files_manager {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
-  constructor() {}
+  constructor(import_global_config: class_global_config) {
+
+    // 导入类
+    this.global_config = import_global_config
+
+  }
 
 }

@@ -3,91 +3,30 @@
 // 广播频段：7
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////
 // 导入第三方库 //
-///////////////
 import emitter from '@ohos.events.emitter'
 import { avSession } from '@kit.AVSessionKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
-//////////////////
 // 导入自创建模块 //
-////////////////
 import nativeModule from 'libentry.so'
-import { av_player } from './by_av_player'
 import { log, notice } from '../system_function'
+import { array_to_json_save, load_json_to_array } from '../array_save_load'
 import { get_image, get_meta } from '../meta_manager'
-import { av_session } from './av_session'
 
-///////////
+// 导入类
+import { class_global_config } from '../class_global_config'
+import { av_player } from './by_av_player'
+
 // 变量池 //
-//////////
-const root_path = getContext().filesDir   // 工作目录
-const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 函数库 //
-//////////
-
-// string[]转json储存（覆盖） //
-export async function array_to_json_save(data: string[], path: string): Promise<boolean> {
-
-  try {fs.rmdirSync(path)} catch {}
-
-  // 转换
-  const packData = JSON.stringify(data)
-
-  // 保存
-  try {
-    const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-    fs.writeSync(file.fd, packData)
-    fs.closeSync(file)
-  } catch (e) {
-    log(`保存文件失败: ${e}`, 'error')
-    return false
-  }
-
-  return true
-
-}
-// json读取转string[] //
-export function read_json_to_array(path: string): string[] {
-
-  try {
-    console.log(path)
-    let json: string = fs.readTextSync(path)
-
-    const parsed = JSON.parse(json) as string[]
-
-    // 校验：必须是数组
-    if (!Array.isArray(parsed)) {
-      throw new Error("JSON 格式错误：期望数组")
-    }
-
-    const result: string[] = []
-
-    // 遍历每个元素，确保是字符串
-    for (let i = 0; i < parsed.length; i++) {
-      const element = parsed[i]
-      if (typeof element !== 'string') {
-        throw new Error("JSON 格式错误：数组元素必须是字符串")
-      }
-      result.push(element)
-    }
-
-    return result
-
-  } catch (e) {
-    log(`读取文件失败: ${e}`, 'error')
-    return []
-  }
-}
+const audio_player_path = getContext().filesDir + '/audio_player/'    // 音频播放器目录
+const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']   // dsd格式集
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
 @Observed
-export class audio_player {
+export class class_audio_player {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
@@ -102,10 +41,10 @@ export class audio_player {
   private current_backup: number = 0  // 播放时长备份
   private like_list: string[] = []    // 喜欢列表
   like_list_path: string[] = [] // 喜欢列表（路径备份）
-  enable_dsd_support = true   // 是否支持dsd
   private dsd_list = new Map<string, string>
 
   // 类 //
+  global_config: class_global_config | null = null
   private session: avSession.AVSession | null = null; // 元音频
   private av_player = new av_player()   // 官方av_player播放器
 
@@ -138,7 +77,7 @@ export class audio_player {
     this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
     // 初始化
     await this.session.setAVMetadata({
-      assetId: '-1',
+      assetId: '0',
       title: '未知歌曲',
       artist: '未知歌手',
     })
@@ -256,7 +195,7 @@ export class audio_player {
       // 如果是dsd
       if (support_dsd_format.includes(this.play_list[this.play_list_index].substring(this.play_list[this.play_list_index].lastIndexOf('.')).toLowerCase())) {
         // 如果开启了支持
-        if (this.enable_dsd_support) {
+        if (this.global_config?.dsd_support) {
           // 拉取转换后的wav
           console.log('开启支持，解码。')
           result = await this.av_player.audio_set(await this.call_dsd(this.play_list[this.play_list_index]))
@@ -306,6 +245,13 @@ export class audio_player {
   pause() {
     if (this.play_list.length == 0) { return }
     this.av_player.set_play_status(false)
+  }
+  // 跳转指定歌曲 //
+  seek_song(index: number) {
+    // 如果超出了那不管
+    if (index < 0 || index >= this.play_list.length) { return }
+    // 点歌
+    this.set_audio_play(index)
   }
 
   // 上一首 //
@@ -370,18 +316,11 @@ export class audio_player {
       }
     }
   }
-  // 跳转指定歌曲 //
-  seek_song(index: number) {
-    // 如果超出了那不管
-    if (index < 0 || index >= this.play_list.length) { return }
-    // 点歌
-    this.set_audio_play(index)
-  }
   // 更改播放进度 //
   seek(time: number) {
     this.av_player.audio_seek(time)
   }
-  // 更改播放模式
+  // 更改播放模式 //
   set_play_mode(index: number) {
     emitter.emit({ eventId: 713 }, { data: { play_mode: index } })
     this.play_mode = index
@@ -435,18 +374,17 @@ export class audio_player {
       }
 
       // 保存
-      array_to_json_save(this.like_list_path, root_path + '/my_like.json')
+      array_to_json_save(this.like_list_path, audio_player_path + '/my_like.json')
 
 
     } catch {}
 
   }
-
   // 重置喜欢列表 //
   reset_like_list() {
     this.like_list = []
     this.like_list_path = []
-    array_to_json_save([], root_path + '/my_like.json')
+    array_to_json_save([], audio_player_path + '/my_like.json')
   }
 
   // dsd加载 //
@@ -468,9 +406,9 @@ export class audio_player {
     notice('这首歌需要加载一下，请耐心等待^v^.')
     try {
       let tmp_ino = `${fs.statSync(fs.openSync(dsd_path).fd).ino}`
-      await nativeModule.dsdToWav(dsd_path, root_path + '/dsd_cache/' + tmp_ino + '.wav')
-      this.dsd_list.set(`${tmp_ino}`, root_path + '/dsd_cache/' + tmp_ino + '.wav')
-      return root_path + '/dsd_cache/' + tmp_ino + '.wav'
+      await nativeModule.dsdToWav(dsd_path, audio_player_path + '/dsd_cache/' + tmp_ino + '.wav')
+      this.dsd_list.set(`${tmp_ino}`, audio_player_path + '/dsd_cache/' + tmp_ino + '.wav')
+      return audio_player_path + '/dsd_cache/' + tmp_ino + '.wav'
     } catch (e) {
       log(`dsd转换失败: ${e}`, 'error')
       return ''
@@ -479,11 +417,13 @@ export class audio_player {
   // dsd重加载 //
   load_dsd() {
     // 加载dsd表
-    try {fs.statSync(root_path + '/dsd_cache')} catch {fs.mkdirSync(root_path + '/dsd_cache')}
-    for (const i of fs.listFileSync(root_path + '/dsd_cache', { recursion: true })) {
+    console.log(audio_player_path + '/dsd_cache')
+    try {fs.statSync(audio_player_path + '/dsd_cache')} catch {fs.mkdirSync(audio_player_path + '/dsd_cache')}
+    for (const i of fs.listFileSync(audio_player_path + '/dsd_cache', { recursion: true })) {
       // 传入
-      this.dsd_list.set(nativeModule.extractFilename(root_path + '/dsd_cache/' + i), root_path + '/dsd_cache/' + i)
+      this.dsd_list.set(nativeModule.extractFilename(audio_player_path + '/dsd_cache/' + i), audio_player_path + '/dsd_cache/' + i)
     }
+    console.log('完成！')
   }
 
   // 播放数据注入 //
@@ -491,30 +431,33 @@ export class audio_player {
     log('加载播放数据')
     try {
       // 打开播放列表
-      let tmp_list = read_json_to_array(root_path + '/playing_data_list.json')
-      let tmp = read_json_to_array(root_path + '/playing_data_other.json')
+      let tmp_list = load_json_to_array(audio_player_path + '/playing_data_list.json')
+      let tmp = load_json_to_array(audio_player_path + '/playing_data_other.json')
       // 加载
-      this.set_play_mode(Number.parseInt(tmp[2]))
-      if (tmp[3] === '1') {this.enable_dsd_support = true} else {this.enable_dsd_support = false}
-      await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
-      while (!this.player_ready) {await new Promise<void>(r => setTimeout(r, 1))}
-      this.seek(Number.parseInt(tmp[1]))
+      if (tmp.length != 0) {
+        await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
+        this.set_play_mode(Number.parseInt(tmp[2]))
+        while (!this.player_ready) {await new Promise<void>(r => setTimeout(r, 1))}
+        this.seek(Number.parseInt(tmp[1]))
+      }
     } catch {}
   }
   // 播放数据保存 //
   play_data_save() {
-    // 保存播放列表
-    array_to_json_save(this.play_list, root_path + '/playing_data_list.json')
-    // 保存dsd列表
-    // 保存其他元数据
-    let tmp: string[] = [
-      `${this.play_list_index}`,
-      `${this.current_backup}`,
-      `${this.play_mode}`,
-    ]
-    if (this.enable_dsd_support) {tmp.push('1')} else {tmp.push('0')}
-    array_to_json_save(tmp, root_path + '/playing_data_other.json')
-    log('数据保存完成.')
+    if (!this.global_config?.reset) {
+      // 保存播放列表
+      array_to_json_save(this.play_list, audio_player_path + '/playing_data_list.json')
+      // 保存dsd列表
+      // 保存其他元数据
+      let tmp: string[] = [
+        `${this.play_list_index}`,
+        `${this.current_backup}`,
+        `${this.play_mode}`,
+        `${this.player_choice}`
+      ]
+      array_to_json_save(tmp, audio_player_path + '/playing_data_other.json')
+      log('数据保存完成.')
+    }
   }
 
   // 销毁 //
@@ -528,13 +471,20 @@ export class audio_player {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
-  constructor() {
+  constructor(import_global_config: class_global_config) {
+
+    // 导入类
+    this.global_config = import_global_config
+
+    // 检测工作目录
+    try {fs.statSync(audio_player_path)} catch {fs.mkdirSync(audio_player_path)}
+
     // 注册回调
     this.player_callback()
     // 注册元音频
     this.avs_start_up()
     // 加载like表
-    const tmp_like = read_json_to_array(root_path + '/my_like.json')
+    const tmp_like = load_json_to_array(audio_player_path + '/my_like.json')
     if (tmp_like.length != 0) {
       for (const i of tmp_like) {
         try {
