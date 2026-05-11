@@ -102,6 +102,7 @@ export class audio_player {
   private current_backup: number = 0  // 播放时长备份
   private like_list: string[] = []    // 喜欢列表
   like_list_path: string[] = [] // 喜欢列表（路径备份）
+  enable_dsd_support = true   // 是否支持dsd
   private dsd_list = new Map<string, string>
 
   // 类 //
@@ -254,8 +255,16 @@ export class audio_player {
       let result: [boolean, string]
       // 如果是dsd
       if (support_dsd_format.includes(this.play_list[this.play_list_index].substring(this.play_list[this.play_list_index].lastIndexOf('.')).toLowerCase())) {
-        // 拉取转换后的wav
-        result = await this.av_player.audio_set(await this.call_dsd(this.play_list[this.play_list_index]))
+        // 如果开启了支持
+        if (this.enable_dsd_support) {
+          // 拉取转换后的wav
+          console.log('开启支持，解码。')
+          result = await this.av_player.audio_set(await this.call_dsd(this.play_list[this.play_list_index]))
+        } else {
+          console.log('未开启支持，下一首')
+          this.next_song()
+          return
+        }
       } else {
         // 普通歌曲
         result = await this.av_player.audio_set(this.play_list[this.play_list_index])
@@ -486,6 +495,7 @@ export class audio_player {
       let tmp = read_json_to_array(root_path + '/playing_data_other.json')
       // 加载
       this.set_play_mode(Number.parseInt(tmp[2]))
+      if (tmp[3] === '1') {this.enable_dsd_support = true} else {this.enable_dsd_support = false}
       await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
       while (!this.player_ready) {await new Promise<void>(r => setTimeout(r, 1))}
       this.seek(Number.parseInt(tmp[1]))
@@ -495,8 +505,15 @@ export class audio_player {
   play_data_save() {
     // 保存播放列表
     array_to_json_save(this.play_list, root_path + '/playing_data_list.json')
+    // 保存dsd列表
     // 保存其他元数据
-    array_to_json_save([`${this.play_list_index}`, `${this.current_backup}`, `${this.play_mode}`], root_path + '/playing_data_other.json')
+    let tmp: string[] = [
+      `${this.play_list_index}`,
+      `${this.current_backup}`,
+      `${this.play_mode}`,
+    ]
+    if (this.enable_dsd_support) {tmp.push('1')} else {tmp.push('0')}
+    array_to_json_save(tmp, root_path + '/playing_data_other.json')
     log('数据保存完成.')
   }
 

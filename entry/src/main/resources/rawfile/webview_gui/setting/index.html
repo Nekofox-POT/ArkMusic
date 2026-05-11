@@ -4,6 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ArkMusic</title>
     <link rel="stylesheet" href="../public_css/color.css">
+    <link rel="stylesheet" href="css/setting.css">
+    <link rel="stylesheet" href="css/ui_setting.css">
+    <link rel="stylesheet" href="css/color_picker.css">
+    <link rel="stylesheet" href="css/confirm_dialog.css">
     <style>
         body {
 
@@ -17,12 +21,178 @@
             overflow: hidden;
 
         }
+        body * {
+            /* border: 1px solid palevioletred; */
+        }
     </style>
 </head>
 <body>
-    
-    <h1>你好</h1>
-    
+
+    <!-- 页面容器 -->
+    <div class="setting_page_container" id="setting_page_container">
+
+        <!-- Page 0: 主设置页 -->
+        <div class="setting_page" id="setting_page_main">
+
+            <!-- 设置图标区域 -->
+            <div class="setting_icon_area">
+                <div class="setting_icon_frame box_color" id="setting_icon_frame">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M12.02 9.43Q12.74 9.43 13.32 9.77Q13.9 10.1 14.23 10.69Q14.57 11.28 14.57 12.02Q14.57 12.74 14.24 13.33Q13.92 13.92 13.33 14.24Q12.74 14.57 12 14.57Q11.28 14.57 10.69 14.23Q10.1 13.9 9.77 13.31Q9.43 12.72 9.43 11.98Q9.43 11.26 9.78 10.67Q10.13 10.08 10.72 9.76Q11.3 9.43 12.02 9.43ZM12.05 7.15Q10.73 7.15 9.6 7.8Q8.47 8.45 7.81 9.55Q7.15 10.66 7.15 11.98Q7.15 13.3 7.8 14.42Q8.45 15.55 9.56 16.21Q10.68 16.87 12 16.87Q13.32 16.87 14.45 16.22Q15.58 15.58 16.22 14.46Q16.87 13.34 16.87 12.02Q16.87 10.7 16.22 9.59Q15.58 8.47 14.47 7.81Q13.37 7.15 12.05 7.15ZM13.56 23.09Q14.16 23.09 14.65 22.78Q15.14 22.46 15.38 21.91L16.13 20.16L16.27 20.09Q16.61 19.9 16.94 19.68L18.86 19.92Q19.46 19.99 19.99 19.73Q20.52 19.46 20.83 18.94L22.42 16.2Q22.7 15.67 22.67 15.08Q22.63 14.5 22.3 14.02L21.12 12.46L21.12 11.57L22.3 10.01Q22.66 9.53 22.68 8.93Q22.7 8.33 22.42 7.82L20.83 5.06Q20.54 4.56 20.02 4.3Q19.49 4.03 18.89 4.08L16.94 4.32Q16.61 4.08 16.2 3.89L15.43 2.06Q15.19 1.54 14.7 1.2Q14.21 0.86 13.61 0.86L10.44 0.86Q9.84 0.86 9.34 1.19Q8.83 1.51 8.59 2.06L7.82 3.89L7.63 3.98Q7.49 4.08 7.37 4.14Q7.25 4.2 7.1 4.3L5.14 4.08Q4.56 3.98 4.02 4.26Q3.48 4.54 3.17 5.04L1.58 7.8Q1.3 8.3 1.33 8.9Q1.37 9.5 1.7 9.98L2.9 11.57L2.9 12.38L1.7 13.97Q1.34 14.45 1.32 15.05Q1.3 15.65 1.58 16.15L3.14 18.89Q3.46 19.42 3.98 19.68Q4.51 19.94 5.11 19.87L7.03 19.66Q7.49 19.94 7.8 20.11L8.57 21.89Q8.78 22.44 9.28 22.76Q9.77 23.09 10.39 23.09L13.56 23.09ZM7.1 17.23L5.04 17.42L3.74 15.12L4.94 13.51Q5.23 13.08 5.23 12.58Q5.21 12.29 5.21 11.94Q5.21 11.59 5.23 11.33Q5.23 10.8 4.94 10.37L3.74 8.71L5.09 6.43L7.1 6.67Q7.39 6.7 7.67 6.64Q7.94 6.58 8.14 6.43Q8.59 6.12 9.12 5.88Q9.62 5.59 9.84 5.11L10.68 3.22L13.32 3.24L14.11 5.11Q14.3 5.57 14.83 5.88Q15.29 6.07 15.86 6.46Q16.37 6.79 16.87 6.7L18.89 6.5L20.18 8.81L19.03 10.34Q18.65 10.78 18.72 11.38Q18.74 11.66 18.74 12.01Q18.74 12.36 18.72 12.62Q18.65 13.18 19.01 13.63L20.18 15.22L18.84 17.5L16.9 17.28Q16.63 17.23 16.36 17.29Q16.08 17.35 15.86 17.52Q15.43 17.83 14.81 18.12Q14.59 18.24 14.39 18.44Q14.18 18.65 14.06 18.89L13.27 20.71L10.63 20.69L9.86 18.86Q9.62 18.36 9.14 18.1Q8.62 17.86 8.09 17.52Q7.73 17.26 7.25 17.26Z"></path></g></svg>
+                </div>
+                <p class="font_color setting_title" id="setting_title">设置</p>
+            </div>
+
+            <!-- 配置卡片 -->
+            <div class="setting_config box_color" id="setting_config">
+                <div class="setting_config_half" id="setting_ui_config">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M21 3H3C1.9 3 1 3.9 1 5V17C1 18.1 1.9 19 3 19H8V21H16V19H21C22.1 19 23 18.1 23 17V5C23 3.9 22.1 3 21 3ZM21 17H3V5H21V17Z"></path></g></svg>
+                    <p class="font_color">UI设置</p>
+                </div>
+                <div class="setting_config_separator"></div>
+                <div class="setting_config_half" id="setting_music_config">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M12 3V12.26C11.5 12.09 11 12 10.5 12C8.01 12 6 14.01 6 16.5C6 18.99 8.01 21 10.5 21C12.99 21 15 18.99 15 16.5V6H19V3H12Z"></path></g></svg>
+                    <p class="font_color">音乐设置</p>
+                </div>
+            </div>
+
+            <!-- 列表元素 -->
+            <div class="setting_list">
+                <div class="setting_list_item box_color" id="setting_rescan">
+                    <p class="font_color">重新扫描数据库</p>
+                </div>
+                <div class="setting_list_item box_color" id="setting_reset">
+                    <p class="font_color">重置程序</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Page 1: UI设置页 -->
+        <div class="setting_page" id="setting_page_ui">
+
+            <div class="setting_sub_header" id="ui_setting_back">
+                <div class="setting_sub_back_btn box_color">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></g></svg>
+                </div>
+                <p class="font_color">UI设置</p>
+            </div>
+
+            <div class="setting_sub_content">
+                <div class="setting_sub_item box_color">
+                    <p class="font_color">允许图标点击高亮</p>
+                    <div class="setting_toggle" id="highlight_toggle">
+                        <div class="setting_toggle_knob"></div>
+                    </div>
+                </div>
+                <div class="setting_sub_item box_color setting_sub_item_clickable" id="setting_color_btn">
+                    <p class="font_color">修改主题色</p>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <div class="setting_color_reset" id="setting_color_reset">
+                            <p class="font_color">恢复默认</p>
+                        </div>
+                        <div class="setting_color_preview box_active_color" id="setting_color_preview"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Page 2: 音乐设置页 -->
+        <div class="setting_page" id="setting_page_music">
+
+            <div class="setting_sub_header" id="music_setting_back">
+                <div class="setting_sub_back_btn box_color">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></g></svg>
+                </div>
+                <p class="font_color">音乐设置</p>
+            </div>
+
+            <div class="setting_sub_content">
+                <div class="setting_sub_item box_color">
+                    <p class="font_color">开启DSD音频支持</p>
+                    <div class="setting_toggle" id="dsd_toggle">
+                        <div class="setting_toggle_knob"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- 颜色选择器遮罩 -->
+    <div class="color_picker_overlay" id="color_picker_overlay">
+        <div class="color_picker_card box_color">
+
+            <div class="color_picker_title_bar">
+                <p class="font_color">修改主题色</p>
+                <div class="color_picker_close box_color" id="color_picker_close">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></g></svg>
+                </div>
+            </div>
+
+            <!-- 调色板 -->
+            <div class="color_picker_palette_wrap" id="color_picker_palette_wrap">
+                <div class="color_picker_palette_bg" id="color_picker_palette_bg"></div>
+                <div class="color_picker_palette_white"></div>
+                <div class="color_picker_palette_black"></div>
+                <div class="color_picker_palette_dot" id="color_picker_palette_dot"></div>
+            </div>
+
+            <!-- 色相条 -->
+            <div class="color_picker_hue_bar" id="color_picker_hue_bar">
+                <div class="color_picker_hue_thumb" id="color_picker_hue_thumb"></div>
+            </div>
+
+            <!-- 预览条 -->
+            <div class="color_picker_preview" id="color_picker_preview"></div>
+
+            <!-- HEX 输入 -->
+            <div class="color_picker_hex_row">
+                <p class="font_color">HEX</p>
+                <input type="text" class="color_picker_hex_input font_color" id="color_picker_hex_input" maxlength="7" value="#F4C6CE">
+            </div>
+
+            <!-- RGB 数值输入 -->
+            <div class="color_picker_rgb_inputs">
+                <div class="color_picker_rgb_input_item">
+                    <p class="font_color">R</p>
+                    <input type="number" class="font_color" id="color_picker_r_input" min="0" max="255" value="244">
+                </div>
+                <div class="color_picker_rgb_input_item">
+                    <p class="font_color">G</p>
+                    <input type="number" class="font_color" id="color_picker_g_input" min="0" max="255" value="198">
+                </div>
+                <div class="color_picker_rgb_input_item">
+                    <p class="font_color">B</p>
+                    <input type="number" class="font_color" id="color_picker_b_input" min="0" max="255" value="206">
+                </div>
+            </div>
+
+            <!-- 确认按钮 -->
+            <div class="color_picker_confirm box_color" id="color_picker_confirm">
+                <p class="font_color">确 定</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 确认对话框遮罩 -->
+    <div class="confirm_overlay" id="confirm_overlay">
+        <div class="confirm_card box_color">
+            <p class="font_color" id="confirm_title" style="font-size:0.95rem;font-weight:700;">确认重置程序？</p>
+            <p class="font_color" id="confirm_message" style="font-size:0.75rem;font-weight:500;margin-top:8px;">此操作将清除所有数据</p>
+            <div class="confirm_buttons">
+                <div class="confirm_btn box_color" id="confirm_cancel">
+                    <p class="font_color">取消</p>
+                </div>
+                <div class="confirm_btn box_color" id="confirm_ok">
+                    <p class="font_color">确认</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 函数块 -->
     <script src="../public_js/color_update.js"></script>
     <script src="js/environment.js"></script>

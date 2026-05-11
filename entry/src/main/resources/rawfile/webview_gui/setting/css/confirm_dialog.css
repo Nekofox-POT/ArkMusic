@@ -1,0 +1,66 @@
+/* 确认对话框遮罩 */
+.confirm_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 110;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    backdrop-filter: blur(15px);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.confirm_overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 确认卡片 */
+.confirm_card {
+    width: 72vw;
+    border-radius: 25px;
+    padding: 25px 20px;
+    text-align: center;
+
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* 按钮组 */
+.confirm_buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.confirm_btn {
+    flex: 1;
+    height: 44px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.confirm_btn.active {
+    transform: scale(0.95);
+}
+
+.confirm_btn p {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 650;
+}

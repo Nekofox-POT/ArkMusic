@@ -109,7 +109,7 @@ export default struct ark_music_start {
   //////////
   // files_manager注册 //
   async reg_files_manager() {
-    await this.files_manager.load_data()
+    await this.files_manager.load_data(this.ark_music_player.enable_dsd_support)
     this.ark_music_player.load_dsd()
     this.ready = true
   }

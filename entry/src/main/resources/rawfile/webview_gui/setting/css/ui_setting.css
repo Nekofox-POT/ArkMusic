@@ -1,0 +1,147 @@
+/* 子页面通用样式 */
+
+/* 返回栏 */
+.setting_sub_header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 6vw;
+}
+
+.setting_sub_back_btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    flex-shrink: 0;
+
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.setting_sub_back_btn svg {
+    width: 22px;
+    height: 22px;
+}
+.setting_sub_back_btn.active {
+    transform: scale(0.9);
+}
+
+.setting_sub_header p {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* 设置项内容区 */
+.setting_sub_content {
+    width: 88vw;
+    margin-left: 6vw;
+    margin-top: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.setting_sub_item {
+    width: 100%;
+    height: 50px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    box-sizing: border-box;
+    backdrop-filter: blur(10px);
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.setting_sub_item p {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+/* 修改主题色 预览圆点 */
+.setting_color_preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    flex-shrink: 0;
+    transition: background-color 0.3s ease;
+}
+
+/* 恢复默认值 小按钮 */
+.setting_color_reset {
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.setting_color_reset.active {
+    transform: scale(0.92);
+}
+.setting_color_reset p {
+    margin: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.setting_sub_item_clickable {
+    transition: transform 0.15s ease;
+}
+.setting_sub_item_clickable.active {
+    transform: scale(0.95);
+}
+
+/* 开关 */
+.setting_toggle {
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+    position: relative;
+    flex-shrink: 0;
+
+    background-color: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.15),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.setting_toggle_knob {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.8),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 0 10px rgba(255, 255, 255, 0.3),
+        0 1px 4px rgba(0, 0, 0, 0.15);
+
+    transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.setting_toggle.on .setting_toggle_knob {
+    left: 26px;
+}

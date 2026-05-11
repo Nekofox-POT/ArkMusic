@@ -25,6 +25,7 @@ const taskbar_music_name = document.getElementById('taskbar_music_name')
 // 页面 //
 const play_list = document.getElementById('play_list')
 const files = document.getElementById('files')
+const setting = document.getElementById('setting')
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 变量配置 //

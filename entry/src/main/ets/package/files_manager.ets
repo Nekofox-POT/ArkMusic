@@ -204,8 +204,13 @@ export class files_manager {
   // 外部函数 //
   ////////////
 
+  // 重置表 //
+  reset_song_data() {fs.rmdirSync(root_path)}
+  // 重置app //
+
+
   // 建立歌曲缓存 //
-  async make_songs_cache() {
+  async make_songs_cache(dsd_support: boolean) {
 
     // 初始化数据库
     log('初始化数据库...')
@@ -251,33 +256,35 @@ export class files_manager {
     }
     // 扫描歌曲(dsd) //
     log('扫描dsd')
-    let tmp_dsd = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })
-    const tmp_dsd_length = tmp_dsd.length
-    for (let i = 0; i < tmp_dsd_length; i++) {
+    if (dsd_support) {
+      let tmp_dsd = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })
+      const tmp_dsd_length = tmp_dsd.length
+      for (let i = 0; i < tmp_dsd_length; i++) {
 
-      notice(`正在转换(${i}/${tmp_dsd_length}): ${tmp_dsd[i]}`)
+        notice(`正在转换(${i}/${tmp_dsd_length}): ${tmp_dsd[i]}`)
 
-      // 获取ino号
-      let tmp_dsd_path = song_path + '/' + tmp_dsd[i]
-      let tmp_ino = `${fs.statSync(fs.openSync(tmp_dsd_path).fd).ino}`
+        // 获取ino号
+        let tmp_dsd_path = song_path + '/' + tmp_dsd[i]
+        let tmp_ino = `${fs.statSync(fs.openSync(tmp_dsd_path).fd).ino}`
 
-      // 判断是否有已经转换好的文件（获取ino核对名称。）
-      let cached_path = dsd_path + '/' + tmp_ino + '.wav'
-      try {
-        fs.statSync(cached_path)
-      } catch {
-        // 没有缓存，使用ffmpeg转换
+        // 判断是否有已经转换好的文件（获取ino核对名称。）
+        let cached_path = dsd_path + '/' + tmp_ino + '.wav'
         try {
-          await nativeModule.dsdToWav(tmp_dsd_path, cached_path)
-        } catch (e) {
-          log(`dsd转换失败: ${e}`, 'error')
-          continue
+          fs.statSync(cached_path)
+        } catch {
+          // 没有缓存，使用ffmpeg转换
+          try {
+            await nativeModule.dsdToWav(tmp_dsd_path, cached_path)
+          } catch (e) {
+            log(`dsd转换失败: ${e}`, 'error')
+            continue
+          }
         }
+
+        // 添加到列表
+        this.all_songs_list.push(tmp_dsd_path)
+
       }
-
-      // 添加到列表
-      this.all_songs_list.push(tmp_dsd_path)
-
     }
     // 扫描歌单(m3u) //
     log('扫描m3u列表')
@@ -315,23 +322,27 @@ export class files_manager {
           // （dsd音乐）
           else if (support_dsd_format.includes(file_suffix)) {
 
-            tmp_play_list.push(tmp)
-            // 获取ino号
-            let tmp_ino = `${fs.statSync(fs.openSync(tmp).fd).ino}`
+            if (dsd_support) {
 
-            // 判断是否有已经转换好的文件（获取ino核对名称。）
-            let cached_path = dsd_path + '/' + tmp_ino + '.wav'
-            try {
-              fs.statSync(cached_path)
+              tmp_play_list.push(tmp)
+              // 获取ino号
+              let tmp_ino = `${fs.statSync(fs.openSync(tmp).fd).ino}`
 
-            } catch {
-              // 没有缓存，使用ffmpeg转换
+              // 判断是否有已经转换好的文件（获取ino核对名称。）
+              let cached_path = dsd_path + '/' + tmp_ino + '.wav'
               try {
-                await nativeModule.dsdToWav(tmp, cached_path)
-              } catch (e) {
-                log(`dsd转换失败: ${e}`, 'error')
-                continue
+                fs.statSync(cached_path)
+
+              } catch {
+                // 没有缓存，使用ffmpeg转换
+                try {
+                  await nativeModule.dsdToWav(tmp, cached_path)
+                } catch (e) {
+                  log(`dsd转换失败: ${e}`, 'error')
+                  continue
+                }
               }
+
             }
 
           }
@@ -413,7 +424,7 @@ export class files_manager {
   }
 
   // 载入列表 //
-  async load_data() {
+  async load_data(dsd_support: boolean) {
 
     // 读取文件夹 //
     try {
@@ -471,13 +482,13 @@ export class files_manager {
 
     } catch (e) {
       // 没有文件夹，扫描
-      await this.make_songs_cache()
+      await this.make_songs_cache(dsd_support)
     }
 
   }
 
   // 读取文件夹 //
-  get_dir(path: string = ''): string[][] {
+  get_dir(path: string = '', dsd_support: boolean): string[][] {
 
     let dir_list: string[] = []
     let file_list: string[] = []
@@ -513,7 +524,9 @@ export class files_manager {
         }
         // （dsd音乐）
         else if (support_dsd_format.includes(file_suffix)) {
-          file_list.push(tmp_path)
+          if (dsd_support) {
+            file_list.push(tmp_path)
+          }
         }
         // 播放列表
         else if (file_suffix == '.m3u') {}

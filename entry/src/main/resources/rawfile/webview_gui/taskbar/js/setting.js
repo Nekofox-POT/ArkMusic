@@ -9,6 +9,7 @@
 function set_active_color(color = null) {
     play_list.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
     files.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
+    setting.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
     if (color !== null) {
         active_color = color
     }
@@ -24,6 +25,7 @@ function set_active_color(color = null) {
 function set_background_color(color = null) {
     play_list.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
     files.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
+    setting.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
     if (color !== null) {
         background_color = color
     }
@@ -42,7 +44,20 @@ function set_background_color(color = null) {
 function set_button_enable_active_color(value) {
     play_list.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     files.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
+    setting.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     button_enable_active_color = value
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 图标高亮设置修改 //
+// 后端可调用：设置DSD //
+function set_dsd(status) {
+    setting.contentWindow.postMessage({action: 'set_dsd', arg1: status}, '*')
+}
+
+// 后端可调用：导入背景图 //
+function set_background_image(base64) {
+    setting.contentWindow.postMessage({action: 'set_background_image', arg1: base64}, '*')
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,12 +72,23 @@ function back_gesture() {
     else if (page_backup === 1) {
         return 'back'
     }
+    // 如果在页面3则转发到设置页
+    else if (page_backup === 3) {
+        setting.contentWindow.postMessage({action: 'back_gesture'}, '*')
+    }
     // 其他页面则直接返回主页
     else {
         taskbar_page_update(1)
     }
     return ''
 }
+
+// 监听设置页的返回请求
+window.addEventListener('message', function(event) {
+    if (event.data.action === 'setting_request_back') {
+        taskbar_page_update(1)
+    }
+})
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ark文件更新池 //

@@ -1,0 +1,239 @@
+/* 颜色选择器遮罩 */
+.color_picker_overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    backdrop-filter: blur(15px);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+.color_picker_overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 颜色选择器卡片 */
+.color_picker_card {
+    width: 82vw;
+    border-radius: 25px;
+    padding: 20px;
+
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.6),
+        0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* 标题栏 */
+.color_picker_title_bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+.color_picker_title_bar p {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+.color_picker_close {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.color_picker_close.active {
+    transform: scale(0.9);
+}
+.color_picker_close svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* 调色板 */
+.color_picker_palette_wrap {
+    width: 100%;
+    height: 170px;
+    border-radius: 15px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 12px;
+
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+}
+
+.color_picker_palette_bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+}
+
+.color_picker_palette_white {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to right, white, transparent);
+    pointer-events: none;
+}
+
+.color_picker_palette_black {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, transparent, black);
+    pointer-events: none;
+}
+
+.color_picker_palette_dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid white;
+    position: absolute;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* 色相条 */
+.color_picker_hue_bar {
+    width: 100%;
+    height: 22px;
+    border-radius: 11px;
+    position: relative;
+    overflow: visible;
+    margin-bottom: 16px;
+
+    background: linear-gradient(to right,
+        #FF0000 0%, #FFFF00 17%, #00FF00 33%,
+        #00FFFF 50%, #0000FF 67%, #FF00FF 83%, #FF0000 100%);
+
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
+}
+
+.color_picker_hue_thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: 2.5px solid white;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 预览条 */
+.color_picker_preview {
+    width: 100%;
+    height: 40px;
+    border-radius: 12px;
+    margin-bottom: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    transition: background-color 0.15s ease;
+}
+
+/* HEX 输入 */
+.color_picker_hex_row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.color_picker_hex_row p {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.color_picker_hex_input {
+    flex: 1;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0 12px;
+    font-size: 0.85rem;
+    outline: none;
+    color: inherit;
+    box-sizing: border-box;
+}
+
+/* RGB 数值输入 */
+.color_picker_rgb_inputs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.color_picker_rgb_input_item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+.color_picker_rgb_input_item p {
+    margin: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+.color_picker_rgb_input_item input {
+    width: 100%;
+    height: 36px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    text-align: center;
+    font-size: 0.85rem;
+    outline: none;
+    color: inherit;
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+    -moz-appearance: textfield;
+}
+.color_picker_rgb_input_item input::-webkit-outer-spin-button,
+.color_picker_rgb_input_item input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* 确认按钮 */
+.color_picker_confirm {
+    width: 100%;
+    height: 46px;
+    border-radius: 23px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.color_picker_confirm.active {
+    transform: scale(0.95);
+}
+.color_picker_confirm p {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+}

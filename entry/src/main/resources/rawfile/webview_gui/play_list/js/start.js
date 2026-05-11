@@ -5,6 +5,7 @@
 function init() {
     // 颜色更新
     set_background_color()
+    window.parent.postMessage({action: 'iframe_ready'}, '*')
 }
 
 init()

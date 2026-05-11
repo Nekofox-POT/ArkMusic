@@ -1,0 +1,144 @@
+/* 页面容器 */
+.setting_page_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+    flex-wrap: nowrap;
+
+    transform: translateX(0);
+
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.setting_page {
+    width: 100%;
+    height: 100%;
+    flex-shrink: 0;
+    overflow-y: auto;
+}
+
+/* 设置图标区域 */
+.setting_icon_area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 50px;
+}
+
+.setting_icon_frame {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.2s ease;
+}
+.setting_icon_frame.active {
+    transform: scale(0.92);
+}
+.setting_icon_frame svg {
+    width: 55%;
+    height: 55%;
+}
+
+.setting_title {
+    margin-top: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* 配置卡片框架 */
+.setting_config {
+    width: 88vw;
+    height: 100px;
+    border-radius: 25px;
+    margin-left: 6vw;
+    margin-top: 40px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+
+    transition: transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.setting_config.active {
+    transform: scale(0.95);
+}
+
+.setting_config_half {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    -webkit-tap-highlight-color: transparent;
+
+    transition: transform 0.15s ease;
+}
+.setting_config_half.active {
+    transform: scale(0.93);
+}
+
+.setting_config_half svg {
+    width: 28px;
+    height: 28px;
+}
+
+.setting_config_half p {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 650;
+}
+
+.setting_config_separator {
+    width: 2px;
+    height: 40px;
+    border-radius: 1px;
+    background-color: rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+}
+
+/* 列表元素 */
+.setting_list {
+    width: 88vw;
+    margin-left: 6vw;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.setting_list_item {
+    width: 100%;
+    height: 50px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    padding: 0 25px;
+    box-sizing: border-box;
+    backdrop-filter: blur(10px);
+
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.15s ease;
+}
+.setting_list_item.active {
+    transform: scale(0.95);
+}
+
+.setting_list_item p {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+}

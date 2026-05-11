@@ -16,26 +16,28 @@ import emitter from '@ohos.events.emitter'
 import { router } from '@kit.ArkUI';
 import nativeModule from 'libentry.so';
 import { window } from '@kit.ArkUI';
+import { photoAccessHelper } from '@kit.MediaLibraryKit';
+import { BusinessError } from '@kit.BasicServicesKit';
+import { resourceManager } from '@kit.LocalizationKit';
 
 //////////////////
 // 导入自创建模块 //
 /////////////////
 import { log, notice, vib } from '../package/system_function'
 import { audio_player } from '../package/audio_player/audio_player'
-import { files_manager } from '../package/files_manager'
+import { array_to_json_save, read_json_to_array, files_manager } from '../package/files_manager'
 import { get_image, get_meta, image_to_base64, check_meta_image } from '../package/meta_manager'
 
 ///////////
 // 变量池 //
 //////////
+const root_path = getContext().filesDir
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
 //////////
 
-///////////////////
 // web图片色值计算 //
-//////////////////
 async function pixel_light_count(metadata: image.PixelMap): Promise<number> {
 
   // 调用 C++ 计算颜色
@@ -70,7 +72,9 @@ export default struct web_ui {
   // 变量池 //
   //////////
   private play_list: string[] = []  // 列表记录器
-  private file_mode: string = ''    // 文件页记录
+  private active_color: string = 'rgba(244, 198, 206, 1.0)'   // 默认高亮色
+  private enable_active_color: boolean = true  // 是否支持按钮高亮色
+  private setting_head_image: string = ''   // 设置头像的base64
 
   ///////////
   // 更新池 //
@@ -178,6 +182,8 @@ export default struct web_ui {
   }
   // 退出操作 //
   aboutToDisappear(): void {
+    // 保存数据
+    this.save_data()
     log('web_ui销毁.')
     // 销毁监听
     emitter.off(712)
@@ -208,6 +214,28 @@ export default struct web_ui {
     }
   }
 
+  // 加载数据 //
+  load_data() {
+    let tmp = read_json_to_array(root_path + '/' + 'web_ui.json')
+    if (tmp.length != 0) {
+      this.active_color = tmp[0]
+      this.enable_active_color = (tmp[1] === '1') ? true : false
+    }
+    console.log(`${this.active_color} ${this.enable_active_color} ${this.ark_music_player.enable_dsd_support}`)
+    this.ark_music_ui.runJavaScript(`set_active_color('${this.active_color}')`)
+    this.ark_music_ui.runJavaScript(`set_button_enable_active_color(${this.enable_active_color})`)
+    this.ark_music_ui.runJavaScript(`set_dsd(${this.ark_music_player.enable_dsd_support})`)
+  }
+  // 保存数据 //
+  save_data() {
+    let tmp = [
+      this.active_color,
+      (this.enable_active_color) ? '1' : '0',
+      this.setting_head_image,
+    ]
+    array_to_json_save(tmp, root_path + '/' + 'web_ui.json')
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Webview功能注册 //
   ///////////////////
@@ -220,9 +248,11 @@ export default struct web_ui {
       ready: () => {
         console.log('页面准备完成')
         this.listen_broadcast()  // 监听广播
-        this.ready = true
+        // 加载数据
+        this.load_data()
         // 加载audio
         this.ark_music_player.play_data_load()
+        this.ready = true
       },
 
       ///////////////
@@ -307,7 +337,6 @@ export default struct web_ui {
       ///////////////
       // files页用 //
       /////////////
-
       // 获取所有歌曲 //
       get_all_songs: () => {
         this.play_list = this.files_manager.all_songs_list
@@ -315,7 +344,7 @@ export default struct web_ui {
       },
       // 获取文件夹歌曲 //
       get_folder_songs: (path: string) => {
-        const tmp = this.files_manager.get_dir(path)
+        const tmp = this.files_manager.get_dir(path, this.ark_music_player.enable_dsd_support)
         this.play_list = tmp[1]
         return tmp
       },
@@ -386,7 +415,47 @@ export default struct web_ui {
         else {
           return Array.from(this.files_manager.genre_list.keys())
         }
-      }
+      },
+
+      /////////////////
+      // setting页用 //
+      ///////////////
+      // 更改头像(目前是进群) //
+      set_head_photo: async () => {
+        notice('进qq群聊聊天：1080024537')
+      },
+      // 打开收起taskbar //
+      toggle_taskbar: (status: boolean) => {
+        // true是screen，false是hide
+        if (status) {
+          this.ark_music_ui.runJavaScript(`taskbar_double('double')`)
+        } else {
+          this.ark_music_ui.runJavaScript(`taskbar_double('hidden')`)
+        }
+      },
+      // 更改主题色 //
+      set_active_color: (color: string) => {
+        this.active_color = color
+        this.ark_music_ui.runJavaScript(`set_active_color('${color}')`)
+      },
+      // 允许点击按钮主题色提示 //
+      set_enable_active_color: (status: boolean) => {
+        this.enable_active_color = status
+        this.ark_music_ui.runJavaScript(`set_button_enable_active_color(${status})`)
+      },
+      // 允许加载dsd歌曲 //
+      enable_dsd_play: (status: boolean) => {
+        this.ark_music_player.enable_dsd_support = status
+        this.ark_music_ui.runJavaScript(`set_dsd(${status})`)
+      },
+      // 重新扫描媒体库 //
+      rescan_data: () => {
+        console.log('重新扫描')
+      },
+      // 重置软件 //
+      reset_app: () => {
+        console.log('软件重置')
+      },
 
     },
       /////////////
@@ -398,7 +467,9 @@ export default struct web_ui {
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like', 'set_play_mode',
         'set_vol', 'back_to_player', 'get_song_meta', 'get_meta_list_image', 'play_song',
         'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
-        'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list'
+        'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list',
+        'set_head_photo', 'toggle_taskbar', 'set_active_color', 'set_enable_active_color',
+        'rescan_data', 'reset_app', 'enable_dsd_play'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}
