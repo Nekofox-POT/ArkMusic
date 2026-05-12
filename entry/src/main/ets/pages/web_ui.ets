@@ -425,7 +425,7 @@ export default struct web_ui {
       ///////////////
       // 更改头像(目前是进群) //
       set_head_photo: async () => {
-        notice('进qq群聊聊天：1080024537')
+        notice('进qq群聊聊天：1062329769 / 1080024537')
       },
       // 打开收起taskbar //
       toggle_taskbar: (status: boolean) => {
