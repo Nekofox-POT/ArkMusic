@@ -78,13 +78,13 @@ export default struct web_ui {
 
   // 继承池 //
   @ObjectLink global_config: class_global_config    // 全局管理器
-  @ObjectLink ark_music_player: class_audio_player  // 类 播放器
+  @ObjectLink lin_music_player: class_audio_player  // 类 播放器
   @ObjectLink files_manager: class_files_manager    // 类 文件管理器
   @Link volume_level: number    // 音量大小
   @Link start_ui: boolean    // 环境准备指示器(为false就是重新扫描数据库)
 
   // 类 //
-  private ark_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
+  private lin_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
   private audioVolumeManager = audio.getAudioManager().getVolumeManager()   // 音量条监听
   private volumeCallback: ((streamVolumeEvent: audio.StreamVolumeEvent) => void) | null = null    // 音量条监听函数
 
@@ -110,6 +110,7 @@ export default struct web_ui {
     emitter.off(715)
     emitter.off(716)
     emitter.off(717)
+    emitter.off(718)
     emitter.off(912)
   }
 
@@ -122,51 +123,51 @@ export default struct web_ui {
     // 元数据监听 //
     emitter.on({ eventId: 712 }, async (eventData: emitter.EventData) => {
       // 载入
-      this.ark_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.name, eventData.data?.title, eventData.data?.artist])})`)
+      this.lin_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.name, eventData.data?.title, eventData.data?.artist])})`)
       // 图片编码发送
       const base_img: string = await image_to_base64(eventData.data?.image)
-      this.ark_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)
+      this.lin_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)
       // 颜色值调整
       if (await pixel_light_count(eventData.data?.image) > 128) {
-        this.ark_music_ui.runJavaScript(`set_background_color('rgba(0, 0, 0, 0.4)')`)
+        this.lin_music_ui.runJavaScript(`set_background_color('rgba(0, 0, 0, 0.4)')`)
         this.set_window_color(false)
       } else {
-        this.ark_music_ui.runJavaScript(`set_background_color('rgba(255, 255, 255, 0.6)')`)
+        this.lin_music_ui.runJavaScript(`set_background_color('rgba(255, 255, 255, 0.6)')`)
         this.set_window_color(true)
       }
     })
     // 设置播放模式
     emitter.on({ eventId: 713 }, async (eventData: emitter.EventData) => {
-      this.ark_music_ui.runJavaScript(`set_play_mode(${eventData.data?.play_mode})`)
+      this.lin_music_ui.runJavaScript(`set_play_mode(${eventData.data?.play_mode})`)
     })
     // 播放状态监听 //
     emitter.on({ eventId: 714 }, (eventData: emitter.EventData) => {
       if (eventData.data?.status == 'playing') {
-        this.ark_music_ui.runJavaScript(`set_play_status(true)`)
+        this.lin_music_ui.runJavaScript(`set_play_status(true)`)
       } else {
-        this.ark_music_ui.runJavaScript(`set_play_status(false)`)
+        this.lin_music_ui.runJavaScript(`set_play_status(false)`)
       }
     })
     // 音频总时长监听 //
     emitter.on({ eventId: 715 }, (eventData: emitter.EventData) => {
-      this.ark_music_ui.runJavaScript(`change_song_range_duration(${eventData.data?.duration_time})`)
+      this.lin_music_ui.runJavaScript(`change_song_range_duration(${eventData.data?.duration_time})`)
     })
     // 音频播放时长监听 //
     emitter.on({ eventId: 716 }, (eventData: emitter.EventData) => {
-      this.ark_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
+      this.lin_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
     })
     // 喜欢监听 //
     emitter.on({eventId: 717}, (eventData: emitter.EventData) => {
-      this.ark_music_ui.runJavaScript(`set_like(${eventData.data?.like})`)
+      this.lin_music_ui.runJavaScript(`set_like(${eventData.data?.like})`)
     })
     // 播放列表监听 //
     emitter.on({eventId: 718}, (eventData: emitter.EventData) => {
-      this.ark_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.list)}, ${eventData.data?.index})`)
+      this.lin_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.list)}, ${eventData.data?.index})`)
     })
     // 返回手势监听 //
     emitter.on({eventId: 912}, async () => {
       // 转发js
-      const tmp = await this.ark_music_ui.runJavaScript(`back_gesture()`)
+      const tmp = await this.lin_music_ui.runJavaScript(`back_gesture()`)
       console.log(`${tmp}`)
       if (tmp === '"back"') {
         router.back()
@@ -179,13 +180,13 @@ export default struct web_ui {
       log('音量条打开')
       // 传入初始音量
       this.volume_level = this.audioVolumeManager.getVolumeByStream(audio.StreamUsage.STREAM_USAGE_MUSIC)
-      this.ark_music_ui.runJavaScript(`set_vol(${this.volume_level})`)
+      this.lin_music_ui.runJavaScript(`set_vol(${this.volume_level})`)
       // 【关键步骤】将回调函数赋值给定义好的变量
       this.volumeCallback = (streamVolumeEvent: audio.StreamVolumeEvent) => {
         log(`音量: ${streamVolumeEvent.volume} `)
         // 更新
         this.volume_level = streamVolumeEvent.volume
-        this.ark_music_ui.runJavaScript(`set_vol(${this.volume_level})`)
+        this.lin_music_ui.runJavaScript(`set_vol(${this.volume_level})`)
         vib()
       }
       this.audioVolumeManager.on('streamVolumeChange', audio.StreamUsage.STREAM_USAGE_MUSIC, this.volumeCallback)
@@ -222,9 +223,9 @@ export default struct web_ui {
       this.enable_active_color = (tmp[1] === '1') ? true : false
     }
     console.log(`${this.active_color} ${this.enable_active_color} ${this.global_config.dsd_support}`)
-    this.ark_music_ui.runJavaScript(`set_active_color('${this.active_color}')`)
-    this.ark_music_ui.runJavaScript(`set_button_enable_active_color(${this.enable_active_color})`)
-    this.ark_music_ui.runJavaScript(`set_dsd(${this.global_config.dsd_support})`)
+    this.lin_music_ui.runJavaScript(`set_active_color('${this.active_color}')`)
+    this.lin_music_ui.runJavaScript(`set_button_enable_active_color(${this.enable_active_color})`)
+    this.lin_music_ui.runJavaScript(`set_dsd(${this.global_config.dsd_support})`)
   }
   // 保存数据 //
   save_data() {
@@ -242,7 +243,7 @@ export default struct web_ui {
   // Webview功能注册 //
   ///////////////////
   reg_webview_js() {
-    try {this.ark_music_ui.registerJavaScriptProxy({
+    try {this.lin_music_ui.registerJavaScriptProxy({
 
       ////////////
       // ready //
@@ -251,7 +252,7 @@ export default struct web_ui {
         console.log('页面准备完成')
         this.listen_broadcast()  // 监听广播
         // 加载audio
-        await this.ark_music_player.play_data_load()
+        await this.lin_music_player.play_data_load()
         // 加载数据
         this.load_data()
         this.ready = true
@@ -261,22 +262,22 @@ export default struct web_ui {
       // 基础功能类 //
       /////////////
       // 播放 //
-      play: () => {this.ark_music_player.playing()},
+      play: () => {this.lin_music_player.playing()},
       // 暂停 //
-      pause: () => {this.ark_music_player.pause()},
+      pause: () => {this.lin_music_player.pause()},
       // 上一首 //
-      last_song: () => {this.ark_music_player.last_song()},
+      last_song: () => {this.lin_music_player.last_song()},
       // 下一首 //
-      next_song: () => {this.ark_music_player.next_song()},
+      next_song: () => {this.lin_music_player.next_song()},
       // 更改播放进度 //
-      seek: (time: string) => {this.ark_music_player.seek(parseInt(time))},
+      seek: (time: string) => {this.lin_music_player.seek(parseInt(time))},
       // 跳转歌曲 //
-      seek_song: (index: number) => {this.ark_music_player.seek_song(index)},
+      seek_song: (index: number) => {this.lin_music_player.seek_song(index)},
       // 喜欢切换 //
-      toggle_like: () => {this.ark_music_player.toggle_like()},
+      toggle_like: () => {this.lin_music_player.toggle_like()},
       // 设置播放模式 //
       set_play_mode: (index: number) => {
-        this.ark_music_player.set_play_mode(index)
+        this.lin_music_player.set_play_mode(index)
       },
 
       ///////////////
@@ -293,7 +294,7 @@ export default struct web_ui {
         }
       },
       // 跳转到主页面 //
-      back_to_player: () => {this.ark_music_ui.runJavaScript('taskbar_page_update(1)')},
+      back_to_player: () => {this.lin_music_ui.runJavaScript('taskbar_page_update(1)')},
 
       // 获取元数据 //
       get_song_meta: async (path: string) => {
@@ -334,7 +335,7 @@ export default struct web_ui {
       },
 
       // 点歌 //
-      play_song: (tmp: number) => {this.ark_music_player.set_play_list(this.play_list, tmp)},
+      play_song: (tmp: number) => {this.lin_music_player.set_play_list(this.play_list, tmp)},
 
       ///////////////
       // files页用 //
@@ -363,7 +364,7 @@ export default struct web_ui {
       },
       // 获取喜欢的歌曲 //
       get_like_songs: () => {
-        this.play_list = this.ark_music_player.like_list_path
+        this.play_list = this.lin_music_player.like_list_path
         return this.play_list
       },
       // 获取 歌手/艺术家 分类
@@ -430,28 +431,28 @@ export default struct web_ui {
       toggle_taskbar: (status: boolean) => {
         // true是screen，false是hide
         if (status) {
-          this.ark_music_ui.runJavaScript(`taskbar_double('double')`)
+          this.lin_music_ui.runJavaScript(`taskbar_double('double')`)
         } else {
-          this.ark_music_ui.runJavaScript(`taskbar_double('hidden')`)
+          this.lin_music_ui.runJavaScript(`taskbar_double('hidden')`)
         }
       },
       // 更改主题色 //
       set_active_color: (color: string) => {
         this.active_color = color
-        this.ark_music_ui.runJavaScript(`set_active_color('${color}')`)
+        this.lin_music_ui.runJavaScript(`set_active_color('${color}')`)
       },
       // 允许点击按钮主题色提示 //
       set_enable_active_color: (status: boolean) => {
         this.enable_active_color = status
-        this.ark_music_ui.runJavaScript(`set_button_enable_active_color(${status})`)
+        this.lin_music_ui.runJavaScript(`set_button_enable_active_color(${status})`)
       },
       // 允许加载dsd歌曲 //
       enable_dsd_play: (status: boolean) => {
         this.global_config.dsd_support = status
-        this.ark_music_ui.runJavaScript(`set_dsd(${status})`)
+        this.lin_music_ui.runJavaScript(`set_dsd(${status})`)
         if (status) {
-          this.ark_music_player.pause()
-          this.ark_music_player.drop_it()
+          this.lin_music_player.pause()
+          this.lin_music_player.drop_it()
           this.files_manager.reset_song_data()
           this.start_ui = false
         }
@@ -459,8 +460,8 @@ export default struct web_ui {
       // 重新扫描媒体库 //
       rescan_data: () => {
         console.log('重新扫描')
-        this.ark_music_player.pause()
-        this.ark_music_player.drop_it()
+        this.lin_music_player.pause()
+        this.lin_music_player.drop_it()
         this.files_manager.reset_song_data()
         this.start_ui = false
       },
@@ -508,7 +509,7 @@ export default struct web_ui {
       /////////////
       // web界面 //
       ////////////
-      Web({ src: $rawfile("webview_gui/play_taskbar_index.html"), controller: this.ark_music_ui })
+      Web({ src: $rawfile("webview_gui/play_taskbar_index.html"), controller: this.lin_music_ui })
         .width('100%').height('100%')
         .position({ x: 0, y: 0 }).zIndex(500)
         .zoomAccess(false)

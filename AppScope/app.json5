@@ -1,6 +1,6 @@
 {
   "app": {
-    "bundleName": "com.nekofox.arkmusic",
+    "bundleName": "com.nekofox.linmusic",
     "vendor": "$string:app_maker",
     "versionCode": 60,
     "versionName": "0.6.0",

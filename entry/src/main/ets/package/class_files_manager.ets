@@ -70,6 +70,12 @@ export class class_files_manager {
   // 重置表 //
   reset_song_data() {
     try {fs.rmdirSync(files_manager_path)} catch {}
+    this.all_songs_list = []
+    this.play_list = new Map<string, string[]>()
+    this.artist_composer_list = new Map<string, string[]>()
+    this.album_list = new Map<string, string[]>()
+    this.album_artist_list = new Map<string, string[]>()
+    this.genre_list = new Map<string, string[]>()
   }
 
   // 建立歌曲缓存 //

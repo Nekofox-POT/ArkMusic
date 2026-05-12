@@ -61,7 +61,7 @@ export function getDownloadPathFromPicker(): Promise<string> {
 // 开始界面入口 //
 ///////////////
 @Component
-export default struct ark_music_start {
+export default struct lin_music_start {
 
   ///////////
   // 变量池 //
@@ -81,14 +81,14 @@ export default struct ark_music_start {
   ////////
   // 类 //
   ///////
-  private ark_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
+  private lin_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
   private dir_create_downloader: webview.WebDownloadDelegate = new webview.WebDownloadDelegate()
 
   ///////////
   // 继承类 //
   //////////
   @ObjectLink files_manager: class_files_manager  // 类 文件管理器
-  @ObjectLink ark_music_player: class_audio_player  // 播放器
+  @ObjectLink lin_music_player: class_audio_player  // 播放器
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -110,7 +110,7 @@ export default struct ark_music_start {
   // files_manager注册 //
   async reg_files_manager() {
     await this.files_manager.load_data()
-    this.ark_music_player.load_dsd()
+    this.lin_music_player.load_dsd()
     this.ready = true
   }
 
@@ -148,7 +148,7 @@ export default struct ark_music_start {
       // 目录初始化页（函数） //
       /////////////////////
       if (!this.dir_ready) {
-        Web({ src: $rawfile("download_dir_create.html"), controller: this.ark_music_ui })
+        Web({ src: $rawfile("download_dir_create.html"), controller: this.lin_music_ui })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 })
           .zIndex(100)
@@ -179,11 +179,11 @@ export default struct ark_music_start {
                     notice(`初始化失败：${e}`)
                   }
                 })
-                this.ark_music_ui.setDownloadDelegate(this.dir_create_downloader)
+                this.lin_music_ui.setDownloadDelegate(this.dir_create_downloader)
               } catch (error) {
                 console.error(`创建出错: ${error}`)
               }
-              this.ark_music_ui.runJavaScript('download()')
+              this.lin_music_ui.runJavaScript('download()')
 
             }
           })

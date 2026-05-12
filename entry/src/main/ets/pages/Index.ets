@@ -16,7 +16,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 // 导入自创建模块 //
 /////////////////
 import web_ui from './web_ui'
-import ark_music_start from './start'
+import lin_music_start from './start'
 import first_start from './first_start'
 import { class_files_manager } from '../package/class_files_manager'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
@@ -57,7 +57,7 @@ struct Index {
 
   // 类 //
   @State global_config: class_global_config = new class_global_config()   // 全局变量管理
-  @State ark_music_player: class_audio_player = new class_audio_player(this.global_config)   // 播放器核心
+  @State lin_music_player: class_audio_player = new class_audio_player(this.global_config)   // 播放器核心
   @State ark_file_manager: class_files_manager = new class_files_manager(this.global_config)   // 文件管理器核心
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,7 +101,7 @@ struct Index {
     // 全局变量保存
     this.global_config.save()
     // 销毁播放器
-    this.ark_music_player.drop_it()
+    this.lin_music_player.drop_it()
     log('再见.')
   }
 
@@ -142,10 +142,10 @@ struct Index {
       // 开始页面 //
       ////////////
       if (!this.ready && this.version_ready && !this.first_start) {
-        ark_music_start({
+        lin_music_start({
           ready: this.ready,
           files_manager: this.ark_file_manager,
-          ark_music_player: this.ark_music_player
+          lin_music_player: this.lin_music_player
         })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(800)
@@ -161,7 +161,7 @@ struct Index {
       if (this.ready && this.ui_mode) {
         web_ui({
           global_config: this.global_config,
-          ark_music_player: this.ark_music_player,
+          lin_music_player: this.lin_music_player,
           files_manager: this.ark_file_manager,
           volume_level: this.volume_level,
           start_ui: this.ready
