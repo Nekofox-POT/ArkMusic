@@ -53,10 +53,6 @@
     ],
     "requestPermissions": [
       {
-        "name": "ohos.permission.INTERNET",
-        "reason": "$string:permission_reason"
-      },
-      {
         "name": "ohos.permission.KEEP_BACKGROUND_RUNNING"
       },
       {
