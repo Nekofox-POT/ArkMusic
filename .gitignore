@@ -11,3 +11,4 @@
 **/.test
 /.appanalyzer
 /build-profile.json5
+/certificate
