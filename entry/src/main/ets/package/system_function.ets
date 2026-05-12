@@ -66,7 +66,7 @@ export async function reg_bg_run(context: common.UIAbilityContext) {
   let wantAgentInfo: wantAgent.WantAgentInfo = {
     wants: [
       {
-        bundleName: "com.nekofox.arkmusic",
+        bundleName: "com.nekofox.linmusic",
         abilityName: "EntryAbility"
       }
     ],

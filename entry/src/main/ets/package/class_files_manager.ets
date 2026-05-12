@@ -21,7 +21,7 @@ import { class_global_config } from './class_global_config'
 // 变量池 //
 const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
 const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
-const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic').path   // 文件目录
+const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.linmusic').path   // 文件目录
 const audio_player_path = getContext().filesDir + '/audio_player/'    // 音频播放器目录
 const files_manager_path = getContext().filesDir + '/files_manager/'    // 文件管理器目录
 

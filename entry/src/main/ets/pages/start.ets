@@ -20,7 +20,7 @@ import { emitter } from '@kit.BasicServicesKit'
 ///////////
 // 变量池 //
 //////////
-const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.arkmusic/').path // 根目录
+const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.linmusic/').path // 根目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //

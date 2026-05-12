@@ -34,6 +34,7 @@ export class class_audio_player {
 
   // 变量池 //
   private player_ready = false
+  private failed_count = 0  // 失败计数
   play_list: string[] = []    // 播放列表
   play_list_index: number = 0   // 播放列表指针
   private player_choice: number = 0   // 播放器使用 ( 0：avplayer播放器 1：ffmpeg播放器 )
@@ -187,6 +188,8 @@ export class class_audio_player {
   // 播放歌曲 //
   async set_audio_play(song_index: number = this.play_list_index) {
     if (song_index != this.play_list_index) { this.play_list_index = song_index }
+    // 非0检测
+    if (this.play_list.length == 0) { return }
     // 广播序号
     emitter.emit({ eventId: 718 }, { data: { list: [], index: this.play_list_index } })
     // 使用官方播放器
@@ -212,10 +215,16 @@ export class class_audio_player {
       // 加载失败，报错
       if (!result[0]) {
         log(`歌曲加载失败：${result[1]}`, 'error')
-        notice(`歌曲加载失败了 (੭ ᐕ)੭？ ：${result[1]}，3s后切换下一首.`)
-        setTimeout(() => {
-          emitter.emit({ eventId: 714 }, { data: { status: 'complete' } })
-        }, 3000)
+        notice(`歌曲加载失败了 (੭ ᐕ)੭？ ：${result[1]}，切换下一首.`)
+        this.failed_count += 1
+        if (this.failed_count >= 3) {
+          this.failed_count = 0
+          notice(`失败太多次了，罢工了！ (੭ ᐕ)੭？`)
+          this.pause()
+          return
+        } else {
+          this.next_song()
+        }
       } else {
         // 发送元数据
         this.send_meta(this.play_list[song_index])
@@ -417,7 +426,6 @@ export class class_audio_player {
   // dsd重加载 //
   load_dsd() {
     // 加载dsd表
-    console.log(audio_player_path + '/dsd_cache')
     try {fs.statSync(audio_player_path + '/dsd_cache')} catch {fs.mkdirSync(audio_player_path + '/dsd_cache')}
     for (const i of fs.listFileSync(audio_player_path + '/dsd_cache', { recursion: true })) {
       // 传入
@@ -429,18 +437,31 @@ export class class_audio_player {
   // 播放数据注入 //
   async play_data_load() {
     log('加载播放数据')
-    try {
-      // 打开播放列表
-      let tmp_list = load_json_to_array(audio_player_path + '/playing_data_list.json')
-      let tmp = load_json_to_array(audio_player_path + '/playing_data_other.json')
-      // 加载
-      if (tmp.length != 0) {
-        await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
-        this.set_play_mode(Number.parseInt(tmp[2]))
-        while (!this.player_ready) {await new Promise<void>(r => setTimeout(r, 1))}
-        this.seek(Number.parseInt(tmp[1]))
+    // 打开播放列表
+    let tmp_list = load_json_to_array(audio_player_path + '/playing_data_list.json')
+    let tmp = load_json_to_array(audio_player_path + '/playing_data_other.json')
+    // 加载
+    if (tmp.length != 0) {
+      this.set_play_mode(Number.parseInt(tmp[2]))
+      await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
+      // 防止超时
+      let tmp_count = 0
+      if (this.play_list.length != 0) {
+        while (!this.player_ready) {
+          await new Promise<void>(r => setTimeout(r, 1))
+          tmp_count += 1
+          if (tmp_count >= 1000) {
+            break
+          }
+        }
+        if (tmp_count < 1000) {
+          this.seek(Number.parseInt(tmp[1]))
+        }
       }
-    } catch {}
+    } else {
+      // 加载默认值
+      this.set_play_mode(2)
+    }
   }
   // 播放数据保存 //
   play_data_save() {
