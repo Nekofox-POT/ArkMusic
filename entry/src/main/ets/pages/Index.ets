@@ -4,26 +4,26 @@
 // 912：给webui的返回广播
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////
+
 // 导入第三方库 //
-///////////////
 import { common } from '@kit.AbilityKit'
 import router from '@ohos.router'
 import emitter from '@ohos.events.emitter'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
-//////////////////
 // 导入自创建模块 //
-/////////////////
-import web_ui from './web_ui'
-import lin_music_start from './start'
-import first_start from './first_start'
 import { class_files_manager } from '../package/class_files_manager'
 import { log, notice, vib, reg_bg_run } from '../package/system_function'
 import { class_audio_player } from '../package/class_audio_player/class_audio_player'
 
 // 导入类 //
 import { class_global_config } from '../package/class_global_config'
+
+// 导入页 //
+import web_ui from './web_ui'
+import ark_ui_index from './ark_ui/ark_ui_index'
+import lin_music_start from './start'
+import first_start from './first_start'
 
 ///////////
 // 变量池 //
@@ -168,6 +168,21 @@ struct Index {
         })
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(700)
+      }
+
+      ///////////////
+      // arkui界面 //
+      //////////////
+      if (this.ready && !this.ui_mode) {
+        ark_ui_index({
+          global_config: this.global_config,
+          lin_music_player: this.lin_music_player,
+          files_manager: this.ark_file_manager,
+          volume_level: this.volume_level,
+          start_ui: this.ready
+        })
+          .width('100%').height('100%')
+          .position({ x: 0, y: 0 }).zIndex(500)
       }
 
     }

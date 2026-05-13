@@ -10,11 +10,11 @@ import { audio } from '@kit.AudioKit'
 import { image } from '@kit.ImageKit'
 import emitter from '@ohos.events.emitter'
 import { router } from '@kit.ArkUI'
-import nativeModule from 'libentry.so'
 import { window } from '@kit.ArkUI'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
 // 导入自创建模块 //
+import nativeModule from 'libentry.so'
 import { log, notice, vib } from '../package/system_function'
 import { array_to_json_save, load_json_to_array } from '../package/array_save_load'
 import { get_image, get_meta, image_to_base64, check_meta_image } from '../package/meta_manager'
