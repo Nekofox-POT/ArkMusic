@@ -293,6 +293,8 @@ export default struct web_ui {
           this.volume_level = parseInt(level)
         }
       },
+      // 震动一下 //
+      vib: () => {vib()},
       // 跳转到主页面 //
       back_to_player: () => {this.lin_music_ui.runJavaScript('taskbar_page_update(1)')},
 
@@ -336,6 +338,28 @@ export default struct web_ui {
 
       // 点歌 //
       play_song: (tmp: number) => {this.lin_music_player.set_play_list(this.play_list, tmp)},
+
+      // 删除歌曲 //
+      delete_song: (tmp: number) => {
+        if (tmp < 0 || tmp >= this.lin_music_player.play_list.length) return
+        this.lin_music_player.play_list.splice(tmp, 1)
+        if (tmp < this.lin_music_player.play_list_index) {
+          this.lin_music_player.play_list_index--
+        }
+      },
+      // 歌曲之间交换
+      exchange_song: (from: number, to: number) => {
+        const list = this.lin_music_player.play_list
+        if (from < 0 || from >= list.length || to < 0 || to >= list.length) return
+        const tmp = list[from]
+        list[from] = list[to]
+        list[to] = tmp
+        if (this.lin_music_player.play_list_index === from) {
+          this.lin_music_player.play_list_index = to
+        } else if (this.lin_music_player.play_list_index === to) {
+          this.lin_music_player.play_list_index = from
+        }
+      },
 
       ///////////////
       // files页用 //
@@ -483,7 +507,8 @@ export default struct web_ui {
         'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
         'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list',
         'set_head_photo', 'toggle_taskbar', 'set_active_color', 'set_enable_active_color',
-        'rescan_data', 'reset_app', 'enable_dsd_play'
+        'rescan_data', 'reset_app', 'enable_dsd_play',
+        'vib', 'delete_song', 'exchange_song'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}

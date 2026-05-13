@@ -173,16 +173,19 @@ struct Index {
       ///////////////
       // arkui界面 //
       //////////////
-      if (this.ready && !this.ui_mode) {
-        ark_ui_index({
-          global_config: this.global_config,
-          lin_music_player: this.lin_music_player,
-          files_manager: this.ark_file_manager,
-          volume_level: this.volume_level,
-          start_ui: this.ready
-        })
+      // if (this.ready && !this.ui_mode) {
+      if (!this.ui_mode) {
+        ark_ui_index(
+          // {
+          // global_config: this.global_config,
+          // lin_music_player: this.lin_music_player,
+          // files_manager: this.ark_file_manager,
+          // volume_level: this.volume_level,
+          // start_ui: this.ready
+        // }
+        )
           .width('100%').height('100%')
-          .position({ x: 0, y: 0 }).zIndex(500)
+          .position({ x: 0, y: 0 }).zIndex(950)
       }
 
     }

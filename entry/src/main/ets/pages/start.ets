@@ -167,11 +167,23 @@ export default struct lin_music_start {
                     webDownloadItem.start(downloadPath + '/' + webDownloadItem.getSuggestedFileName())
                   });
                 })
-                this.dir_create_downloader.onDownloadFinish(() => {
+                this.dir_create_downloader.onDownloadFinish( async () => {
                   // 检测
                   try {
                     fs.listFileSync(root_path)
                     log('download初始化完成.')
+                    // 复制资源文件
+                    try {
+                      const context = getContext(this)
+                      const fileData = await context.resourceManager.getRawFile('示例音频.wav')
+                      const destPath = root_path + '/示例音频.wav'
+                      const file = fs.openSync(destPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+                      fs.writeSync(file.fd, fileData.buffer)
+                      fs.closeSync(file)
+                      log('示例音频已复制.')
+                    } catch (e) {
+                      log(`复制示例音频失败: ${e}`, 'error')
+                    }
                     notice('初始化完成.')
                     this.dir_ready = true
                   } catch (e) {

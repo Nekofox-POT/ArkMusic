@@ -85,8 +85,8 @@ function playList_create_song_element(path, index, num) {
     wrapper.className = 'box_color'
     wrapper.id = index
     wrapper.dataset.path = path
-    wrapper.style.cssText = 'height:50px;display:flex;border-radius:50px;'
-    
+    wrapper.style.cssText = 'height:50px;display:flex;border-radius:50px;position:relative;'
+
     const mainArea = document.createElement('div')
     mainArea.style.cssText = 'flex:1;display:flex;align-items:center;overflow:hidden;border-radius:50px;min-width:0;height:auto;background-image:none;box-shadow:none;margin-left:0;padding:0 10px;'
     mainArea.addEventListener('click', () => { ark.seek_song(index) })
@@ -116,7 +116,7 @@ function playList_create_song_element(path, index, num) {
     infoDiv.appendChild(artistWrap)
 
     const metaDiv = document.createElement('div')
-    metaDiv.style.cssText = 'display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:50px;margin-left:auto;margin-right:8px;height:auto;'
+    metaDiv.style.cssText = 'display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:50px;margin-left:auto;margin-right:44px;height:auto;'
 
     const sampleP = document.createElement('p')
     sampleP.className = 'font_color song_meta_sample'
@@ -139,6 +139,35 @@ function playList_create_song_element(path, index, num) {
     mainArea.appendChild(metaDiv)
 
     wrapper.appendChild(mainArea)
+
+    const detailBtn = document.createElement('div')
+    detailBtn.className = 'song_item_detail_btn'
+    detailBtn.style.cssText = 'position:absolute;right:12.5px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:flex;align-items:center;justify-content:center;background-image:none;border-radius:0;box-shadow:none;margin-left:0;aspect-ratio:auto;background-size:auto;'
+
+    const btnSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    btnSvg.setAttribute('width', '24')
+    btnSvg.setAttribute('height', '24')
+    btnSvg.setAttribute('viewBox', '0 0 24 24')
+
+    const btnRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
+    btnRect.setAttribute('width', '24')
+    btnRect.setAttribute('height', '24')
+    btnRect.setAttribute('opacity', '0')
+
+    const positions = [[6.5, 6.5], [17.5, 6.5], [6.5, 17.5], [17.5, 17.5]]
+    const circles = positions.map(([cx, cy]) => {
+        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
+        c.setAttribute('class', 'svg_color')
+        c.setAttribute('cx', cx)
+        c.setAttribute('cy', cy)
+        c.setAttribute('r', '2.5')
+        return c
+    })
+
+    btnSvg.appendChild(btnRect)
+    circles.forEach(c => btnSvg.appendChild(c))
+    detailBtn.appendChild(btnSvg)
+    wrapper.appendChild(detailBtn)
 
     return wrapper
 }
@@ -221,11 +250,11 @@ function playList_handle_scroll() {
 
 // 更新高亮色（独立函数）
 function update_highlight(num) {
-    const items = slide.querySelectorAll('div.box_color')
-    items.forEach(item => {
+    const items = slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator)')
+    items.forEach((item, index) => {
         const titleP = item.querySelector('.song_item_title')
         if (titleP) {
-            if (parseInt(item.id) === num) {
+            if (index === num) {
                 titleP.className = 'font_color song_item_title font_active_color'
                 titleP.style.color = active_color
             } else {
@@ -239,7 +268,8 @@ function update_highlight(num) {
 // 滚动到指定歌曲位置
 function scroll_to_song(index) {
     const container = document.querySelector('.slide_frame')
-    const targetElement = document.getElementById(index.toString())
+    const items = slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator)')
+    const targetElement = items[index]
     
     if (targetElement) {
         // 元素已存在，直接滚动
@@ -270,7 +300,8 @@ function scroll_to_song(index) {
         
         // 使用 requestAnimationFrame 确保 DOM 更新后再滚动
         requestAnimationFrame(() => {
-            const newTarget = document.getElementById(index.toString())
+            const newItems = slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator)')
+            const newTarget = newItems[index]
             if (newTarget) {
                 newTarget.scrollIntoView({ behavior: 'smooth', block: 'center' })
             }

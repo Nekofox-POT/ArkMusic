@@ -39,15 +39,16 @@ export default struct ark_ui_index {
   ////////////
 
   // 变量池 //
+  @State currentTab: number = 0 // 当前导航栏页面 0:列表 1:音乐播放页 2:文件页 3:设置页
 
   // 更新池 //
 
   // 继承池 //
-  @ObjectLink global_config: class_global_config    // 全局管理器
-  @ObjectLink lin_music_player: class_audio_player  // 类 播放器
-  @ObjectLink files_manager: class_files_manager    // 类 文件管理器
-  @Link volume_level: number    // 音量大小
-  @Link start_ui: boolean    // 环境准备指示器(为false就是重新扫描数据库)
+  // @ObjectLink global_config: class_global_config    // 全局管理器
+  // @ObjectLink lin_music_player: class_audio_player  // 类 播放器
+  // @ObjectLink files_manager: class_files_manager    // 类 文件管理器
+  // @Link volume_level: number    // 音量大小
+  // @Link start_ui: boolean    // 环境准备指示器(为false就是重新扫描数据库)
 
   // 类 //
 
@@ -131,9 +132,12 @@ export default struct ark_ui_index {
   // UI构建 //
   ///////////
   build() {
-    Row() {
+    Column() {
 
     }
+    .background('#ffffff')
+    .width('100%').height('100%')
+    .position({ x: 0, y: 0 })
   }
 
 }
