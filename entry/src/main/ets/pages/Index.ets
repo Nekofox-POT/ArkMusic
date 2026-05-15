@@ -7,13 +7,12 @@
 
 // 导入第三方库 //
 import { common } from '@kit.AbilityKit'
-import router from '@ohos.router'
 import emitter from '@ohos.events.emitter'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
 // 导入自创建模块 //
 import { class_files_manager } from '../package/class_files_manager'
-import { log, notice, vib, reg_bg_run } from '../package/system_function'
+import { log, notice, reg_bg_run } from '../package/system_function'
 import { class_audio_player } from '../package/class_audio_player/class_audio_player'
 
 // 导入类 //
@@ -52,7 +51,7 @@ struct Index {
   @State first_start: boolean = false // 首次启动
   @State version_ready: boolean = false // 版本检测
   @State ready: boolean = false   // 环境准备指示器
-  @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
+  @State ui_mode: boolean = false    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
 
   // 类 //

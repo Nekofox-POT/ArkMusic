@@ -6,8 +6,9 @@
 
 // 导入第三方库 //
 import emitter from '@ohos.events.emitter'
-import { window } from '@kit.ArkUI'
+import { App, window } from '@kit.ArkUI'
 import { fileIo as fs } from '@kit.CoreFileKit'
+import { CircleShape, RectShape } from '@kit.ArkUI';
 
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
@@ -39,9 +40,9 @@ export default struct ark_ui_index {
   ////////////
 
   // 变量池 //
-  @State currentTab: number = 0 // 当前导航栏页面 0:列表 1:音乐播放页 2:文件页 3:设置页
 
   // 更新池 //
+  @State meta_image_rotate: number = 0
 
   // 继承池 //
   // @ObjectLink global_config: class_global_config    // 全局管理器
@@ -60,6 +61,14 @@ export default struct ark_ui_index {
   aboutToAppear(): void {
     // 检查目录 //
     try {fs.statSync(ark_ui_path)} catch {fs.mkdirSync(ark_ui_path)}
+
+    this.set_rotate()
+
+  }
+
+  set_rotate() {
+    this.meta_image_rotate += 1
+    setTimeout(() => {this.set_rotate()}, 10)
   }
 
   // 退出操作 //
@@ -134,10 +143,44 @@ export default struct ark_ui_index {
   build() {
     Column() {
 
+      // taskbar组件
+      Stack() {
+
+        // 旋转的背景框架
+        Stack() {
+
+          // 背景图
+          Image($r('app.media.CD'))
+            .width('1200%').height('1200%')
+            .borderRadius('100%')
+
+          // 模糊遮罩
+          Row()
+            .width('1200%').height('1200%')
+            .borderRadius('100%').blur(100)
+
+        }
+        .width('10%').aspectRatio(1)
+        .alignContent(Alignment.Center)
+        .rotate({ centerX: '50%', centerY: '50%', angle: this.meta_image_rotate })
+
+        // 四大金刚键
+
+
+
+      }
+      .backgroundColor('#ffffff')
+      .width('80%').height('96vp')
+      .margin({ bottom: '28vp' })
+      .borderRadius('24vp').clip(true)
+      .alignContent(Alignment.Center)
+
     }
-    .background('#ffffff')
+    .backgroundImage($rawfile('example.jpg')).backgroundImageSize(ImageSize.Cover)
     .width('100%').height('100%')
     .position({ x: 0, y: 0 })
+    .alignItems(HorizontalAlign.Center)
+    .justifyContent(FlexAlign.End)
   }
 
 }
