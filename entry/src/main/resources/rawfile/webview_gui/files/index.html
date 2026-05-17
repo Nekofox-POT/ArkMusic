@@ -41,6 +41,8 @@
             <div class="choice_bar_separator"></div>
             <div class="choice_bar_item" data-type="文件夹"><p class="font_color">文件夹</p></div>
             <div class="choice_bar_separator"></div>
+            <div class="choice_bar_item" data-type="外部歌曲"><p class="font_color">外部歌曲</p></div>
+            <div class="choice_bar_separator"></div>
             <div class="choice_bar_item" data-type="播放列表"><p class="font_color">播放列表</p></div>
             <div class="choice_bar_separator"></div>
             <div class="choice_bar_item" data-type="我的喜欢"><p class="font_color">我的喜欢</p></div>
@@ -67,56 +69,6 @@
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
 
-                <!-- 样品1: 短标题 -->
-                <div style="height:62px;margin-bottom:3px;position:relative;">
-                    <div class="song_cover"></div>
-                    <div style="display:flex;flex-direction:column;justify-content:center;flex:1;margin:0 6px;min-width:0;max-width:55%;height:auto;border-radius:0;box-shadow:none;background-image:none;">
-                        <div class="song_item_title_wrap"><p class="font_color song_item_title" style="color:rgba(0,0,0,0.4);font-size:0.82rem;font-weight:700;margin:0 0 1px 0;line-height:1.15;">短标题</p></div>
-                        <div class="song_item_artist_wrap"><p class="font_color song_item_artist" style="color:rgba(0,0,0,0.4);font-size:0.62rem;font-weight:400;margin:0;line-height:1.15;">歌手名</p></div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:50px;margin-right:38px;height:auto;border-radius:0;box-shadow:none;background-image:none;">
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">44100hz</p>
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">16bit</p>
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">320.0kbps</p>
-                    </div>
-                    <div class="box_color song_item_detail_btn" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background-image:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s ease;">
-                        <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" opacity="0"></rect><circle class="svg_color" cx="7" cy="3" r="1.3"></circle><circle class="svg_color" cx="7" cy="7" r="1.3"></circle><circle class="svg_color" cx="7" cy="11" r="1.3"></circle></svg>
-                    </div>
-                </div>
-
-                <!-- 样品2: 超长标题（测试滚动字幕） -->
-                <div style="height:62px;margin-bottom:3px;position:relative;">
-                    <div class="song_cover"></div>
-                    <div style="display:flex;flex-direction:column;justify-content:center;flex:1;margin:0 6px;min-width:0;max-width:55%;height:auto;border-radius:0;box-shadow:none;background-image:none;">
-                        <div class="song_item_title_wrap marquee"><p class="font_color song_item_title" style="color:rgba(0,0,0,0.4);font-size:0.82rem;font-weight:700;margin:0 0 1px 0;line-height:1.15;display:inline-block;width:max-content;padding-left:120%;animation:marquee 8s linear infinite;">这是一个非常非常长的歌曲标题用来测试滚动字幕效果</p></div>
-                        <div class="song_item_artist_wrap marquee"><p class="font_color song_item_artist" style="color:rgba(0,0,0,0.4);font-size:0.62rem;font-weight:400;margin:0;line-height:1.15;display:inline-block;width:max-content;padding-left:120%;animation:marquee 8s linear infinite;">超长歌手名字用来测试滚动效果</p></div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:50px;margin-right:38px;height:auto;border-radius:0;box-shadow:none;background-image:none;">
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">48000hz</p>
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">24bit</p>
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">1411.2kbps</p>
-                    </div>
-                    <div class="box_color song_item_detail_btn" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background-image:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s ease;">
-                        <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" opacity="0"></rect><circle class="svg_color" cx="7" cy="3" r="1.3"></circle><circle class="svg_color" cx="7" cy="7" r="1.3"></circle><circle class="svg_color" cx="7" cy="11" r="1.3"></circle></svg>
-                    </div>
-                </div>
-
-                <!-- 样品3: 中等长度 -->
-                <div style="height:62px;margin-bottom:3px;position:relative;">
-                    <div class="song_cover"></div>
-                    <div style="display:flex;flex-direction:column;justify-content:center;flex:1;margin:0 6px;min-width:0;max-width:55%;height:auto;border-radius:0;box-shadow:none;background-image:none;">
-                        <div class="song_item_title_wrap"><p class="font_color song_item_title" style="color:rgba(0,0,0,0.4);font-size:0.82rem;font-weight:700;margin:0 0 1px 0;line-height:1.15;">中等长度的歌曲标题</p></div>
-                        <div class="song_item_artist_wrap"><p class="font_color song_item_artist" style="color:rgba(0,0,0,0.4);font-size:0.62rem;font-weight:400;margin:0;line-height:1.15;">歌手名字</p></div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex-shrink:0;min-width:50px;margin-right:38px;height:auto;border-radius:0;box-shadow:none;background-image:none;">
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">96000hz</p>
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">24bit</p>
-                        <p class="font_color" style="color:rgba(0,0,0,0.4);font-size:0.5rem;font-weight:500;margin:0;">2304.0kbps</p>
-                    </div>
-                    <div class="box_color song_item_detail_btn" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background-image:none;-webkit-tap-highlight-color:transparent;transition:transform 0.15s ease;">
-                        <svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" opacity="0"></rect><circle class="svg_color" cx="7" cy="3" r="1.3"></circle><circle class="svg_color" cx="7" cy="7" r="1.3"></circle><circle class="svg_color" cx="7" cy="11" r="1.3"></circle></svg>
-                    </div>
-                </div>
 
             </div>
         </div>
@@ -128,10 +80,6 @@
             <!-- 占位符 -->
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
-
-                <!-- 滑块内容(会实时变动) -->
-                <div><div style="border-radius: 50%; background-image: none;"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="width: 100%; height: 100%;"><rect width="24" height="24" opacity="0"></rect><path class="svg_color" d="M0,0H24V24H0ZM16.02,10.512a1.6,1.6,0,0,1,.456.12,1.181,1.181,0,0,1,.4.27,1.1,1.1,0,0,1,.252.438,1.379,1.379,0,0,1,.024.636q-.024.1-.1.474t-.168.87q-.1.492-.216,1.014t-.228.894a2.48,2.48,0,0,1-.174.444,1.66,1.66,0,0,1-.294.414,1.479,1.479,0,0,1-.432.306,1.384,1.384,0,0,1-.6.12H8.292A1.4,1.4,0,0,1,7.77,16.4a1.743,1.743,0,0,1-.5-.306,1.579,1.579,0,0,1-.372-.48,1.365,1.365,0,0,1-.144-.63V9.84a1.59,1.59,0,0,1,.4-1.146A1.471,1.471,0,0,1,8.268,8.28h5.9a1.6,1.6,0,0,1,.546.1,1.811,1.811,0,0,1,.51.282,1.546,1.546,0,0,1,.372.42.986.986,0,0,1,.144.516v.132H15.12q-.48,0-1.122-.006T12.63,9.72q-.726,0-1.356-.006t-1.086-.006H9.636a.613.613,0,0,0-.486.2,1.368,1.368,0,0,0-.27.522q-.1.348-.216.738t-.216.726q-.12.4-.24.768a.674.674,0,0,0-.024.156.471.471,0,0,0,.48.48q.372,0,.5-.468L9.8,10.5q1.56.012,2.856.012h3.36Z" fill-rule="evenodd"/></svg></div><p class="font_color">文件夹</p></div>
-                <div><div></div><p class="font_color">歌曲</p></div>
 
             </div>
         </div>
@@ -145,12 +93,6 @@
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
 
-                <!-- 滑块内容(会实时变动) -->
-                <div><div style="border-radius: 50%; background-image: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 1024 1024"  style="width: 100%; height: 100%;"><rect width="24" height="24" opacity="0"></rect><path class="svg_color" d="M0,0H1024V1024H0ZM501.12,420.48a28.153,28.153,0,0,0,20.16-8.32q8.64-8.32,8.64-19.2t-8.64-19.2a28.153,28.153,0,0,0-20.16-8.32H329.92a28.153,28.153,0,0,0-20.16,8.32q-8.64,8.32-8.64,19.2t8.64,19.2a28.153,28.153,0,0,0,20.16,8.32h171.2M529.92,512q0-10.88-8.64-19.2a28.153,28.153,0,0,0-20.16-8.32H329.92a28.153,28.153,0,0,0-20.16,8.32q-8.64,8.32-8.64,19.2t8.64,19.2a28.153,28.153,0,0,0,20.16,8.32h171.2a28.153,28.153,0,0,0,20.16-8.32q8.64-8.32,8.64-19.2m-200,91.52a28.153,28.153,0,0,0-20.16,8.32q-8.64,8.32-8.64,19.2t8.64,19.2a28.153,28.153,0,0,0,20.16,8.32h91.2a27.086,27.086,0,0,0,19.84-8.32q8.32-8.32,8.32-19.2t-8.32-19.2a27.086,27.086,0,0,0-19.84-8.32h-91.2M667.52,371.2q-15.36,1.28-24.96,12.16T633.6,409.6l.64,34.56V569.6a14.248,14.248,0,0,1-1.28,6.4,20.057,20.057,0,0,1-3.84,5.12q-5.76,5.12-24.96,13.12l-1.6.64q-25.92,9.6-42.56,22.08t-24.96,34.56a60.092,60.092,0,0,0-2.56,30.08,55.415,55.415,0,0,0,12.16,26.88q12.8,15.36,33.92,21.12t39.04,3.2q41.6-5.12,57.6-32.64a115.231,115.231,0,0,0,16-58.88V456.96q.64-5.76,3.2-8.32a38.831,38.831,0,0,1,8.32-5.76q7.68-4.48,16.96-9.92,18.24-11.52,24-26.88t-1.28-34.24l-74.88-.64M610.56,689.92a43.215,43.215,0,0,1-16-.96,21.139,21.139,0,0,1-10.88-7.36,16.836,16.836,0,0,1-2.56-6.4,16.154,16.154,0,0,1,.64-7.68q2.56-8.32,11.84-14.08t25.28-12.16l.96-.64,3.2-1.28q5.44-2.56,10.56-4.48a43.889,43.889,0,0,0,8.96-4.48v17.28a63.325,63.325,0,0,1-5.76,26.24Q631.04,686.72,610.56,689.92Z" fill-rule="evenodd"/></svg>
-                </div><p class="font_color">文件夹</p></div>
-                <div><div></div><p class="font_color">歌曲</p></div>
-
             </div>
         </div>
 
@@ -163,9 +105,6 @@
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
 
-                <!-- 滑块内容(会实时变动) -->
-                <div><div></div><p class="font_color">我的喜欢</p></div>
-
             </div>
         </div>
 
@@ -177,13 +116,6 @@
             <!-- 占位符 -->
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
-
-                <!-- 滑块内容(会实时变动) -->
-                <div><div style="border-radius: 50%; background-image: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="width: 100%; height: 100%;"><rect width="24" height="24" opacity="0"></rect><path class="svg_color" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                </div><p class="font_color">歌手</p></div>
-                <div><div></div><p class="font_color">歌曲</p></div>
-
             </div>
         </div>
 
@@ -195,12 +127,6 @@
             <!-- 占位符 -->
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
-
-                <!-- 滑块内容(会实时变动) -->
-                <div><div style="border-radius: 50%; background-image: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="width: 100%; height: 100%;"><rect width="24" height="24" opacity="0"></rect><path class="svg_color" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 14.5c-2.49 0-4.5-2.01-4.5-4.5S9.51 7.5 12 7.5s4.5 2.01 4.5 4.5-2.01 4.5-4.5 4.5zm0-5.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1z"/></svg>
-                </div><p class="font_color">专辑</p></div>
-                <div><div></div><p class="font_color">歌曲</p></div>
 
             </div>
         </div>
@@ -214,12 +140,6 @@
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
 
-                <!-- 滑块内容(会实时变动) -->
-                <div><div style="border-radius: 50%; background-image: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="width: 100%; height: 100%;"><rect width="24" height="24" opacity="0"></rect><path class="svg_color" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                </div><p class="font_color">专辑作者</p></div>
-                <div><div></div><p class="font_color">歌曲</p></div>
-
             </div>
         </div>
 
@@ -231,13 +151,6 @@
             <!-- 占位符 -->
             <div style="height: 25px; position: relative; top: 0;"></div>
             <div class="slide" id="slide">
-
-                <!-- 滑块内容(会实时变动) -->
-                <div><div style="border-radius: 50%; background-image: none;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="width: 100%; height: 100%;"><rect width="24" height="24" opacity="0"></rect><path class="svg_color" d="M12 3v9.28c-.47-.17-.97-.28-1.5-.28C8.01 12 6 14.01 6 16.5S8.01 21 10.5 21c2.31 0 4.2-1.75 4.45-4H15V6h4V3h-7z"/></svg>
-                </div><p class="font_color">流派</p></div>
-                <div><div></div><p class="font_color">歌曲</p></div>
-
             </div>
         </div>
 

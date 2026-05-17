@@ -217,6 +217,8 @@ export default struct web_ui {
 
   // 加载数据 //
   load_data() {
+
+    // 加载设置 //
     let tmp = load_json_to_array(web_ui_path + '/' + 'web_ui.json')
     if (tmp.length != 0) {
       this.active_color = tmp[0]
@@ -226,6 +228,11 @@ export default struct web_ui {
     this.lin_music_ui.runJavaScript(`set_active_color('${this.active_color}')`)
     this.lin_music_ui.runJavaScript(`set_button_enable_active_color(${this.enable_active_color})`)
     this.lin_music_ui.runJavaScript(`set_dsd(${this.global_config.dsd_support})`)
+
+    // 加载歌曲 //
+    this.play_list = this.files_manager.all_songs_list
+    this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list)})`)
+
   }
   // 保存数据 //
   save_data() {
@@ -364,10 +371,9 @@ export default struct web_ui {
       ///////////////
       // files页用 //
       /////////////
-      // 获取所有歌曲 //
-      get_all_songs: () => {
+      // 所有歌曲 列表添加 //
+      set_play_list_with_all_songs: () => {
         this.play_list = this.files_manager.all_songs_list
-        return this.play_list
       },
       // 获取文件夹歌曲 //
       get_folder_songs: (path: string) => {
@@ -504,7 +510,7 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like', 'set_play_mode',
         'set_vol', 'back_to_player', 'get_song_meta', 'get_meta_list_image', 'play_song',
-        'get_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
+        'set_play_list_with_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
         'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list',
         'set_head_photo', 'toggle_taskbar', 'set_active_color', 'set_enable_active_color',
         'rescan_data', 'reset_app', 'enable_dsd_play',

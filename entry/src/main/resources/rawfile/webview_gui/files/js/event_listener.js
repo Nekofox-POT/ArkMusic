@@ -207,7 +207,7 @@ choice_bar_items.forEach((item) => {
 
         // 添加点击操作
         if (type === '所有歌曲') {
-            get_all_songs()
+            ark.set_play_list_with_all_songs()
         }
         else if (type === '文件夹') {
             let tmp = ''

@@ -26,9 +26,7 @@ const root_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Dow
 // 函数库 //
 //////////
 
-//////////////////
 // 资源目录创建器 //
-/////////////////
 export function getDownloadPathFromPicker(): Promise<string> {
   return new Promise<string>(resolve => {
     try {
@@ -63,30 +61,20 @@ export function getDownloadPathFromPicker(): Promise<string> {
 @Component
 export default struct lin_music_start {
 
-  ///////////
   // 变量池 //
-  //////////
 
-  ///////////
   // 更新池 //
-  //////////
   @State msg: string = '准备'    // 第一次启动
   @State @Watch('reg_files_manager')dir_ready: boolean = false    // 环境指示器（下载目录是否初始化）
 
-  ///////////
   // 继承池 //
-  //////////
   @Link ready: boolean    // 环境准备指示器
 
-  ////////
   // 类 //
-  ///////
   private lin_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
   private dir_create_downloader: webview.WebDownloadDelegate = new webview.WebDownloadDelegate()
 
-  ///////////
   // 继承类 //
-  //////////
   @ObjectLink files_manager: class_files_manager  // 类 文件管理器
   @ObjectLink lin_music_player: class_audio_player  // 播放器
 
@@ -172,18 +160,6 @@ export default struct lin_music_start {
                   try {
                     fs.listFileSync(root_path)
                     log('download初始化完成.')
-                    // 复制资源文件
-                    try {
-                      const context = getContext(this)
-                      const fileData = await context.resourceManager.getRawFile('示例音频.wav')
-                      const destPath = root_path + '/示例音频.wav'
-                      const file = fs.openSync(destPath, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-                      fs.writeSync(file.fd, fileData.buffer)
-                      fs.closeSync(file)
-                      log('示例音频已复制.')
-                    } catch (e) {
-                      log(`复制示例音频失败: ${e}`, 'error')
-                    }
                     notice('初始化完成.')
                     this.dir_ready = true
                   } catch (e) {

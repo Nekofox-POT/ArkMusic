@@ -14,8 +14,6 @@ function init() {
     }
     // 颜色更新
     set_background_color()
-    // 歌曲更新
-    get_all_songs()
     window.parent.postMessage({action: 'iframe_ready'}, '*')
 }
 

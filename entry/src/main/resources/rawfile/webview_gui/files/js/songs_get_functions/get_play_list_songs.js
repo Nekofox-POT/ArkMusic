@@ -8,14 +8,6 @@
 
 let playlist_imageObserver = null
 
-// 从路径提取文件名
-function extract_filename(path) {
-    const lastSlash = path.lastIndexOf('/')
-    const fileName = lastSlash >= 0 ? path.substring(lastSlash + 1) : path
-    const dotIndex = fileName.lastIndexOf('.')
-    return dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName
-}
-
 // 初始化懒加载观察器（元数据 + 图片）
 function playlist_init_image_observer() {
     if (playlist_imageObserver) return

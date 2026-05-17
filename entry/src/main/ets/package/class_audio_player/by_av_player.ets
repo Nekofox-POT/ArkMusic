@@ -29,7 +29,7 @@ export class av_player {
   ///////////
   // 变量池 //
   //////////
-  private auto_play: boolean = false  // 载入后自动播放 (防止第一次打开自动播放)
+  auto_play: boolean = false  // 载入后自动播放 (防止第一次打开自动播放)
 
   ////////
   // 类 //

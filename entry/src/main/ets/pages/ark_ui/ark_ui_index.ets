@@ -164,8 +164,23 @@ export default struct ark_ui_index {
         .alignContent(Alignment.Center)
         .rotate({ centerX: '50%', centerY: '50%', angle: this.meta_image_rotate })
 
-        // 四大金刚键
+        // 功能栏
+        Column() {
 
+          // 上班音乐栏
+          Row() {}
+            .width('100%').height('50%')
+            .backgroundColor('#ee0000')
+
+          // 下半功能栏
+          Row() {
+
+          }
+            .width('100%').height('50%')
+            .background('#66ccff')
+        }
+        .width('100%').height('100%')
+        .alignItems(HorizontalAlign.Center)
 
 
       }

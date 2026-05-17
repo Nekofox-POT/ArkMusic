@@ -24,9 +24,7 @@ import ark_ui_index from './ark_ui/ark_ui_index'
 import lin_music_start from './start'
 import first_start from './first_start'
 
-///////////
 // 变量池 //
-//////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -51,7 +49,7 @@ struct Index {
   @State first_start: boolean = false // 首次启动
   @State version_ready: boolean = false // 版本检测
   @State ready: boolean = false   // 环境准备指示器
-  @State ui_mode: boolean = false    // ui模式 ( false：arkui模式 true：webui模式 )
+  @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
   @State volume_level: number = 0   // 音量大小
 
   // 类 //

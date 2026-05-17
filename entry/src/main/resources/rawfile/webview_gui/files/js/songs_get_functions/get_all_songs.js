@@ -1,20 +1,46 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 获取所有歌曲 //
+// 所有歌曲设置 //
 /////////////////
+
+// 后端启动时主动推送歌曲列表，触发渲染
+function set_all_songs(list) {
+
+    // 初始化环境
+    const slide = document.querySelector('#all_song_frame .slide')
+    slide.innerHTML = ''
+
+    // 停止之前的观察器和滚动监听
+    if (all_songs_imageObserver) {
+        all_songs_imageObserver.disconnect()
+    }
+
+    const container = document.querySelector('#all_song_frame')
+    container.removeEventListener('scroll', all_songs_handle_scroll)
+
+    // 初始化观察器
+    all_songs_init_image_observer()
+
+    // 重置分批渲染状态
+    all_songs_batchState = {
+        list: list,
+        currentIndex: 0,
+        isRendering: false,
+        sentinel: null
+    }
+
+    // 注册滚动监听
+    container.addEventListener('scroll', all_songs_handle_scroll)
+
+    // 渲染第一批
+    all_songs_render_next_batch()
+
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 懒加载观察器 //
 /////////////////
 
 let all_songs_imageObserver = null
-
-// 从路径提取文件名
-function extract_filename(path) {
-    const lastSlash = path.lastIndexOf('/')
-    const fileName = lastSlash >= 0 ? path.substring(lastSlash + 1) : path
-    const dotIndex = fileName.lastIndexOf('.')
-    return dotIndex >= 0 ? fileName.substring(0, dotIndex) : fileName
-}
 
 // 初始化懒加载观察器（元数据 + 图片）
 function all_songs_init_image_observer() {
@@ -238,48 +264,17 @@ function all_songs_handle_scroll() {
     const scrollBottom = container.scrollTop + container.clientHeight
     const threshold = container.scrollHeight - 500 // 提前500px加载
 
-    if (scrollBottom >= threshold && 
+    if (scrollBottom >= threshold &&
         all_songs_batchState.currentIndex < all_songs_batchState.list.length) {
         all_songs_render_next_batch()
     }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 主函数 //
-///////////
-
-async function get_all_songs() {
-
-    // 初始化环境
-    const slide = document.querySelector('#all_song_frame .slide')
-    slide.innerHTML = ''
-
-    // 停止之前的观察器和滚动监听
-    if (all_songs_imageObserver) {
-        all_songs_imageObserver.disconnect()
+// 上级监听 //
+/////////////
+window.addEventListener('message', function(event) {
+    if (event.data.action === 'set_all_songs') {
+        set_all_songs(event.data.arg1)
     }
-
-    const container = document.querySelector('#all_song_frame')
-    container.removeEventListener('scroll', all_songs_handle_scroll)
-
-    // 初始化观察器
-    all_songs_init_image_observer()
-
-    // 获取歌曲路径列表
-    const songsList = ark.get_all_songs()
-
-    // 重置分批渲染状态
-    all_songs_batchState = {
-        list: songsList,
-        currentIndex: 0,
-        isRendering: false,
-        sentinel: null
-    }
-
-    // 注册滚动监听
-    container.addEventListener('scroll', all_songs_handle_scroll)
-
-    // 渲染第一批
-    all_songs_render_next_batch()
-
-}
+})

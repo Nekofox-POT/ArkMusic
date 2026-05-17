@@ -53,6 +53,7 @@ export class class_files_manager {
 
   // 共享变量池 //
   all_songs_list: string[] = []
+  external_songs_list: string[] = []
   play_list = new Map<string, string[]>()
   artist_composer_list = new Map<string, string[]>()
   album_list = new Map<string, string[]>()
