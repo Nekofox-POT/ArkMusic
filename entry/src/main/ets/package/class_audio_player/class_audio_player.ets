@@ -451,6 +451,7 @@ export class class_audio_player {
           await new Promise<void>(r => setTimeout(r, 1))
           tmp_count += 1
           if (tmp_count >= 1000) {
+            log('audio加载超时。')
             this.av_player.auto_play = true
             break
           }
@@ -464,7 +465,9 @@ export class class_audio_player {
       this.set_play_mode(2)
     }
     // 设置每分钟保存数据定时
-    setTimeout(() => {this.play_data_save()}, 60000)
+    setInterval(() => {this.play_data_save()}, 60000)
+    // 允许播放
+    this.av_player.auto_play = true
   }
   // 播放数据保存 //
   play_data_save() {
