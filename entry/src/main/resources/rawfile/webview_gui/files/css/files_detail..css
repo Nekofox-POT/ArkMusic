@@ -1,28 +1,85 @@
 #files_detail {
 
     position: absolute;
-    right: 5vw;
+    right: 5%;
     top: calc(50% - 25px);
     width: 50px;
     height: 50px;
     border-radius: 25px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    overflow: hidden;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     backdrop-filter: blur(10px);
     z-index: 900;
 
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                height 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                border-radius 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
 }
+
 #files_detail.active {
 
-    width: 80%;
-    height: 100px;
-
+    width: 60%;
+    height: auto;
+    right: 20%;
     top: 25vh;
-    right: 10%;
+    border-radius: 20px;
 
+}
+
+/* 图标 */
+#files_detail_icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+#files_detail.active #files_detail_icon {
+    right: -50px;
+    pointer-events: none;
+}
+
+/* 选项网格 */
+#files_detail_options {
+    display: none;
+}
+#files_detail.active #files_detail_options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 10px;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* 选项项 */
+.files_detail_option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.files_detail_option_icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.files_detail_option_text {
+    font-size: 0.65rem;
+    margin: 0;
 }

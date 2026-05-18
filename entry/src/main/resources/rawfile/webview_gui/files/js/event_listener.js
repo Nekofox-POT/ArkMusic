@@ -236,15 +236,39 @@ choice_bar_items.forEach((item) => {
 // files_detail点击 //
 /////////////////////
 files_detail.addEventListener("touchstart", () => {
-    files_detail.style.transform = 'scale(0.9)'
-    files_detail.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
+    if (!files_detail.classList.contains('active')) {
+        files_detail.style.transform = 'scale(0.9)'
+    }
 })
 files_detail.addEventListener("touchend", () => {
     files_detail.style.transform = 'scale(1)'
-    files_detail.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
 })
 files_detail.addEventListener('click', () => {
     if (!files_detail.classList.contains('active')) {
         files_detail_active_open()
     }
+})
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// files_detail_icon 独立亮 //
+////////////////////////////
+files_detail_icon.addEventListener("touchstart", () => {
+    files_detail_icon.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
+})
+files_detail_icon.addEventListener("touchend", () => {
+    files_detail_icon.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+})
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// files_detail_option 逐个独立亮 //
+//////////////////////////////////
+document.querySelectorAll('.files_detail_option').forEach(option => {
+    option.addEventListener("touchstart", () => {
+        option.style.transform = 'scale(0.9)'
+        option.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
+    })
+    option.addEventListener("touchend", () => {
+        option.style.transform = 'scale(1)'
+        option.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+    })
 })
