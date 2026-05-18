@@ -122,9 +122,46 @@ function close_detail_panel() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 详情盒子 //
+/////////////
+let files_detail_backdrop = null
+
+function files_detail_active_open() {
+    files_detail.classList.add('active')
+
+    files_detail_backdrop = document.createElement('div')
+    files_detail_backdrop.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:899;backdrop-filter:blur(10px);opacity:0;transition:opacity 0.3s ease;'
+    files_detail_backdrop.addEventListener('click', () => {
+        files_detail_active_close()
+    })
+    document.body.appendChild(files_detail_backdrop)
+
+    requestAnimationFrame(() => {
+        files_detail_backdrop.style.opacity = '1'
+    })
+}
+
+function files_detail_active_close() {
+    files_detail.classList.remove('active')
+    if (files_detail_backdrop) {
+        files_detail_backdrop.style.opacity = '0'
+        files_detail_backdrop.addEventListener('transitionend', () => {
+            files_detail_backdrop.remove()
+            files_detail_backdrop = null
+        })
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 菜单回滚 //
 ////////////
 function router_back() {
+
+    // 详情盒子优先关闭
+    if (files_detail.classList.contains('active')) {
+        files_detail_active_close()
+        return
+    }
 
     // 详情弹窗优先关闭
     if (detail_active) {

@@ -1,0 +1,28 @@
+#files_detail {
+
+    position: absolute;
+    right: 5vw;
+    top: calc(50% - 25px);
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    backdrop-filter: blur(10px);
+    z-index: 900;
+
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+#files_detail.active {
+
+    width: 80%;
+    height: 100px;
+
+    top: 25vh;
+    right: 10%;
+
+}

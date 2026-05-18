@@ -208,8 +208,7 @@ choice_bar_items.forEach((item) => {
         // 添加点击操作
         if (type === '所有歌曲') {
             ark.set_play_list_with_all_songs()
-        }
-        else if (type === '文件夹') {
+        } else if (type === '文件夹') {
             let tmp = ''
             for (const e of router_list) {
                 tmp += e
@@ -231,4 +230,21 @@ choice_bar_items.forEach((item) => {
         }
 
     })
+})
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// files_detail点击 //
+/////////////////////
+files_detail.addEventListener("touchstart", () => {
+    files_detail.style.transform = 'scale(0.9)'
+    files_detail.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
+})
+files_detail.addEventListener("touchend", () => {
+    files_detail.style.transform = 'scale(1)'
+    files_detail.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+})
+files_detail.addEventListener('click', () => {
+    if (!files_detail.classList.contains('active')) {
+        files_detail_active_open()
+    }
 })

@@ -7,11 +7,13 @@
 const choice_bar = document.querySelector(".choice_bar")
 const choice_bar_scroll = document.getElementById("choice_bar_scroll")
 const choice_bar_items = document.querySelectorAll(".choice_bar_item")
+const files_detail = document.getElementById("files_detail")
 
 // 框架组件映射
 const frame_map = {
     '所有歌曲': document.getElementById("all_song_frame"),
     '文件夹': document.getElementById("folder_frame"),
+    '外部歌曲': document.getElementById("external_song_frame"),
     '播放列表': document.getElementById("playlist_frame"),
     '我的喜欢': document.getElementById("favorite_frame"),
     '歌手': document.getElementById("artist_composer_frame"),

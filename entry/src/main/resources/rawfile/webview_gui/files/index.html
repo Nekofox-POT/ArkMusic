@@ -2,12 +2,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ArkMusic</title>
+    <title>LinMusic</title>
     <link rel="stylesheet" href="../public_css/color.css">
     <link rel="stylesheet" href="./css/choice_bar.css">
     <link rel="stylesheet" href="./css/files_main_bar.css">
     <link rel="stylesheet" href="./css/files_slide frame.css">
     <link rel="stylesheet" href="./css/folder_img_frame.css">
+    <link rel="stylesheet" href="./css/files_detail..css">
     <style>
         body {
 
@@ -23,16 +24,19 @@
             /* border: 1px solid red; */
 
         }
-        body > h1 {
-            margin-left: 5vw;
-            margin-top: 50px;
-        }
     </style>
 </head>
 <body>
     
     <!-- 标题 -->
-    <h1 class="font_color">文件浏览</h1>
+    <div style="display:flex;align-items:center;margin-top:50px;position:relative;">
+        <!-- 标题 -->
+        <h1 class="font_color" style="margin:0 0 0 5vw;">文件浏览</h1>
+        <!-- 详情按钮 -->
+        <div class="box_color" id="files_detail">
+            <svg xmlns="http://www.w3.org/2000/svg" width="27" height="27" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M17.76 4.25Q16.8 4.25 16.15 4.9Q15.5 5.54 15.5 6.51Q15.5 7.44 16.15 8.1Q16.8 8.76 17.76 8.76Q18.7 8.76 19.36 8.1Q20.02 7.43 20.02 6.5Q20.02 5.54 19.35 4.9Q18.69 4.25 17.76 4.25ZM6.24 4.25Q5.3 4.25 4.66 4.9Q4.01 5.54 4.01 6.51Q4.01 7.44 4.66 8.1Q5.3 8.76 6.24 8.76Q7.18 8.76 7.84 8.1Q8.5 7.43 8.5 6.5Q8.5 5.54 7.83 4.9Q7.17 4.25 6.24 4.25ZM17.76 15.24Q16.8 15.24 16.15 15.9Q15.5 16.57 15.5 17.5Q15.5 18.42 16.15 19.09Q16.8 19.75 17.76 19.75Q18.7 19.75 19.36 19.09Q20.02 18.42 20.02 17.5Q20.02 16.57 19.35 15.9Q18.69 15.24 17.76 15.24ZM6.24 15.24Q5.3 15.24 4.66 15.9Q4.01 16.57 4.01 17.5Q4.01 18.42 4.66 19.09Q5.3 19.75 6.24 19.75Q7.18 19.75 7.84 19.09Q8.5 18.42 8.5 17.5Q8.5 16.57 7.83 15.9Q7.17 15.24 6.24 15.24Z" fill="rgba(0,0,0,0.9019607843137255)"></path></g></svg>
+        </div>
+    </div>
 
     <!-- 选项栏 -->
     <div class="choice_bar box_color">
@@ -74,6 +78,18 @@
         </div>
     </div>
     <div class="files_main_bar box_color hide" id="folder_frame">
+
+        <!-- 滑动框架 -->
+        <div class="slide_frame">
+            <!-- 占位符 -->
+            <div style="height: 25px; position: relative; top: 0;"></div>
+            <div class="slide" id="slide">
+
+            </div>
+        </div>
+
+    </div>
+    <div class="files_main_bar box_color hide" id="external_song_frame">
 
         <!-- 滑动框架 -->
         <div class="slide_frame">
