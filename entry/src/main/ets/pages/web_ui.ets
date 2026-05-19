@@ -232,6 +232,7 @@ export default struct web_ui {
     // 加载歌曲 //
     this.play_list = this.files_manager.all_songs_list
     this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list)})`)
+    this.lin_music_ui.runJavaScript(`set_external_songs(${JSON.stringify(this.files_manager.external_songs_list)})`)
 
   }
   // 保存数据 //
@@ -256,7 +257,7 @@ export default struct web_ui {
       // ready //
       //////////
       ready: async () => {
-        console.log('页面准备完成')
+        log('页面准备完成')
         this.listen_broadcast()  // 监听广播
         // 加载audio
         await this.lin_music_player.play_data_load()
@@ -449,6 +450,14 @@ export default struct web_ui {
           return Array.from(this.files_manager.genre_list.keys())
         }
       },
+      // 添加 卡外部歌曲
+      get_external_song: async () => {
+        // 添加
+        await this.files_manager.get_external_song()
+        // 加载
+        this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list)})`)
+        this.lin_music_ui.runJavaScript(`set_external_songs(${JSON.stringify(this.files_manager.external_songs_list)})`)
+      },
 
       /////////////////
       // setting页用 //
@@ -501,6 +510,15 @@ export default struct web_ui {
         this.global_config.reset_app()
       },
 
+      // 保存web_ui的配置文件
+      save_data: (name: string, data: string[]) => {
+        return array_to_json_save(data, web_ui_path + '/' + name + '.json')
+      },
+      // 打开web_ui的配置文件
+      load_data: (name: string) => {
+        return load_json_to_array(web_ui_path + '/' + name + '.json')
+      },
+
     },
       /////////////
       // 接口声明 //
@@ -514,7 +532,8 @@ export default struct web_ui {
         'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list',
         'set_head_photo', 'toggle_taskbar', 'set_active_color', 'set_enable_active_color',
         'rescan_data', 'reset_app', 'enable_dsd_play',
-        'vib', 'delete_song', 'exchange_song'
+        'vib', 'delete_song', 'exchange_song', 'get_external_song',
+        'save_data', 'load_data'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}

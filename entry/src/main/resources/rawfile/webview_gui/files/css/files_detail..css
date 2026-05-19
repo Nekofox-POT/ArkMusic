@@ -31,6 +31,15 @@
 
 }
 
+#files_detail.active.editor {
+
+    width: 90vw;
+    right: 5vw;
+    top: 8vh;
+    max-height: 84vh;
+
+}
+
 /* 图标 */
 #files_detail_icon {
     position: absolute;
@@ -82,4 +91,114 @@
 .files_detail_option_text {
     font-size: 0.65rem;
     margin: 0;
+}
+
+/* 列表编辑器 */
+#files_detail_list_editor {
+    display: none;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.list_editor_header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+#list_editor_back {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.list_editor_title {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+#list_editor_items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 50vh;
+    overflow-y: auto;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, black 25px, black calc(100% - 25px), transparent);
+    mask-image: linear-gradient(to bottom, transparent, black 25px, black calc(100% - 25px), transparent);
+}
+
+/* 列表项 */
+.list_editor_item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 25px;
+    transition: opacity 0.2s ease;
+}
+.list_editor_item.hidden {
+    opacity: 0.4;
+}
+
+.list_item_drag {
+    width: 24px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+}
+.list_item_drag svg {
+    width: 24px;
+    height: 24px;
+}
+
+.list_item_name {
+    flex: 1;
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* toggle 开关（参考 setting 样式） */
+.list_item_toggle {
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.15),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+.list_item_toggle_knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.8),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.1),
+        inset 0 0 10px rgba(255, 255, 255, 0.3),
+        0 1px 4px rgba(0, 0, 0, 0.15);
+    transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.list_item_toggle.on .list_item_toggle_knob {
+    left: 26px;
 }

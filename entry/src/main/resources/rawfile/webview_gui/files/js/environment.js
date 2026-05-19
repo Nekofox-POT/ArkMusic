@@ -9,6 +9,7 @@ const choice_bar_scroll = document.getElementById("choice_bar_scroll")
 const choice_bar_items = document.querySelectorAll(".choice_bar_item")
 const files_detail = document.getElementById("files_detail")
 const files_detail_icon = document.getElementById("files_detail_icon")
+const files_detail_options = document.getElementById("files_detail_options")
 
 // 框架组件映射
 const frame_map = {

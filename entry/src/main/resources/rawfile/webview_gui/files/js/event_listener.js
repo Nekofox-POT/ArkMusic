@@ -208,6 +208,8 @@ choice_bar_items.forEach((item) => {
         // 添加点击操作
         if (type === '所有歌曲') {
             ark.set_play_list_with_all_songs()
+        } else if (type === '外部歌曲') {
+            ark.set_external_songs()
         } else if (type === '文件夹') {
             let tmp = ''
             for (const e of router_list) {
@@ -271,4 +273,222 @@ document.querySelectorAll('.files_detail_option').forEach(option => {
         option.style.transform = 'scale(1)'
         option.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
     })
+})
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// files_detail 列表选项编辑器 //
+////////////////////////////////
+const files_detail_list_editor = document.getElementById("files_detail_list_editor")
+const list_editor_back = document.getElementById("list_editor_back")
+const list_editor_items = document.getElementById("list_editor_items")
+
+// 拖拽排序状态
+let dragState = {
+    isActive: false,
+    element: null,
+    startY: 0,
+    currentIndex: 0,
+    swapCooldown: false
+}
+
+// "列表选项" 按钮点击
+const listOptionsTrigger = document.querySelector('[data-action="list_options"]')
+if (listOptionsTrigger) {
+    listOptionsTrigger.addEventListener('click', () => {
+        open_list_editor()
+    })
+}
+
+// "添加外部音频" 按钮点击
+const addExternalTrigger = document.querySelector('[data-action="add_external"]')
+if (addExternalTrigger) {
+    addExternalTrigger.addEventListener('click', () => {
+        ark.get_external_song()
+    })
+}
+
+// 返回按钮
+list_editor_back.addEventListener('click', () => {
+    close_list_editor()
+})
+
+function open_list_editor() {
+    files_detail_options.style.display = 'none'
+    files_detail_list_editor.style.display = 'flex'
+    files_detail.classList.add('editor')
+    build_list_editor_items()
+    set_background_color()
+    apply_toggle_visuals()
+}
+
+function close_list_editor() {
+    files_detail_list_editor.style.display = 'none'
+    files_detail_options.style.display = 'grid'
+    files_detail.classList.remove('editor')
+}
+
+function build_list_editor_items() {
+    list_editor_items.innerHTML = ''
+    const items = choice_bar_scroll.querySelectorAll('.choice_bar_item')
+    items.forEach((item) => {
+        const type = item.dataset.type
+        const name = item.querySelector('p').textContent
+        const isHidden = item.style.display === 'none'
+
+        const row = document.createElement('div')
+        row.className = 'list_editor_item box_color' + (isHidden ? ' hidden' : '')
+        row.dataset.type = type
+
+        // toggle 开关（左侧）
+        const toggle = document.createElement('div')
+        toggle.className = 'list_item_toggle' + (isHidden ? '' : ' on')
+        const knob = document.createElement('div')
+        knob.className = 'list_item_toggle_knob'
+        toggle.appendChild(knob)
+
+        // 名称
+        const nameSpan = document.createElement('span')
+        nameSpan.className = 'font_color list_item_name'
+        nameSpan.textContent = name
+
+        // 拖拽手柄（右侧）
+        const dragDiv = document.createElement('div')
+        dragDiv.className = 'list_item_drag'
+        dragDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M14.5 17.5Q14.5 16.47 13.76 15.74Q13.03 15 12 15Q10.97 15 10.24 15.74Q9.5 16.47 9.5 17.5Q9.5 18.52 10.24 19.26Q10.97 19.99 12 19.99Q13.03 19.99 13.76 19.26Q14.5 18.52 14.5 17.5ZM14.5 6.5Q14.5 5.47 13.76 4.74Q13.03 4.01 12 4.01Q10.97 4.01 10.24 4.74Q9.5 5.47 9.5 6.51Q9.5 7.51 10.24 8.26Q10.97 9 12 9Q13.03 9 13.76 8.26Q14.5 7.53 14.5 6.5Z"></path></g></svg>'
+
+        row.appendChild(toggle)
+        row.appendChild(nameSpan)
+        row.appendChild(dragDiv)
+        list_editor_items.appendChild(row)
+
+        // toggle 事件
+        toggle.addEventListener('click', () => {
+            const on = toggle.classList.toggle('on')
+            row.classList.toggle('hidden', !on)
+            set_toggle_visual(toggle, on)
+            item.style.display = on ? '' : 'none'
+            const prev = item.previousElementSibling
+            if (prev && prev.classList.contains('choice_bar_separator')) {
+                prev.style.display = on ? '' : 'none'
+            }
+            if (!on) {
+                choice_bar_updateMaxTranslate()
+            }
+        })
+    })
+}
+
+function set_toggle_visual(toggle, on) {
+    if (on) {
+        toggle.classList.add('box_active_color')
+        toggle.style.backgroundColor = active_color
+    } else {
+        toggle.classList.remove('box_active_color')
+        toggle.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
+    }
+}
+
+function apply_toggle_visuals() {
+    const toggles = list_editor_items.querySelectorAll('.list_item_toggle')
+    toggles.forEach(toggle => {
+        set_toggle_visual(toggle, toggle.classList.contains('on'))
+    })
+}
+
+function sync_choice_bar_order() {
+    const rows = list_editor_items.querySelectorAll('.list_editor_item')
+    const typeOrder = Array.from(rows).map(r => r.dataset.type)
+    typeOrder.forEach(type => {
+        const item = choice_bar_scroll.querySelector(`.choice_bar_item[data-type="${type}"]`)
+        if (!item) return
+        const prev = item.previousElementSibling
+        if (prev && prev.classList.contains('choice_bar_separator')) {
+            choice_bar_scroll.appendChild(prev)
+        }
+        choice_bar_scroll.appendChild(item)
+    })
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 列表编辑器 拖拽排序 //
+////////////////////////
+
+list_editor_items.addEventListener('touchstart', (e) => {
+    const dragHandle = e.target.closest('.list_item_drag')
+    if (!dragHandle) return
+    const item = dragHandle.closest('.list_editor_item')
+    if (!item) return
+    e.preventDefault()
+    dragState.isActive = true
+    dragState.element = item
+    dragState.startY = e.touches[0].clientY
+    dragState.currentIndex = Array.from(list_editor_items.children).indexOf(item)
+    item.style.zIndex = '10'
+    item.style.transition = 'none'
+}, { passive: false })
+
+list_editor_items.addEventListener('touchmove', (e) => {
+    if (!dragState.isActive || dragState.swapCooldown) return
+    e.preventDefault()
+    const y = e.touches[0].clientY
+    const children = Array.from(list_editor_items.children)
+    const el = dragState.element
+    for (let i = 0; i < children.length; i++) {
+        const child = children[i]
+        if (child === el) continue
+        const rect = child.getBoundingClientRect()
+        if (y > rect.top && y < rect.bottom && i !== dragState.currentIndex) {
+            dragState.swapCooldown = true
+
+            const elRectBefore = el.getBoundingClientRect()
+            const targetRectBefore = child.getBoundingClientRect()
+
+            if (i < dragState.currentIndex) {
+                list_editor_items.insertBefore(el, child)
+            } else {
+                list_editor_items.insertBefore(el, child.nextSibling)
+            }
+
+            const elRectAfter = el.getBoundingClientRect()
+            const targetRectAfter = child.getBoundingClientRect()
+            const elDeltaY = elRectBefore.top - elRectAfter.top
+            const targetDeltaY = targetRectBefore.top - targetRectAfter.top
+
+            if (Math.abs(elDeltaY) > 1 || Math.abs(targetDeltaY) > 1) {
+                el.style.transition = 'none'
+                child.style.transition = 'none'
+                el.style.transform = `translateY(${elDeltaY}px)`
+                child.style.transform = `translateY(${targetDeltaY}px)`
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        el.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        child.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                        el.style.transform = ''
+                        child.style.transform = ''
+                    })
+                })
+            }
+
+            dragState.currentIndex = i
+            sync_choice_bar_order()
+
+            setTimeout(() => { dragState.swapCooldown = false }, 150)
+            break
+        }
+    }
+}, { passive: false })
+
+list_editor_items.addEventListener('touchend', () => {
+    if (!dragState.isActive) return
+    const el = dragState.element
+    el.style.transition = 'transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+    el.style.transform = ''
+    dragState.isActive = false
+    dragState.element = null
+    setTimeout(() => {
+        if (el) {
+            el.style.zIndex = ''
+            el.style.transition = ''
+        }
+    }, 300)
 })

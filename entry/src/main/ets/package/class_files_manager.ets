@@ -8,6 +8,7 @@
 import { fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
 import emitter from '@ohos.events.emitter'
+import picker from '@ohos.file.picker'
 
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
@@ -24,6 +25,7 @@ const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']
 const song_path = new fileUri.FileUri('file://docs/storage/Users/currentUser/Download/com.nekofox.linmusic').path   // 文件目录
 const audio_player_path = getContext().filesDir + '/audio_player/'    // 音频播放器目录
 const files_manager_path = getContext().filesDir + '/files_manager/'    // 文件管理器目录
+const external_path = getContext().filesDir + '/files_manager_external_cache/'  // 外部歌曲缓存目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -70,7 +72,9 @@ export class class_files_manager {
 
   // 重置表 //
   reset_song_data() {
+    // 重置目录
     try {fs.rmdirSync(files_manager_path)} catch {}
+    // 重置列表
     this.all_songs_list = []
     this.play_list = new Map<string, string[]>()
     this.artist_composer_list = new Map<string, string[]>()
@@ -96,7 +100,7 @@ export class class_files_manager {
 
     // 扫描歌曲(普通歌曲) //
     log('扫描普通歌曲')
-    let tmp_audio = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })
+    let tmp_audio = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } }).concat(this.external_songs_list)
     const tmp_audio_length = tmp_audio.length
     for (let i = 0; i < tmp_audio_length; i++) {
 
@@ -238,6 +242,10 @@ export class class_files_manager {
     log('保存 所有歌曲')
     this.all_songs_list = nativeModule.sortStringArray(this.all_songs_list)
     array_to_json_save(this.all_songs_list, files_manager_path + '/all_songs.json')
+    // 外部歌曲
+    log('保存 外部歌曲')
+    this.external_songs_list = nativeModule.sortStringArray(this.external_songs_list)
+    array_to_json_save(this.external_songs_list, files_manager_path + '/external_songs.json')
     // 歌手 / 作曲家
     log('保存 歌手 / 作曲家')
     tick = 0
@@ -303,7 +311,21 @@ export class class_files_manager {
       // 加载 //
       // 加载所有歌曲
       notice('读取 所有歌曲')
-      this.all_songs_list = load_json_to_array(files_manager_path + '/all_songs.json')
+      for (const i of load_json_to_array(files_manager_path + '/all_songs.json')) {
+        // 检查有效性
+        try {
+          fs.openSync(i)
+          this.all_songs_list.push(i)
+        } catch {}
+      }
+      // 加载外部歌曲
+      for (const i of load_json_to_array(files_manager_path + '/external_songs.json')) {
+        // 检查有效性
+        try {
+          fs.openSync(i)
+          this.external_songs_list.push(i)
+        } catch {}
+      }
       // 加载歌手 / 艺术家
       for (const i of fs.listFileSync(files_manager_path + '/artist_composer/', { recursion: false })) {
         const tmp_path = files_manager_path + '/artist_composer/' + i
@@ -347,7 +369,6 @@ export class class_files_manager {
       }
       // 加载dsd文件
 
-
       notice('完成.')
 
     } catch (e) {
@@ -356,6 +377,10 @@ export class class_files_manager {
     }
 
   }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 外部歌曲处理库 //
+  ////////////////
 
   // 读取文件夹 //
   get_dir(path: string = ''): string[][] {
@@ -372,10 +397,10 @@ export class class_files_manager {
       if(fs.statSync(tmp_path).isDirectory()) {
         // 如果里面没有文件
         if (!(
-            fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } }).length === 0
-          &&
+          fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } }).length === 0
+            &&
             fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } }).length === 0
-          &&
+            &&
             fs.listFileSync(song_path, { recursion: true, filter: { suffix: ['.m3u'] } }).length === 0
         )) {
           // 添加
@@ -410,6 +435,34 @@ export class class_files_manager {
 
   }
 
+  // 添加外部歌曲 //
+  async get_external_song() {
+
+    // 获取
+    const audioSelectOptions = new picker.AudioSelectOptions()
+    const audioPicker = new picker.AudioViewPicker()
+    const tmp = await audioPicker.select(audioSelectOptions)
+
+    log(`外部添加${tmp.length}首歌曲`)
+    for (const i of tmp) {
+      // 检查有效性
+      try {
+        log(i)
+        // 读取fd
+        const tmp_fd = fs.openSync(i, fs.OpenMode.READ_ONLY).fd
+        log(`获取到fd：${tmp_fd}`)
+        const tmp_stat = fs.statSync(tmp_fd)
+        log(`文件；${tmp_stat.size}`)
+
+      } catch {}
+    }
+    // 排序
+    // this.all_songs_list = nativeModule.sortStringArray(this.all_songs_list)
+    // this.external_songs_list = nativeModule.sortStringArray(this.external_songs_list)
+    notice('添加完成.')
+
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
@@ -417,6 +470,8 @@ export class class_files_manager {
 
     // 导入类
     this.global_config = import_global_config
+    // 检查外部歌曲目录，没有则创建
+    try {fs.statSync(external_path)} catch {fs.mkdirSync(external_path)}
 
   }
 

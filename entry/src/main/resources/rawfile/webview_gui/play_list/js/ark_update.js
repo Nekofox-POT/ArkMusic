@@ -144,29 +144,7 @@ function playList_create_song_element(path, index, num) {
     detailBtn.className = 'song_item_detail_btn'
     detailBtn.style.cssText = 'position:absolute;right:12.5px;top:50%;transform:translateY(-50%);width:28px;height:28px;display:flex;align-items:center;justify-content:center;background-image:none;border-radius:0;box-shadow:none;margin-left:0;aspect-ratio:auto;background-size:auto;'
 
-    const btnSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    btnSvg.setAttribute('width', '24')
-    btnSvg.setAttribute('height', '24')
-    btnSvg.setAttribute('viewBox', '0 0 24 24')
-
-    const btnRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect')
-    btnRect.setAttribute('width', '24')
-    btnRect.setAttribute('height', '24')
-    btnRect.setAttribute('opacity', '0')
-
-    const positions = [[6.5, 6.5], [17.5, 6.5], [6.5, 17.5], [17.5, 17.5]]
-    const circles = positions.map(([cx, cy]) => {
-        const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle')
-        c.setAttribute('class', 'svg_color')
-        c.setAttribute('cx', cx)
-        c.setAttribute('cy', cy)
-        c.setAttribute('r', '2.5')
-        return c
-    })
-
-    btnSvg.appendChild(btnRect)
-    circles.forEach(c => btnSvg.appendChild(c))
-    detailBtn.appendChild(btnSvg)
+    detailBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M14.5 17.5Q14.5 16.47 13.76 15.74Q13.03 15 12 15Q10.97 15 10.24 15.74Q9.5 16.47 9.5 17.5Q9.5 18.52 10.24 19.26Q10.97 19.99 12 19.99Q13.03 19.99 13.76 19.26Q14.5 18.52 14.5 17.5ZM14.5 6.5Q14.5 5.47 13.76 4.74Q13.03 4.01 12 4.01Q10.97 4.01 10.24 4.74Q9.5 5.47 9.5 6.51Q9.5 7.51 10.24 8.26Q10.97 9 12 9Q13.03 9 13.76 8.26Q14.5 7.53 14.5 6.5Z"></path></g></svg>'
     wrapper.appendChild(detailBtn)
 
     return wrapper
