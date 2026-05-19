@@ -1,5 +1,7 @@
-![icon](entry/src/main/resources/base/media/icon_round.png)
-# 铃音
+<div align="center">
+  <img src="entry/src/main/resources/base/media/icon_round.png" width="192" />
+  <h1>铃音</h1>
+</div>
 
 基于 **HarmonyOS NEXT** 的本地音乐播放器。
 
