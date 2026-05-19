@@ -72,7 +72,6 @@ export class class_audio_player {
     this.session.on("playNext", () => {this.next_song()}) //下一首
     this.session.on("seek", (position) => {this.seek(position)})  // 跳转
     this.session.on("toggleFavorite", () => {this.toggle_like()})
-    this.session.on("playFromAssetId", (position) => {console.log(`跳转第${position}首`)})
     this.session.on("answer", () => {console.log('avs:接听电话')})
     this.session.on("hangUp", () => {console.log('avs:挂断电话')})
     this.session.on("toggleCallMute", async () => {console.log('通话静音或解除静音')})
@@ -200,10 +199,10 @@ export class class_audio_player {
         // 如果开启了支持
         if (this.global_config?.dsd_support) {
           // 拉取转换后的wav
-          console.log('开启支持，解码。')
+          log('开启支持，解码。')
           result = await this.av_player.audio_set(await this.call_dsd(this.play_list[this.play_list_index]))
         } else {
-          console.log('未开启支持，下一首')
+          log('未开启支持，下一首')
           this.next_song()
           return
         }
@@ -431,7 +430,6 @@ export class class_audio_player {
       // 传入
       this.dsd_list.set(nativeModule.extractFilename(audio_player_path + '/dsd_cache/' + i), audio_player_path + '/dsd_cache/' + i)
     }
-    console.log('完成！')
   }
 
   // 播放数据注入 //
@@ -473,7 +471,11 @@ export class class_audio_player {
           this.seek(Number.parseInt(tmp[1] ?? '0'))
         }
       }
-    } else {this.av_player.auto_play = true}
+    } else {
+      // 加载默认值
+      this.av_player.auto_play = true
+      await this.set_play_list([], 0)
+    }
     // 设置每分钟保存数据定时
     setInterval(() => {this.play_data_save()}, 60000)
 

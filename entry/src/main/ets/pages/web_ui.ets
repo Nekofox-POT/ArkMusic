@@ -168,7 +168,6 @@ export default struct web_ui {
     emitter.on({eventId: 912}, async () => {
       // 转发js
       const tmp = await this.lin_music_ui.runJavaScript(`back_gesture()`)
-      console.log(`${tmp}`)
       if (tmp === '"back"') {
         router.back()
       }
@@ -224,14 +223,13 @@ export default struct web_ui {
       this.active_color = tmp[0]
       this.enable_active_color = (tmp[1] === '1') ? true : false
     }
-    console.log(`${this.active_color} ${this.enable_active_color} ${this.global_config.dsd_support}`)
+    // console.log(`${this.active_color} ${this.enable_active_color} ${this.global_config.dsd_support}`)
     this.lin_music_ui.runJavaScript(`set_active_color('${this.active_color}')`)
     this.lin_music_ui.runJavaScript(`set_button_enable_active_color(${this.enable_active_color})`)
     this.lin_music_ui.runJavaScript(`set_dsd(${this.global_config.dsd_support})`)
 
     // 加载歌曲 //
     this.play_list = this.files_manager.all_songs_list
-    console.log(`[${this.files_manager.external_songs_list}]`)
     this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list.concat(this.files_manager.external_songs_list))})`)
     this.lin_music_ui.runJavaScript(`set_external_songs(${JSON.stringify(this.files_manager.external_songs_list)})`)
 
@@ -261,7 +259,7 @@ export default struct web_ui {
         log('页面准备完成')
         this.listen_broadcast()  // 监听广播
         // 加载audio
-        await this.lin_music_player.play_data_load()
+        try {await this.lin_music_player.play_data_load()} catch {}
         // 加载数据
         this.load_data()
         this.ready = true
@@ -510,7 +508,7 @@ export default struct web_ui {
       },
       // 重新扫描媒体库 //
       rescan_data: () => {
-        console.log('重新扫描')
+        log('重新扫描')
         this.lin_music_player.pause()
         this.lin_music_player.drop_it()
         this.files_manager.reset_song_data()
@@ -562,7 +560,11 @@ export default struct web_ui {
       // 准备界面 //
       ////////////
       if (!this.ready) {
-        Column() { Image($r('app.media.foreground_backup')).width('256px').height('256px') }
+        Column() {
+          Image($r('app.media.icon_white'))
+            .width('256px').height('256px')
+            .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
+        }
           .width('100%').height('100%')
           .position({ x: 0, y: 0 }).zIndex(900)
           .backgroundColor('#fff').justifyContent(FlexAlign.Center)
@@ -587,7 +589,7 @@ export default struct web_ui {
         })
 
         .onPageEnd(() => {
-          console.log('页面加载完成.')
+          log('页面加载完成.')
         })
 
       /////////////

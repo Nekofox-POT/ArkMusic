@@ -61,7 +61,7 @@ export async function vib() {
 /////////////
 // 后台注册 //
 ////////////
-export async function reg_bg_run(context: common.UIAbilityContext) {
+export async function reg_bg_run() {
   console.log('注册后台任务')
   let wantAgentInfo: wantAgent.WantAgentInfo = {
     wants: [

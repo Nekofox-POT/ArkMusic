@@ -14,6 +14,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 import { class_files_manager } from '../package/class_files_manager'
 import { log, notice, reg_bg_run } from '../package/system_function'
 import { class_audio_player } from '../package/class_audio_player/class_audio_player'
+import { version_update } from '../package/version_update'
 
 // 导入类 //
 import { class_global_config } from '../package/class_global_config'
@@ -22,7 +23,7 @@ import { class_global_config } from '../package/class_global_config'
 import web_ui from './web_ui'
 import ark_ui_index from './ark_ui/ark_ui_index'
 import lin_music_start from './start'
-import first_start from './first_start'
+import first_start from './first_start/first_start'
 
 // 变量池 //
 
@@ -66,12 +67,18 @@ struct Index {
 
     log('程序开始运行...')
     // 注册后台
-    reg_bg_run(this.context)
+    reg_bg_run()
     // 版本号校验
     log('校验版本号..')
     try {
       // 获取版本号
       let tmp = fs.readTextSync(getContext().filesDir + '/version.json')
+      let tmp_update = version_update(tmp)
+      if (tmp != tmp_update) {
+        const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+        fs.writeSync(file.fd, tmp_update)
+        fs.closeSync(file)
+      }
     }
     // 获取失败，视为第一次启动
     catch {
@@ -79,7 +86,7 @@ struct Index {
       // 写入版本号
       try {
         const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-        fs.writeSync(file.fd, '0.6.0')
+        fs.writeSync(file.fd, version_update())
         fs.closeSync(file)
       } catch (e) {
         log(`版本号保存失败: ${e}`, 'error')

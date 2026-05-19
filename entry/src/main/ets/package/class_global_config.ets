@@ -75,7 +75,6 @@ export class class_global_config {
   ////////////
 
   constructor() {
-    console.log(`dsd支持：${this.dsd_support}`)
     // 检测文件存在性
     const tmp = load_json_to_array(global_config_json)
     if (tmp.length != 0) {
@@ -85,10 +84,7 @@ export class class_global_config {
 
     } else {
 
-
-
     }
-    console.log(`dsd支持：${this.dsd_support}`)
   }
 
 }

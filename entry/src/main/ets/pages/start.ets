@@ -114,7 +114,7 @@ export default struct lin_music_start {
       Column() {
 
         // logo
-        Image($r('app.media.foreground_backup')).width('512px').height('512px')
+        Image($r('app.media.icon_white')).width('512px').height('512px')
         // 加载动画
         LoadingProgress().width('64vp').height('64vp').color('rgba(0, 0, 0, 0.4)')
 
@@ -146,8 +146,7 @@ export default struct lin_music_start {
               fs.listFileSync(root_path)
               this.dir_ready = true
             } catch (e) {   // 读取失败，创建目录
-              console.log(`目录不存在：${e}`)
-              console.log('准备创建...')
+              log(`目录不存在：${e}`, 'error')
               try {
                 // 调用创建器
                 this.dir_create_downloader.onBeforeDownload((webDownloadItem: webview.WebDownloadItem) => {
