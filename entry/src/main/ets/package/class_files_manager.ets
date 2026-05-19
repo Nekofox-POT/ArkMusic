@@ -12,7 +12,7 @@ import picker from '@ohos.file.picker'
 
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
-import { log } from './system_function'
+import { log, notice as notice_down } from './system_function'
 import { get_meta } from './meta_manager'
 import { array_to_json_save, load_json_to_array } from './array_save_load'
 
@@ -54,6 +54,7 @@ export class class_files_manager {
   global_config: class_global_config | null = null
 
   // 共享变量池 //
+  is_working: boolean = false
   all_songs_list: string[] = []
   external_songs_list: string[] = []
   play_list = new Map<string, string[]>()
@@ -100,7 +101,7 @@ export class class_files_manager {
 
     // 扫描歌曲(普通歌曲) //
     log('扫描普通歌曲')
-    let tmp_audio = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } }).concat(this.external_songs_list)
+    let tmp_audio = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })
     const tmp_audio_length = tmp_audio.length
     for (let i = 0; i < tmp_audio_length; i++) {
 
@@ -319,12 +320,8 @@ export class class_files_manager {
         } catch {}
       }
       // 加载外部歌曲
-      for (const i of load_json_to_array(files_manager_path + '/external_songs.json')) {
-        // 检查有效性
-        try {
-          fs.openSync(i)
-          this.external_songs_list.push(i)
-        } catch {}
+      for (const i of fs.listFileSync(external_path, { recursion: false })) {
+        this.external_songs_list.push(external_path + i)
       }
       // 加载歌手 / 艺术家
       for (const i of fs.listFileSync(files_manager_path + '/artist_composer/', { recursion: false })) {
@@ -443,23 +440,45 @@ export class class_files_manager {
     const audioPicker = new picker.AudioViewPicker()
     const tmp = await audioPicker.select(audioSelectOptions)
 
+    // 导入
+    let success: number = 0
     log(`外部添加${tmp.length}首歌曲`)
     for (const i of tmp) {
-      // 检查有效性
       try {
-        log(i)
-        // 读取fd
-        const tmp_fd = fs.openSync(i, fs.OpenMode.READ_ONLY).fd
-        log(`获取到fd：${tmp_fd}`)
-        const tmp_stat = fs.statSync(tmp_fd)
-        log(`文件；${tmp_stat.size}`)
 
-      } catch {}
+        // 解析真实路径
+        const tmp_path = new fileUri.FileUri(i).path
+        const tmp_name = nativeModule.extractFilename(tmp_path) + tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase()
+
+        // 复制到外部缓存目录
+        log(`复制：${tmp_path}`)
+        fs.copyFileSync(tmp_path, external_path + tmp_name)
+        success++
+
+      } catch (e) {log(`外部歌曲添加失败：${e}`, 'error')}
     }
+
+    // 更新表
+    this.external_songs_list = []
+    for (const i of fs.listFileSync(external_path, { recursion: false })) {
+      this.external_songs_list.push(external_path + i)
+    }
+
     // 排序
-    // this.all_songs_list = nativeModule.sortStringArray(this.all_songs_list)
-    // this.external_songs_list = nativeModule.sortStringArray(this.external_songs_list)
-    notice('添加完成.')
+    this.external_songs_list = nativeModule.sortStringArray(this.external_songs_list)
+    notice_down(`成功添加 ${success} 首音乐`)
+
+  }
+  // 删除外部歌曲 //
+  del_external_song(index: number) {
+
+    // 删除
+    const tmp = this.external_songs_list[index]
+    try {fs.unlinkSync(tmp)} catch {log(`删除了一个未知目录：${tmp}`, 'error'); return}
+    // 更新表
+    this.external_songs_list.splice(index, 1)
+    // 排序
+    notice_down(`已删除：${nativeModule.extractFilename(tmp)}`)
 
   }
 

@@ -3,6 +3,8 @@
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 function init() {
+    // 加载列表选项配置
+    load_list_options()
     // 设置默认选中项的文字颜色
     const activeItem = document.querySelector('.choice_bar_item.active')
     if (activeItem) {

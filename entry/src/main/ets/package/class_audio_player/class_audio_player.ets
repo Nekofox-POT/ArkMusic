@@ -436,38 +436,47 @@ export class class_audio_player {
 
   // 播放数据注入 //
   async play_data_load() {
+
     log('加载播放数据')
-    // 打开播放列表
-    let tmp_list = load_json_to_array(audio_player_path + '/playing_data_list.json')
+    // 打开配置文件
     let tmp = load_json_to_array(audio_player_path + '/playing_data_other.json')
-    // 加载
-    if (tmp.length != 0) {
-      this.set_play_mode(Number.parseInt(tmp[2]))
-      await this.set_play_list(tmp_list, Number.parseInt(tmp[0]))
-      // 防止超时
-      let tmp_count = 0
-      if (this.play_list.length != 0) {
+
+    // 打开检查播放列表
+    let tmp_list: string[] = []
+    for (const i of load_json_to_array(audio_player_path + '/playing_data_list.json')) {
+      try {
+        fs.openSync(i)
+        tmp_list.push(i)
+      } catch {}
+    }
+
+    // 加载基础数据
+    this.set_play_mode(Number.parseInt(tmp[2] ?? '2'))
+    // 加载播放列表
+    if (tmp_list.length != 0) {
+      // 防溢出
+      if (Number.parseInt(tmp[0] ?? `${tmp_list.length}`) + 1 >= tmp_list.length) {
+        await this.set_play_list(tmp_list, 0)
+      } else {
+        await this.set_play_list(tmp_list, Number.parseInt(tmp[0] ?? '0'))
+        // 加载时间
+        let tmp_count = 0
         while (!this.player_ready) {
           await new Promise<void>(r => setTimeout(r, 1))
-          tmp_count += 1
-          if (tmp_count >= 1000) {
+          if (tmp_count++ >= 1000) {
             log('audio加载超时。')
             this.av_player.auto_play = true
             break
           }
         }
         if (tmp_count < 1000) {
-          this.seek(Number.parseInt(tmp[1]))
+          this.seek(Number.parseInt(tmp[1] ?? '0'))
         }
       }
-    } else {
-      // 加载默认值
-      this.set_play_mode(2)
-    }
+    } else {this.av_player.auto_play = true}
     // 设置每分钟保存数据定时
     setInterval(() => {this.play_data_save()}, 60000)
-    // 允许播放
-    this.av_player.auto_play = true
+
   }
   // 播放数据保存 //
   play_data_save() {

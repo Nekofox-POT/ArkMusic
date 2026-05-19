@@ -206,30 +206,7 @@ choice_bar_items.forEach((item) => {
         page = type
 
         // 添加点击操作
-        if (type === '所有歌曲') {
-            ark.set_play_list_with_all_songs()
-        } else if (type === '外部歌曲') {
-            ark.set_external_songs()
-        } else if (type === '文件夹') {
-            let tmp = ''
-            for (const e of router_list) {
-                tmp += e
-                tmp += '/'
-            }
-            get_folder_songs(tmp)
-        } else if (type === '播放列表') {
-            get_play_list_songs(play_list_backup)
-        } else if (type === '我的喜欢') {
-            get_favorite_songs()
-        } else if (type === '歌手') {
-            get_artist_composer_list(artist_composer_backup)
-        } else if (type === '专辑') {
-            get_album_list(album_backup)
-        } else if (type === '专辑作者') {
-            get_album_artist_list(album_artist_backup)
-        } else if (type === '流派') {
-            get_genre_list(genre_backup)
-        }
+        load_page(type)
 
     })
 })
@@ -300,12 +277,23 @@ if (listOptionsTrigger) {
 }
 
 // "添加外部音频" 按钮点击
-const addExternalTrigger = document.querySelector('[data-action="add_external"]')
-if (addExternalTrigger) {
-    addExternalTrigger.addEventListener('click', () => {
+document.querySelectorAll('[data-action="add_external"]').forEach(btn => {
+    btn.addEventListener('click', () => {
         ark.get_external_song()
     })
-}
+    btn.addEventListener('touchstart', () => {
+        btn.style.transform = 'translateX(-50%) scale(0.9)'
+        btn.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
+        const span = btn.querySelector('.font_color')
+        if (span) span.style.color = active_color
+    })
+    btn.addEventListener('touchend', () => {
+        btn.style.transform = 'translateX(-50%) scale(1)'
+        btn.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+        const span = btn.querySelector('.font_color')
+        if (span) span.style.color = background_color
+    })
+})
 
 // 返回按钮
 list_editor_back.addEventListener('click', () => {
@@ -325,6 +313,7 @@ function close_list_editor() {
     files_detail_list_editor.style.display = 'none'
     files_detail_options.style.display = 'grid'
     files_detail.classList.remove('editor')
+    save_list_options()
 }
 
 function build_list_editor_items() {
@@ -393,6 +382,34 @@ function apply_toggle_visuals() {
     toggles.forEach(toggle => {
         set_toggle_visual(toggle, toggle.classList.contains('on'))
     })
+}
+
+function load_page(type) {
+    page = type
+    if (type === '所有歌曲') {
+        ark.set_play_list_with_all_songs()
+    } else if (type === '外部歌曲') {
+        ark.set_play_list_with_external_songs()
+    } else if (type === '文件夹') {
+        let tmp = ''
+        for (const e of router_list) {
+            tmp += e
+            tmp += '/'
+        }
+        get_folder_songs(tmp)
+    } else if (type === '播放列表') {
+        get_play_list_songs(play_list_backup)
+    } else if (type === '我的喜欢') {
+        get_favorite_songs()
+    } else if (type === '歌手') {
+        get_artist_composer_list(artist_composer_backup)
+    } else if (type === '专辑') {
+        get_album_list(album_backup)
+    } else if (type === '专辑作者') {
+        get_album_artist_list(album_artist_backup)
+    } else if (type === '流派') {
+        get_genre_list(genre_backup)
+    }
 }
 
 function sync_choice_bar_order() {
@@ -471,6 +488,7 @@ list_editor_items.addEventListener('touchmove', (e) => {
 
             dragState.currentIndex = i
             sync_choice_bar_order()
+            ark.vib()
 
             setTimeout(() => { dragState.swapCooldown = false }, 150)
             break
@@ -492,3 +510,77 @@ list_editor_items.addEventListener('touchend', () => {
         }
     }, 300)
 })
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 列表选项 持久化 //
+////////////////////
+
+function save_list_options() {
+    const items = choice_bar_scroll.querySelectorAll('.choice_bar_item')
+    const data = []
+    items.forEach(item => {
+        const type = item.dataset.type
+        const visible = item.style.display !== 'none' ? '1' : '0'
+        data.push(type + ':' + visible)
+    })
+    ark.save_data('list_options', data)
+}
+
+function load_list_options() {
+    try {
+        const data = ark.load_data('list_options')
+        if (!data || !Array.isArray(data) || data.length === 0) return
+        const map = {}
+        const order = []
+        data.forEach(entry => {
+            const idx = entry.lastIndexOf(':')
+            if (idx <= 0) return
+            const type = entry.substring(0, idx)
+            const visible = entry.substring(idx + 1) === '1'
+            map[type] = visible
+            order.push(type)
+        })
+        let firstVisible = null
+        let activeItem = null
+        order.forEach(type => {
+            const item = choice_bar_scroll.querySelector(`.choice_bar_item[data-type="${type}"]`)
+            if (!item) return
+            const prev = item.previousElementSibling
+            if (prev && prev.classList.contains('choice_bar_separator')) {
+                choice_bar_scroll.appendChild(prev)
+            }
+            choice_bar_scroll.appendChild(item)
+            item.style.display = map[type] ? '' : 'none'
+            const sep = item.previousElementSibling
+            if (sep && sep.classList.contains('choice_bar_separator')) {
+                sep.style.display = map[type] ? '' : 'none'
+            }
+            if (item.classList.contains('active')) activeItem = item
+            if (!firstVisible && map[type]) firstVisible = item
+        })
+        choice_bar_updateMaxTranslate()
+        // 若原 active 项被隐藏，则切换到第一个可见项
+        if (activeItem && !map[activeItem.dataset.type]) {
+            activeItem.classList.remove('active')
+            const p = activeItem.querySelector('p')
+            if (p) p.classList.remove('font_active_color')
+            activeItem = null
+        }
+        if (!activeItem && firstVisible) {
+            firstVisible.classList.add('active')
+            const p = firstVisible.querySelector('p')
+            if (p) {
+                p.classList.add('font_active_color')
+                p.style.color = active_color
+            }
+            // 显示对应 frame、加载页面数据
+            const type = firstVisible.dataset.type
+            Object.keys(frame_map).forEach(key => {
+                if (frame_map[key]) {
+                    frame_map[key].classList.toggle('hide', key !== type)
+                }
+            })
+            load_page(type)
+        }
+    } catch (_) {}
+}

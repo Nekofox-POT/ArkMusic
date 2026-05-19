@@ -144,7 +144,10 @@ function files_detail_active_open() {
 function files_detail_active_close() {
     files_detail.classList.remove('active', 'editor')
     const editor = document.getElementById("files_detail_list_editor")
-    if (editor) editor.style.display = 'none'
+    if (editor) {
+        editor.style.display = 'none'
+        save_list_options()
+    }
     files_detail_options.style.display = ''
     if (files_detail_backdrop) {
         files_detail_backdrop.style.opacity = '0'

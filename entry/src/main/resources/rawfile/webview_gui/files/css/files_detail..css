@@ -202,3 +202,35 @@
 .list_item_toggle.on .list_item_toggle_knob {
     left: 26px;
 }
+
+/* 外部歌曲框架底部添加按钮 */
+.external_add_btn {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    z-index: 10;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    -webkit-tap-highlight-color: transparent;
+}
+.external_add_btn_icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.external_add_btn_text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+}

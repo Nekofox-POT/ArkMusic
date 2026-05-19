@@ -9,3 +9,8 @@
 function set_all_songs(list) {
     files.contentWindow.postMessage({action: 'set_all_songs', arg1: list}, '*')
 }
+
+// 后端可调用：导入外部歌曲
+function set_external_songs(list) {
+    files.contentWindow.postMessage({action: 'set_external_songs', arg1: list}, '*')
+}

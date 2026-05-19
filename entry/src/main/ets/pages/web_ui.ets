@@ -231,7 +231,8 @@ export default struct web_ui {
 
     // 加载歌曲 //
     this.play_list = this.files_manager.all_songs_list
-    this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list)})`)
+    console.log(`[${this.files_manager.external_songs_list}]`)
+    this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list.concat(this.files_manager.external_songs_list))})`)
     this.lin_music_ui.runJavaScript(`set_external_songs(${JSON.stringify(this.files_manager.external_songs_list)})`)
 
   }
@@ -376,6 +377,10 @@ export default struct web_ui {
       set_play_list_with_all_songs: () => {
         this.play_list = this.files_manager.all_songs_list
       },
+      // 外部歌曲 列表添加 //
+      set_play_list_with_external_songs: () => {
+        this.play_list = this.files_manager.external_songs_list
+      },
       // 获取文件夹歌曲 //
       get_folder_songs: (path: string) => {
         const tmp = this.files_manager.get_dir(path)
@@ -450,13 +455,20 @@ export default struct web_ui {
           return Array.from(this.files_manager.genre_list.keys())
         }
       },
-      // 添加 卡外部歌曲
+      // 添加 外部歌曲
       get_external_song: async () => {
         // 添加
         await this.files_manager.get_external_song()
         // 加载
-        this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list)})`)
+        this.play_list = this.files_manager.external_songs_list
+        this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list.concat(this.files_manager.external_songs_list))})`)
         this.lin_music_ui.runJavaScript(`set_external_songs(${JSON.stringify(this.files_manager.external_songs_list)})`)
+      },
+      // 删除 外部歌曲
+      del_external_song: (index: number) => {
+        this.files_manager.del_external_song(index)
+        // 更新表
+        this.lin_music_ui.runJavaScript(`set_all_songs(${JSON.stringify(this.files_manager.all_songs_list.concat(this.files_manager.external_songs_list))})`)
       },
 
       /////////////////
@@ -506,7 +518,7 @@ export default struct web_ui {
       },
       // 重置软件 //
       reset_app: () => {
-        console.log('软件重置')
+        log('软件重置')
         this.global_config.reset_app()
       },
 
@@ -528,11 +540,12 @@ export default struct web_ui {
         'ready',
         'play', 'pause', 'last_song', 'next_song', 'seek', 'seek_song', 'toggle_like', 'set_play_mode',
         'set_vol', 'back_to_player', 'get_song_meta', 'get_meta_list_image', 'play_song',
-        'set_play_list_with_all_songs', 'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
+        'set_play_list_with_all_songs', 'set_play_list_with_external_songs',
+        'get_folder_songs', 'get_play_list_songs', 'get_like_songs',
         'get_artist_composer_list', 'get_album_list', 'get_album_artist_list', 'get_genre_list',
         'set_head_photo', 'toggle_taskbar', 'set_active_color', 'set_enable_active_color',
         'rescan_data', 'reset_app', 'enable_dsd_play',
-        'vib', 'delete_song', 'exchange_song', 'get_external_song',
+        'vib', 'delete_song', 'exchange_song', 'get_external_song', 'del_external_song',
         'save_data', 'load_data'
       ]
 
