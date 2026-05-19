@@ -1,7 +1,5 @@
-<div align="center">
-  <img src="entry/src/main/resources/base/media/icon_ping.png" width="192" style="border-radius: 25px;" />
-  <h1>铃音</h1>
-</div>
+![icon](entry/src/main/resources/base/media/icon_round.png)
+# 铃音
 
 基于 **HarmonyOS NEXT** 的本地音乐播放器。
 
