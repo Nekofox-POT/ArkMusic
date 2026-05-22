@@ -282,13 +282,15 @@ document.querySelectorAll('[data-action="add_external"]').forEach(btn => {
         ark.get_external_song()
     })
     btn.addEventListener('touchstart', () => {
-        btn.style.transform = 'translateX(-50%) scale(0.9)'
+        const hasTranslate = btn.classList.contains('external_add_btn')
+        btn.style.transform = hasTranslate ? 'translateX(-50%) scale(0.9)' : 'scale(0.9)'
         btn.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
         const span = btn.querySelector('.font_color')
         if (span) span.style.color = active_color
     })
     btn.addEventListener('touchend', () => {
-        btn.style.transform = 'translateX(-50%) scale(1)'
+        const hasTranslate = btn.classList.contains('external_add_btn')
+        btn.style.transform = hasTranslate ? 'translateX(-50%) scale(1)' : 'scale(1)'
         btn.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
         const span = btn.querySelector('.font_color')
         if (span) span.style.color = background_color
@@ -541,7 +543,6 @@ function load_list_options() {
             order.push(type)
         })
         let firstVisible = null
-        let activeItem = null
         order.forEach(type => {
             const item = choice_bar_scroll.querySelector(`.choice_bar_item[data-type="${type}"]`)
             if (!item) return
@@ -555,25 +556,21 @@ function load_list_options() {
             if (sep && sep.classList.contains('choice_bar_separator')) {
                 sep.style.display = map[type] ? '' : 'none'
             }
-            if (item.classList.contains('active')) activeItem = item
+            // 清除所有 hardcoded active
+            item.classList.remove('active')
+            const p = item.querySelector('p')
+            if (p) p.classList.remove('font_active_color')
             if (!firstVisible && map[type]) firstVisible = item
         })
         choice_bar_updateMaxTranslate()
-        // 若原 active 项被隐藏，则切换到第一个可见项
-        if (activeItem && !map[activeItem.dataset.type]) {
-            activeItem.classList.remove('active')
-            const p = activeItem.querySelector('p')
-            if (p) p.classList.remove('font_active_color')
-            activeItem = null
-        }
-        if (!activeItem && firstVisible) {
+        // 始终激活第一个可见项
+        if (firstVisible) {
             firstVisible.classList.add('active')
             const p = firstVisible.querySelector('p')
             if (p) {
                 p.classList.add('font_active_color')
                 p.style.color = active_color
             }
-            // 显示对应 frame、加载页面数据
             const type = firstVisible.dataset.type
             Object.keys(frame_map).forEach(key => {
                 if (frame_map[key]) {
