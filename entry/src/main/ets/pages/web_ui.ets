@@ -373,7 +373,7 @@ export default struct web_ui {
       /////////////
       // 所有歌曲 列表添加 //
       set_play_list_with_all_songs: () => {
-        this.play_list = this.files_manager.all_songs_list
+        this.play_list = this.files_manager.all_songs_list.concat(this.files_manager.external_songs_list)
       },
       // 外部歌曲 列表添加 //
       set_play_list_with_external_songs: () => {
