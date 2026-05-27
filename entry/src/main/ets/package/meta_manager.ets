@@ -6,7 +6,7 @@ import media from '@ohos.multimedia.media'
 import { image } from '@kit.ImageKit'
 import { picker, fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs, ListFileOptions } from '@kit.CoreFileKit'
-import nativeModule, { AudioMetadata, BatchAudioMetadata } from 'libentry.so'
+import nativeModule, { AudioMetadata, BatchAudioMetadata, DsdTask, DsdResult } from 'libentry.so'
 
 import { log } from './system_function'
 
@@ -156,6 +156,23 @@ export async function get_meta_batch(paths: string[]): Promise<Map<string, strin
   }
 
   return result_map
+}
+
+// 批量 DSD 转换（多线程并行）//
+export async function dsd_to_wav_batch(tasks: DsdTask[]): Promise<DsdResult[]> {
+
+  //
+  // 批量转换 DSD 文件为 WAV
+  // 返回 Array<{inputPath, success, error?}>
+  //
+
+  try {
+    return await nativeModule.dsdToWavBatch(tasks)
+  } catch (e) {
+    log(`dsd_to_wav_batch：批量 DSD 转换失败 ${e}`, 'error')
+    return []
+  }
+
 }
 
 // 元数据获取 //

@@ -6,6 +6,7 @@ export const getAudioMetadataBatch: (filePaths: string[]) => Promise<Array<Batch
 export const base64urlCode: (input: string, isEncode: boolean) => string
 export const sortStringArray: (arr: string[]) => string[]
 export const dsdToWav: (inputPath: string, outputPath: string) => Promise<void>
+export const dsdToWavBatch: (tasks: DsdTask[]) => Promise<DsdResult[]>
 
 export interface AudioMetadata {
   channels: number
@@ -37,4 +38,15 @@ export interface BatchAudioMetadata {
   album: string
   albumArtist: string
   genre: string
+}
+
+export interface DsdTask {
+  inputPath: string
+  outputPath: string
+}
+
+export interface DsdResult {
+  inputPath: string
+  success: boolean
+  error?: string
 }

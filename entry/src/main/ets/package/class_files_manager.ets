@@ -11,9 +11,9 @@ import emitter from '@ohos.events.emitter'
 import picker from '@ohos.file.picker'
 
 // 导入自创建模块 //
-import nativeModule from 'libentry.so'
+import nativeModule, { DsdTask } from 'libentry.so'
 import { log, notice as notice_down } from './system_function'
-import { get_meta_batch } from './meta_manager'
+import { get_meta_batch, dsd_to_wav_batch } from './meta_manager'
 import { array_to_json_save, load_json_to_array } from './array_save_load'
 
 // 导入类
@@ -156,32 +156,49 @@ export class class_files_manager {
     if (this.global_config?.dsd_support) {
       let tmp_dsd = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })
       const tmp_dsd_length = tmp_dsd.length
+
+      // 收集 DSD 路径和缓存路径
+      const dsd_paths: string[] = []
+      const convert_tasks: DsdTask[] = []
+
       for (let i = 0; i < tmp_dsd_length; i++) {
-
-        notice(`正在转换(${i}/${tmp_dsd_length}): ${tmp_dsd[i]}`)
-
-        // 获取ino号
         let tmp_dsd_path = song_path + '/' + tmp_dsd[i]
         let tmp_ino = `${fs.statSync(fs.openSync(tmp_dsd_path).fd).ino}`
+        let cached_path = audio_player_path + '/dsd_cache/' + tmp_ino + '.wav'
 
-        // 判断是否有已经转换好的文件（获取ino核对名称。）
-        let cached_path =audio_player_path + '/dsd_cache/' + tmp_ino + '.wav'
+        dsd_paths.push(tmp_dsd_path)
+
+        // 检查缓存是否存在
+        let is_cached = false
         try {
           fs.statSync(cached_path)
+          is_cached = true
         } catch {
-          // 没有缓存，使用ffmpeg转换
-          try {
-            await nativeModule.dsdToWav(tmp_dsd_path, cached_path)
-          } catch (e) {
-            log(`dsd转换失败: ${e}`, 'error')
-            continue
-          }
+          // 无缓存，加入批量转换队列
         }
 
-        // 添加到列表
-        this.all_songs_list.push(tmp_dsd_path)
-
+        if (!is_cached) {
+          convert_tasks.push({ inputPath: tmp_dsd_path, outputPath: cached_path })
+        }
       }
+
+      // 批量转换未缓存的 DSD 文件
+      if (convert_tasks.length > 0) {
+        notice(`正在批量转换 DSD (${convert_tasks.length} 个文件)...`)
+        const batch_results = await dsd_to_wav_batch(convert_tasks)
+
+        for (const res of batch_results) {
+          if (!res.success) {
+            log(`dsd转换失败: ${res.inputPath}`, 'error')
+          }
+        }
+      }
+
+      // 所有 DSD 文件添加到列表
+      for (const dsd_path of dsd_paths) {
+        this.all_songs_list.push(dsd_path)
+      }
+
     }
     // 扫描歌单(m3u) //
     log('扫描m3u列表')

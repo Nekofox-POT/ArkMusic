@@ -15,6 +15,11 @@ napi_value GetAudioMetadata(napi_env env, napi_callback_info info);
 // 返回: Promise<void>
 napi_value DsdToWav(napi_env env, napi_callback_info info);
 
+// 批量 DSD 文件转 WAV（多线程并行，异步）
+// 参数: Array<{inputPath: string, outputPath: string}>
+// 返回: Promise<Array<{inputPath: string, success: boolean}>>
+napi_value DsdToWavBatch(napi_env env, napi_callback_info info);
+
 // 批量获取音频元信息（多线程并行，异步）
 // 参数: 文件路径数组 (string[])
 // 返回: Promise<object[]>

@@ -26,6 +26,7 @@ package/ffmpeg_manager/get_meta_batch.cpp
 package/base64url_code/base64url_code.cpp
 package/sort_manager/sort_manager.cpp
 package/ffmpeg_manager/dsd_to_wav.cpp
+package/ffmpeg_manager/dsd_to_wav_batch.cpp
 )
 
 # 关键修改点：

@@ -5,6 +5,7 @@
 #include "package/extract_filename/extract_filename.h"
 #include "package/ffmpeg_manager/ffmpeg_manager.h"
 #include "package/ffmpeg_manager/get_meta_batch.h"
+#include "package/ffmpeg_manager/dsd_to_wav_batch.h"
 #include "package/base64url_code/base64url_code.h"
 #include "package/sort_manager/sort_manager.h"
 
@@ -233,7 +234,7 @@ static napi_value SortStringArray(napi_env env, napi_callback_info info) {
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
-        // 暴露八个函数给 ArkTS
+        // 暴露九个函数给 ArkTS
         {"encodeImageToBase64", nullptr, EncodeImageToBase64, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getImageAverageColor", nullptr, GetImageAverageColor, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"extractFilename", nullptr, ExtractFilename, nullptr, nullptr, nullptr, napi_default, nullptr},
@@ -241,6 +242,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"base64urlCode", nullptr, Base64UrlCode, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"sortStringArray", nullptr, SortStringArray, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"dsdToWav", nullptr, DsdToWav, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"dsdToWavBatch", nullptr, DsdToWavBatch, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getAudioMetadataBatch", nullptr, GetAudioMetadataBatch, nullptr, nullptr, nullptr, napi_default, nullptr}
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
