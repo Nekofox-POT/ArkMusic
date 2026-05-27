@@ -22,6 +22,7 @@ package/buffer_to_base64/buffer_to_base64.cpp
 package/image_color_calculate/image_color_calculate.cpp
 package/extract_filename/extract_filename.cpp
 package/ffmpeg_manager/get_meta.cpp
+package/ffmpeg_manager/get_meta_batch.cpp
 package/base64url_code/base64url_code.cpp
 package/sort_manager/sort_manager.cpp
 package/ffmpeg_manager/dsd_to_wav.cpp

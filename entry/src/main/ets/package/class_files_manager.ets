@@ -13,7 +13,7 @@ import picker from '@ohos.file.picker'
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
 import { log, notice as notice_down } from './system_function'
-import { get_meta } from './meta_manager'
+import { get_meta_batch } from './meta_manager'
 import { array_to_json_save, load_json_to_array } from './array_save_load'
 
 // 导入类
@@ -103,33 +103,55 @@ export class class_files_manager {
     log('扫描普通歌曲')
     let tmp_audio = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })
     const tmp_audio_length = tmp_audio.length
+
+    // 构建完整路径列表
+    const tmp_audio_paths: string[] = []
     for (let i = 0; i < tmp_audio_length; i++) {
+      tmp_audio_paths.push(song_path + '/' + tmp_audio[i])
+    }
 
-      notice(`正在处理(${i}/${tmp_audio_length}): ${tmp_audio[i]}`)
+    // 分批处理歌曲元数据
+    const BATCH_SIZE = 16
+    const batch_count = Math.ceil(tmp_audio_length / BATCH_SIZE)
 
-      // 建立路径缓存
-      let tmp_path = song_path + '/' + tmp_audio[i]
+    for (let b = 0; b < batch_count; b++) {
+      const start = b * BATCH_SIZE
+      const end = Math.min(start + BATCH_SIZE, tmp_audio_length)
+      const batch_paths = tmp_audio_paths.slice(start, end)
 
-      // 添加所有歌曲列
-      this.all_songs_list.push(tmp_path)
+      notice(`正在处理 (${start + 1}-${end}/${tmp_audio_length})`)
 
-      // 获取元数据
-      const tmp_meta = await get_meta(tmp_path)
-      // 分类 歌手 / 作曲家
-      if (!this.artist_composer_list.has(tmp_meta[1][1])) { this.artist_composer_list.set(tmp_meta[1][1], [])}
-      this.artist_composer_list.get(tmp_meta[1][1])?.push(tmp_path)
-      // 分类 专辑
-      if (!this.album_list.has(tmp_meta[1][2])) { this.album_list.set(tmp_meta[1][2], [])}
-      this.album_list.get(tmp_meta[1][2])?.push(tmp_path)
-      // 分类 专辑作家
-      if (!this.album_artist_list.has(tmp_meta[1][3])) { this.album_artist_list.set(tmp_meta[1][3], [])}
-      this.album_artist_list.get(tmp_meta[1][3])?.push(tmp_path)
-      // 分类 流派
-      if (!this.genre_list.has(tmp_meta[1][4])) { this.genre_list.set(tmp_meta[1][4], [])}
-      this.genre_list.get(tmp_meta[1][4])?.push(tmp_path)
+      // 批量获取元数据（C++ 多线程并行）
+      const batch_meta_map = await get_meta_batch(batch_paths)
+
+      // 处理批量结果
+      for (let i = start; i < end; i++) {
+        const tmp_path = tmp_audio_paths[i]
+        const tmp_meta = batch_meta_map.get(tmp_path)
+
+        if (!tmp_meta) {
+          log(`跳过无效元数据: ${tmp_path}`, 'error')
+          continue
+        }
+
+        // 添加所有歌曲列
+        this.all_songs_list.push(tmp_path)
+
+        // 分类 歌手 / 作曲家
+        if (!this.artist_composer_list.has(tmp_meta[1][1])) { this.artist_composer_list.set(tmp_meta[1][1], [])}
+        this.artist_composer_list.get(tmp_meta[1][1])?.push(tmp_path)
+        // 分类 专辑
+        if (!this.album_list.has(tmp_meta[1][2])) { this.album_list.set(tmp_meta[1][2], [])}
+        this.album_list.get(tmp_meta[1][2])?.push(tmp_path)
+        // 分类 专辑作家
+        if (!this.album_artist_list.has(tmp_meta[1][3])) { this.album_artist_list.set(tmp_meta[1][3], [])}
+        this.album_artist_list.get(tmp_meta[1][3])?.push(tmp_path)
+        // 分类 流派
+        if (!this.genre_list.has(tmp_meta[1][4])) { this.genre_list.set(tmp_meta[1][4], [])}
+        this.genre_list.get(tmp_meta[1][4])?.push(tmp_path)
+      }
 
     }
-    // 扫描歌曲(dsd) //
     log('扫描dsd')
     if (this.global_config?.dsd_support) {
       let tmp_dsd = fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })

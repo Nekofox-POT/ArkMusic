@@ -6,7 +6,7 @@ import media from '@ohos.multimedia.media'
 import { image } from '@kit.ImageKit'
 import { picker, fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs, ListFileOptions } from '@kit.CoreFileKit'
-import nativeModule from 'libentry.so'
+import nativeModule, { AudioMetadata, BatchAudioMetadata } from 'libentry.so'
 
 import { log } from './system_function'
 
@@ -87,6 +87,75 @@ export async function check_meta_image(path: string): Promise<boolean> {
     return false
   }
 
+}
+
+// 批量元数据获取（多线程并行）//
+export async function get_meta_batch(paths: string[]): Promise<Map<string, string[][]>> {
+
+  //
+  // 批量获取音频元数据
+  // 返回 Map<路径, [基础数据, 制作数据]>
+  //
+
+  const result_map = new Map<string, string[][]>()
+
+  try {
+    const batch_results: BatchAudioMetadata[] = await nativeModule.getAudioMetadataBatch(paths)
+
+    for (const item of batch_results) {
+      const file_path = item['filePath'] as string
+      const success = item['success'] as boolean
+
+      if (!success || !file_path) {
+        continue
+      }
+
+      const file_name = nativeModule.extractFilename(file_path)
+      const file_type = file_path.substring(file_path.lastIndexOf('.') + 1).toLowerCase()
+      const channels = item['channels'] as number
+      const sample_rate = (item['sampleRate'] as number) / 1000
+      const bit_depth = fix_bit_depth(file_type, item['bitDepth'] as number)
+      const bit_rate = ((item['bitrate'] as number) / 1000).toFixed(1)
+      const duration = translate_second(item['duration'] as number)
+
+      let title = file_name
+      let artist = '未知歌手'
+      let album = '未知专辑'
+      let album_artist = '未知专辑作家'
+      let genre = '未知流派'
+
+      const meta_title = item['title'] as string
+      if (meta_title) {
+        title = meta_title
+        const meta_artist = item['artist'] as string
+        if (meta_artist) {
+          artist = meta_artist
+        } else {
+          const meta_composer = item['composer'] as string
+          if (meta_composer) {
+            artist = meta_composer
+          }
+        }
+      }
+      const meta_album = item['album'] as string
+      if (meta_album) { album = meta_album }
+      const meta_album_artist = item['albumArtist'] as string
+      if (meta_album_artist) { album_artist = meta_album_artist }
+      const meta_genre = item['genre'] as string
+      if (meta_genre) { genre = meta_genre }
+
+      result_map.set(file_path, [[
+        file_name, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, duration
+      ], [
+        title, artist, album, album_artist, genre
+      ]])
+    }
+
+  } catch (e) {
+    log(`get_meta_batch：批量元数据获取失败 ${e}`, 'error')
+  }
+
+  return result_map
 }
 
 // 元数据获取 //
