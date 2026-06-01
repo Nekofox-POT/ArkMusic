@@ -9,6 +9,15 @@ function set_all_songs(list) {
     const slide = document.querySelector('#all_song_frame .slide')
     slide.innerHTML = ''
 
+    // 空状态：重置并检查
+    show_frame_empty('all_song_frame', false)
+
+    if (list.length === 0) {
+        show_frame_empty('all_song_frame', true)
+        set_background_color()
+        return
+    }
+
     // 停止之前的观察器和滚动监听
     if (all_songs_imageObserver) {
         all_songs_imageObserver.disconnect()

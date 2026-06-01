@@ -159,6 +159,39 @@ function files_detail_active_close() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 空状态显示 //
+///////////////
+
+function show_frame_empty(frameId, isEmpty) {
+    const frame = document.getElementById(frameId)
+    if (!frame) return
+
+    // 移除旧指示器
+    const old = frame.querySelector('.frame_empty_text')
+    if (old) old.remove()
+
+    const slideFrame = frame.querySelector('.slide_frame')
+
+    if (isEmpty) {
+        if (slideFrame) slideFrame.style.display = 'none'
+
+        const p = document.createElement('p')
+        p.className = 'font_color frame_empty_text'
+        p.style.cssText = `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:200;margin:0;font-size:0.85rem;font-weight:600;white-space:pre-line;color:${background_color};`
+
+        if (frameId === 'all_song_frame' || frameId === 'folder_frame' || frameId === 'external_song_frame') {
+            p.textContent = '空'
+        } else {
+            p.textContent = '暂无歌曲，请检查Download是否有歌曲存在\n(外部导入的歌曲暂不支持分类操作)'
+        }
+
+        frame.appendChild(p)
+    } else {
+        if (slideFrame) slideFrame.style.display = ''
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 菜单回滚 //
 ////////////
 function router_back() {

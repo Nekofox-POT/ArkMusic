@@ -248,6 +248,15 @@ function set_external_songs(list) {
     const slide = document.querySelector('#external_song_frame .slide')
     slide.innerHTML = ''
 
+    // 空状态：重置并检查
+    show_frame_empty('external_song_frame', false)
+
+    if (list.length === 0) {
+        show_frame_empty('external_song_frame', true)
+        set_background_color()
+        return
+    }
+
     // 注册滑动删除监听（仅一次）
     ext_setupSwipeListeners()
 

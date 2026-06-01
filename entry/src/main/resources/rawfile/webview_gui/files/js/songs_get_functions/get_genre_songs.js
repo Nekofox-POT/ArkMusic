@@ -369,6 +369,9 @@ async function get_genre_list(name) {
 
     slide.innerHTML = ''
 
+    // 空状态：重置
+    show_frame_empty('genre_frame', false)
+
     if (genre_imageObserver) {
         genre_imageObserver.disconnect()
     }
@@ -379,10 +382,17 @@ async function get_genre_list(name) {
     container.removeEventListener('scroll', genre_handle_scroll)
     container.removeEventListener('scroll', genre_list_handle_scroll)
 
+    const data = ark.get_genre_list(name)
+
+    // 空状态：检查
+    if (data.length === 0) {
+        show_frame_empty('genre_frame', true)
+        set_background_color()
+        return
+    }
+
     genre_init_image_observer()
     genre_list_init_image_observer()
-
-    const data = ark.get_genre_list(name)
 
     if (!name) {
         genre_list_batchState = {

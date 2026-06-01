@@ -244,6 +244,9 @@ async function get_favorite_songs() {
     const slide = document.querySelector('#favorite_frame .slide')
     slide.innerHTML = ''
 
+    // 空状态：重置
+    show_frame_empty('favorite_frame', false)
+
     // 停止之前的观察器和滚动监听
     if (favorite_imageObserver) {
         favorite_imageObserver.disconnect()
@@ -252,11 +255,18 @@ async function get_favorite_songs() {
     const container = document.querySelector('#favorite_frame')
     container.removeEventListener('scroll', favorite_handle_scroll)
 
-    // 初始化观察器
-    favorite_init_image_observer()
-
     // 获取喜欢的歌曲路径列表
     const songsList = ark.get_like_songs()
+
+    // 空状态：检查
+    if (songsList.length === 0) {
+        show_frame_empty('favorite_frame', true)
+        set_background_color()
+        return
+    }
+
+    // 初始化观察器
+    favorite_init_image_observer()
 
     // 重置分批渲染状态
     favorite_batchState = {

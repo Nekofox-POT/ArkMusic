@@ -210,18 +210,28 @@ async function get_folder_songs(path = '') {
     const slide = document.querySelector('#folder_frame .slide')
     slide.innerHTML = ''
 
+    // 空状态：重置
+    show_frame_empty('folder_frame', false)
+
     // 停止之前观察器
     if (folder_imageObserver) {
         folder_imageObserver.disconnect()
     }
 
-    // 初始化观察器
-    folder_init_image_observer()
-
     // 获取数据 [文件夹列表, 歌曲路径列表]
     const data = ark.get_folder_songs(path)
     const folderList = data[0]  // 文件夹名称数组
     const songsList = data[1]   // 歌曲路径数组
+
+    // 空状态：检查
+    if (folderList.length === 0 && songsList.length === 0) {
+        show_frame_empty('folder_frame', true)
+        set_background_color()
+        return
+    }
+
+    // 初始化观察器
+    folder_init_image_observer()
 
     // 使用 DocumentFragment 减少DOM重绘
     const fragment = document.createDocumentFragment()

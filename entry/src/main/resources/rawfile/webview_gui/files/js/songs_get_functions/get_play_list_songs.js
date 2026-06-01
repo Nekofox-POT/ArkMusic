@@ -271,6 +271,9 @@ async function get_play_list_songs(name) {
     const slide = document.querySelector('#playlist_frame .slide')
     slide.innerHTML = ''
 
+    // 空状态：重置
+    show_frame_empty('playlist_frame', false)
+
     // 停止之前的观察器和滚动监听
     if (playlist_imageObserver) {
         playlist_imageObserver.disconnect()
@@ -279,11 +282,18 @@ async function get_play_list_songs(name) {
     const container = document.querySelector('#playlist_frame')
     container.removeEventListener('scroll', playlist_handle_scroll)
 
-    // 初始化观察器
-    playlist_init_image_observer()
-
     // 获取数据
     const data = ark.get_play_list_songs(name)
+
+    // 空状态：检查
+    if (data.length === 0) {
+        show_frame_empty('playlist_frame', true)
+        set_background_color()
+        return
+    }
+
+    // 初始化观察器
+    playlist_init_image_observer()
 
     // 使用 DocumentFragment 减少DOM重绘
     const fragment = document.createDocumentFragment()

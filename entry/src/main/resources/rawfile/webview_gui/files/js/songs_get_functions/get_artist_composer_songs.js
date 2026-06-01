@@ -395,6 +395,9 @@ async function get_artist_composer_list(name) {
 
     slide.innerHTML = ''
 
+    // 空状态：重置
+    show_frame_empty('artist_composer_frame', false)
+
     // 停止之前的观察器和滚动监听
     if (artist_imageObserver) {
         artist_imageObserver.disconnect()
@@ -406,12 +409,19 @@ async function get_artist_composer_list(name) {
     container.removeEventListener('scroll', artist_handle_scroll)
     container.removeEventListener('scroll', artist_list_handle_scroll)
 
+    // 获取数据
+    const data = ark.get_artist_composer_list(name)
+
+    // 空状态：检查
+    if (data.length === 0) {
+        show_frame_empty('artist_composer_frame', true)
+        set_background_color()
+        return
+    }
+
     // 初始化观察器
     artist_init_image_observer()
     artist_list_init_image_observer()
-
-    // 获取数据
-    const data = ark.get_artist_composer_list(name)
 
     if (!name) {
         // 歌手列表模式：分批渲染

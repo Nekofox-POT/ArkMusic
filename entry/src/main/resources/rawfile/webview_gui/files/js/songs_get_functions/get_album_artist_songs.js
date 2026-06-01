@@ -369,6 +369,9 @@ async function get_album_artist_list(name) {
 
     slide.innerHTML = ''
 
+    // 空状态：重置
+    show_frame_empty('album_artist_frame', false)
+
     if (album_artist_imageObserver) {
         album_artist_imageObserver.disconnect()
     }
@@ -379,10 +382,17 @@ async function get_album_artist_list(name) {
     container.removeEventListener('scroll', album_artist_handle_scroll)
     container.removeEventListener('scroll', album_artist_list_handle_scroll)
 
+    const data = ark.get_album_artist_list(name)
+
+    // 空状态：检查
+    if (data.length === 0) {
+        show_frame_empty('album_artist_frame', true)
+        set_background_color()
+        return
+    }
+
     album_artist_init_image_observer()
     album_artist_list_init_image_observer()
-
-    const data = ark.get_album_artist_list(name)
 
     if (!name) {
         album_artist_list_batchState = {
