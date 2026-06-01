@@ -9,6 +9,7 @@ function set_vol(value = null) {
         vol_range.value = value
     }
     vol_range_show.style.left = `${(vol_range.value / vol_range.max * 150) - 150}px`
+    vol_value.textContent = vol_range.value
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

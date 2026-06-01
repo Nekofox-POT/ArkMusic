@@ -1,0 +1,258 @@
+/* 睡眠定时器图标 */
+.sleep_timer_icon {
+
+    width: 40px;
+    height: 40px;
+    border-radius: 40px;
+
+    position: absolute;
+    top: 40px;
+    right: 0;
+
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    z-index: 100;
+
+}
+.sleep_timer_icon svg {
+
+    width: 20px;
+    height: 20px;
+
+}
+
+/* 遮罩 */
+.sleep_timer_overlay {
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+
+    backdrop-filter: blur(0px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+
+    transition: backdrop-filter 0.3s ease,
+                opacity 0.3s ease;
+
+}
+.sleep_timer_overlay.active {
+
+    backdrop-filter: blur(20px);
+    pointer-events: auto;
+    opacity: 1;
+
+}
+
+/* 面板 */
+.sleep_timer_panel {
+
+    width: 280px;
+    padding: 30px 25px;
+    border-radius: 25px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    transform: scale(0.85);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.sleep_timer_overlay.active .sleep_timer_panel {
+    transform: scale(1);
+}
+
+/* 时间调节区 */
+.sleep_timer_time {
+
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+
+}
+
+/* 时/分列（单元 + 标签） */
+.sleep_timer_time_col {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+
+}
+
+/* 小时/分钟单元 */
+.sleep_timer_time_unit {
+
+    width: 80px;
+    height: 200px;
+    border-radius: 18px;
+
+    overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
+
+    /* 滚动效果遮罩 */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+
+}
+
+/* 三数字滚动列 */
+.sleep_timer_scroll_column {
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    height: 100%;
+
+}
+/* 拖动时禁用 transition，让数字紧跟手指 */
+.sleep_timer_scroll_column.dragging .sleep_timer_value,
+.sleep_timer_scroll_column.dragging .sleep_timer_value_prev,
+.sleep_timer_scroll_column.dragging .sleep_timer_value_next {
+    transition: none;
+}
+
+/* 中间主数值 */
+.sleep_timer_value,
+.sleep_timer_value_prev,
+.sleep_timer_value_next {
+
+    margin: 0;
+    font-size: 3rem;
+    font-weight: 750;
+    line-height: 1;
+    flex-shrink: 0;
+
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+                opacity 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+
+/* 标签 */
+.sleep_timer_label {
+
+    margin: 0;
+    font-size: 0.7rem;
+    font-weight: 600;
+    opacity: 0.5;
+    flex-shrink: 0;
+
+}
+
+/* 冒号 */
+.sleep_timer_colon {
+
+    margin: 0 0 18px 0;
+    font-size: 2.4rem;
+    font-weight: 750;
+    align-self: center;
+
+}
+
+/* 按钮区 */
+.sleep_timer_buttons {
+
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+
+}
+
+/* 按钮 */
+.sleep_timer_btn {
+
+    flex: 1;
+    height: 42px;
+    border-radius: 21px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.sleep_timer_btn p {
+
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 650;
+
+}
+
+/* 勾选项 */
+.sleep_timer_checkbox {
+
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+}
+.sleep_timer_checkbox p {
+
+    margin: 0;
+    font-size: 0.7rem;
+
+}
+
+/* 拨动开关 */
+.sleep_timer_toggle {
+
+    width: 52px;
+    height: 28px;
+    border-radius: 14px;
+    position: relative;
+    flex-shrink: 0;
+
+    background-color: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.15),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.3s ease;
+
+}
+.sleep_timer_toggle_knob {
+
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+
+    transition: left 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+.sleep_timer_toggle.on .sleep_timer_toggle_knob {
+    left: 26px;
+}

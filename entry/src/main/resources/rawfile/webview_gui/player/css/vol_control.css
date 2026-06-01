@@ -7,15 +7,12 @@
     
     position: absolute;
     top: 40px;
-    right: 0;
+    right: 50px;
 
     overflow: hidden;
 
     transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
-}
-.vol_control.active {
-    transform: scale(0.95);
 }
 .vol_control.focus {
     width: 150px;
@@ -84,6 +81,22 @@
     border-radius: 40px;
 
     transform: left 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+}
+
+/* 音量数值 */
+#vol_value {
+
+    position: absolute;
+    top: 50%;
+    left: 40%;
+    transform: translate(-50%, -50%);
+
+    margin: 0;
+    font-size: 15px;
+    font-weight: bold;
+
+    z-index: 760;
 
 }
 

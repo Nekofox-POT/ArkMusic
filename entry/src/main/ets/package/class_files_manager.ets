@@ -55,6 +55,7 @@ export class class_files_manager {
 
   // 共享变量池 //
   is_working: boolean = false
+  is_scanning: boolean = false
   all_songs_list: string[] = []
   external_songs_list: string[] = []
   play_list = new Map<string, string[]>()
@@ -82,10 +83,20 @@ export class class_files_manager {
     this.album_list = new Map<string, string[]>()
     this.album_artist_list = new Map<string, string[]>()
     this.genre_list = new Map<string, string[]>()
+    this.make_songs_cache()
   }
 
   // 建立歌曲缓存 //
   async make_songs_cache() {
+
+    // 防重入：如果正在扫描中则直接忽略
+    if (this.is_scanning) {
+      log('make_songs_cache 已在运行中，忽略重复调用', 'warn')
+      return
+    }
+    this.is_scanning = true
+
+    try {
 
     // 初始化数据库
     log('初始化数据库...')
@@ -337,8 +348,11 @@ export class class_files_manager {
       array_to_json_save(this.play_list.get(i) ?? [], files_manager_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
     }
     log('保存完毕！')
-    notice('完成！')
+    notice_down('扫描完成！')
 
+    } finally {
+      this.is_scanning = false
+    }
   }
 
   // 载入列表 //

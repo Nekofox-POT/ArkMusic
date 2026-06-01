@@ -43,6 +43,8 @@ export class class_audio_player {
   private like_list: string[] = []    // 喜欢列表
   like_list_path: string[] = [] // 喜欢列表（路径备份）
   private dsd_list = new Map<string, string>
+  timed: number = 0   // 目标时间
+  is_timed: boolean = false // 是否开启定时
 
   // 类 //
   global_config: class_global_config | null = null
@@ -504,6 +506,26 @@ export class class_audio_player {
     this.play_data_save()
     // 销毁av_player
     this.av_player.drop_it()
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 新加的定时 //
+  /////////////
+
+  // 设置定时 //
+  start_timing() {
+    // 定时设置成目标时间
+    // 通过对比现在时间来判定
+  }
+
+  // 取消定时 //
+  end_timing() {
+    this.is_timed = false
+  }
+
+  // 获取当前时间 //
+  get_timing(): number {
+    return this.timed
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

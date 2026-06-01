@@ -64,6 +64,11 @@ function set_background_image(base64) {
 // 返回手势 //
 ////////////
 function back_gesture() {
+    // 优先关闭睡眠定时器遮罩
+    if (sleep_timer_overlay.classList.contains('active')) {
+        sleep_timer_overlay.classList.remove('active')
+        return ''
+    }
     // 如果在页面2则转发手势
     if (page_backup === 2) {
         files.contentWindow.postMessage({action: 'back_gesture'}, '*')

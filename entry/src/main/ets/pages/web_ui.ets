@@ -512,7 +512,7 @@ export default struct web_ui {
         this.lin_music_player.pause()
         this.lin_music_player.drop_it()
         this.files_manager.reset_song_data()
-        this.start_ui = false
+        // this.start_ui = false
       },
       // 重置软件 //
       reset_app: () => {
@@ -520,14 +520,17 @@ export default struct web_ui {
         this.global_config.reset_app()
       },
 
-      // 保存web_ui的配置文件
+      // 保存web_ui的配置文件 //
       save_data: (name: string, data: string[]) => {
         return array_to_json_save(data, web_ui_path + '/' + name + '.json')
       },
-      // 打开web_ui的配置文件
+      // 打开web_ui的配置文件 //
       load_data: (name: string) => {
         return load_json_to_array(web_ui_path + '/' + name + '.json')
       },
+
+      // 定时部分 //
+
 
     },
       /////////////
