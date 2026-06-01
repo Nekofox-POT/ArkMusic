@@ -2,8 +2,8 @@
   "app": {
     "bundleName": "com.nekofox.linmusic",
     "vendor": "$string:app_maker",
-    "versionCode": 70,
-    "versionName": "0.7.0",
+    "versionCode": 71,
+    "versionName": "0.7.1",
     "icon": "$media:layered_image",
     "label": "$string:app_name"
   }

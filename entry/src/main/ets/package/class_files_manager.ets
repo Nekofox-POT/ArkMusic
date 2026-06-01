@@ -83,7 +83,7 @@ export class class_files_manager {
     this.album_list = new Map<string, string[]>()
     this.album_artist_list = new Map<string, string[]>()
     this.genre_list = new Map<string, string[]>()
-    this.make_songs_cache()
+    // this.make_songs_cache()
   }
 
   // 建立歌曲缓存 //

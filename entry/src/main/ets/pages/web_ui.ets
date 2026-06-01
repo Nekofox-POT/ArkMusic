@@ -517,7 +517,7 @@ export default struct web_ui {
         this.lin_music_player.pause()
         this.lin_music_player.drop_it()
         this.files_manager.reset_song_data()
-        // this.start_ui = false
+        this.start_ui = false
       },
       // 重置软件 //
       reset_app: () => {
