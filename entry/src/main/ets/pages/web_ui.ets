@@ -111,6 +111,7 @@ export default struct web_ui {
     emitter.off(716)
     emitter.off(717)
     emitter.off(718)
+    emitter.off(719)
     emitter.off(912)
   }
 
@@ -163,6 +164,10 @@ export default struct web_ui {
     // 播放列表监听 //
     emitter.on({eventId: 718}, (eventData: emitter.EventData) => {
       this.lin_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.list)}, ${eventData.data?.index})`)
+    })
+    // 定时状态监听 //
+    emitter.on({eventId: 719}, (eventData: emitter.EventData) => {
+      this.lin_music_ui.runJavaScript(`set_sleep_timer_status(${eventData.data?.is_timed}, ${eventData.data?.timed}, ${eventData.data?.wait_end})`)
     })
     // 返回手势监听 //
     emitter.on({eventId: 912}, async () => {
@@ -530,6 +535,18 @@ export default struct web_ui {
       },
 
       // 定时部分 //
+      // 开始睡眠定时
+      start_sleep_timer: (hours: number, minutes: number, waitEnd: boolean) => {
+        this.lin_music_player.start_timing(hours, minutes, waitEnd)
+      },
+      // 取消睡眠定时
+      cancel_sleep_timer: () => {
+        this.lin_music_player.end_timing()
+      },
+      // 获取定时信息
+      get_sleep_timer: (): [number, number, number, boolean] => {
+        return this.lin_music_player.get_timing()
+      },
 
 
     },
@@ -547,7 +564,8 @@ export default struct web_ui {
         'set_head_photo', 'toggle_taskbar', 'set_active_color', 'set_enable_active_color',
         'rescan_data', 'reset_app', 'enable_dsd_play',
         'vib', 'delete_song', 'exchange_song', 'get_external_song', 'del_external_song',
-        'save_data', 'load_data'
+        'save_data', 'load_data',
+        'start_sleep_timer', 'cancel_sleep_timer', 'get_sleep_timer'
       ]
 
     )} catch (e) {console.error(`注册webview时出现了错误: ${e}.`)}

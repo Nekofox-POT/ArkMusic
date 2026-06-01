@@ -43,8 +43,10 @@ export class class_audio_player {
   private like_list: string[] = []    // 喜欢列表
   like_list_path: string[] = [] // 喜欢列表（路径备份）
   private dsd_list = new Map<string, string>
-  timed: number = 0   // 目标时间
+  timed: number = 0   // 目标时间戳（毫秒）
   is_timed: boolean = false // 是否开启定时
+  private wait_end: boolean = false // 是否等待当前歌曲播放完再停止
+  private timer_interval: number = -1 // 定时器轮询ID
 
   // 类 //
   global_config: class_global_config | null = null
@@ -153,6 +155,13 @@ export class class_audio_player {
         this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
       } else if (status == 'complete') {
         this.session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
+        // 定时检查：等待播放完再停止
+        if (this.is_timed && this.wait_end) {
+          this.pause()
+          this.end_timing()
+          notice('当前歌曲播放完毕，睡眠定时结束。')
+          return
+        }
         // 如果不是末尾，那就下一首
         if ((this.play_list_index >= this.play_list.length - 1) && (this.play_mode === 2)) {
           notice('最后一首播放完了哦！ξ( ✿＞◡❛)')
@@ -170,6 +179,13 @@ export class class_audio_player {
     }
     // 播放进度更新 //
     const current_time_update = (current: number) => {
+      // 定时检查（非等待播放完模式）
+      if (this.is_timed && !this.wait_end && Date.now() >= this.timed) {
+        this.pause()
+        this.end_timing()
+        notice('睡眠定时结束，已暂停播放。')
+        return
+      }
       // 广播 //
       emitter.emit({ eventId: 716 }, { data: { current_time: current } })
       // 更新时长 //
@@ -504,6 +520,8 @@ export class class_audio_player {
   drop_it() {
     // 保存数据
     this.play_data_save()
+    // 清除定时器
+    this.clear_timer_interval()
     // 销毁av_player
     this.av_player.drop_it()
   }
@@ -513,19 +531,88 @@ export class class_audio_player {
   /////////////
 
   // 设置定时 //
-  start_timing() {
-    // 定时设置成目标时间
-    // 通过对比现在时间来判定
+  start_timing(hours: number, minutes: number, waitEnd: boolean) {
+    // 先清除旧定时器
+    this.clear_timer_interval()
+    const now = Date.now()
+    this.timed = now + (hours * 60 + minutes) * 60 * 1000
+    this.wait_end = waitEnd
+    this.is_timed = true
+    const totalSeconds = hours * 3600 + minutes * 60
+    if (totalSeconds <= 0) {
+      // 时间为 0 则立即停止
+      this.pause()
+      this.end_timing()
+      notice('睡眠定时结束，已暂停播放。')
+      return
+    }
+    if (waitEnd) {
+      notice(`睡眠定时已开启，将在当前歌曲播放完毕后停止。`)
+    } else {
+      const h = Math.floor(totalSeconds / 3600)
+      const m = Math.floor((totalSeconds % 3600) / 60)
+      if (h > 0) {
+        notice(`睡眠定时已开启：${h} 小时 ${m} 分钟后停止。`)
+      } else {
+        notice(`睡眠定时已开启：${m} 分钟后停止。`)
+      }
+      // 启动独立轮询定时器（不依赖播放回调，暂停时也能到点触发）
+      this.timer_interval = setInterval(() => {
+        if (!this.is_timed || this.wait_end) {
+          this.clear_timer_interval()
+          return
+        }
+        if (Date.now() >= this.timed) {
+          this.pause()
+          this.end_timing()
+          notice('睡眠定时结束，已暂停播放。')
+        }
+      }, 1000)
+    }
+    // 广播定时状态到前端
+    emitter.emit({ eventId: 719 }, { data: {
+      timed: this.timed,
+      is_timed: this.is_timed,
+      wait_end: this.wait_end
+    } })
+  }
+
+  // 清除轮询定时器 //
+  private clear_timer_interval() {
+    if (this.timer_interval !== -1) {
+      clearInterval(this.timer_interval)
+      this.timer_interval = -1
+    }
   }
 
   // 取消定时 //
   end_timing() {
+    if (this.is_timed) {
+      notice('睡眠定时已取消。')
+    }
     this.is_timed = false
+    this.wait_end = false
+    this.timed = 0
+    this.clear_timer_interval()
+    // 广播定时状态到前端
+    emitter.emit({ eventId: 719 }, { data: {
+      timed: 0,
+      is_timed: false,
+      wait_end: false
+    } })
   }
 
-  // 获取当前时间 //
-  get_timing(): number {
-    return this.timed
+  // 获取当前定时信息 //
+  get_timing(): [number, number, number, boolean] {
+    if (!this.is_timed) {
+      return [0, 0, 0, false]
+    }
+    const remaining = Math.max(0, this.timed - Date.now())
+    const totalSeconds = Math.floor(remaining / 1000)
+    const hours = Math.floor(totalSeconds / 3600)
+    const minutes = Math.floor((totalSeconds % 3600) / 60)
+    const seconds = totalSeconds % 60
+    return [hours, minutes, seconds, this.wait_end]
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

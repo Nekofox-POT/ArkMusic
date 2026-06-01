@@ -133,6 +133,10 @@ play_disorder_button.addEventListener("touchend", () => {
 // 睡眠定时器 //
 //////////////
 
+// 定时状态
+let sleep_timer_is_active = false
+let sleep_timer_wait_end = false
+
 // 打开/关闭遮罩
 sleep_timer_icon.addEventListener("touchstart", () => {
     sleep_timer_icon.style.transform = 'scale(0.9)'
@@ -144,6 +148,27 @@ sleep_timer_icon.addEventListener("touchend", () => {
 })
 sleep_timer_icon.addEventListener("click", () => {
     sleep_timer_overlay.classList.add('active')
+    // 同步定时状态
+    if (sleep_timer_is_active) {
+        // 如果正在定时，从后端取剩余时间
+        const info = ark.get_sleep_timer()
+        if (info && info.length >= 4 && info[0] + info[1] + info[2] > 0) {
+            timer_hours = info[0]
+            timer_minutes = info[1]
+            update_hours_text()
+            update_minutes_text()
+        }
+        // 恢复拨动开关状态
+        if (info && info[3]) {
+            sleep_timer_toggle.classList.add('on')
+            sleep_timer_toggle.classList.add('box_active_color')
+            sleep_timer_toggle.style.backgroundColor = active_color
+        } else {
+            sleep_timer_toggle.classList.remove('on')
+            sleep_timer_toggle.classList.remove('box_active_color')
+            sleep_timer_toggle.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
+        }
+    }
     // 初始化数字的静止态样式
     set_rest_scales(sleep_timer_hours_prev, sleep_timer_hours, sleep_timer_hours_next)
     set_rest_scales(sleep_timer_minutes_prev, sleep_timer_minutes, sleep_timer_minutes_next)
@@ -153,11 +178,28 @@ sleep_timer_overlay.addEventListener("click", (e) => {
         sleep_timer_overlay.classList.remove('active')
     }
 })
+
+// 开始计时按钮
+sleep_timer_start.addEventListener("touchstart", () => {
+    sleep_timer_start.style.transform = 'scale(0.9)'
+})
+sleep_timer_start.addEventListener("touchend", () => {
+    sleep_timer_start.style.transform = 'scale(1)'
+    const waitEnd = sleep_timer_toggle.classList.contains('on')
+    ark.start_sleep_timer(timer_hours, timer_minutes, waitEnd)
+    sleep_timer_overlay.classList.remove('active')
+})
+
+// 取消按钮
 sleep_timer_cancel.addEventListener("touchstart", () => {
     sleep_timer_cancel.style.transform = 'scale(0.9)'
 })
 sleep_timer_cancel.addEventListener("touchend", () => {
     sleep_timer_cancel.style.transform = 'scale(1)'
+    // 如果正在定时则取消
+    if (sleep_timer_is_active) {
+        ark.cancel_sleep_timer()
+    }
     sleep_timer_overlay.classList.remove('active')
 })
 

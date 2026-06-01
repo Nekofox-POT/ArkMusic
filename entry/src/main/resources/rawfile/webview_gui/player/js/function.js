@@ -149,3 +149,24 @@ function set_meta_img_rotate_pause() {
         }
     }, transitionTime * 1000)
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 睡眠定时状态同步 //
+/////////////////////
+function set_sleep_timer_status(is_timed, timed, wait_end) {
+    sleep_timer_is_active = is_timed
+    sleep_timer_wait_end = wait_end
+    if (is_timed) {
+        // 定时中：图标显示激活色
+        sleep_timer_icon.querySelectorAll('.svg_color').forEach(tmp => {
+            tmp.style.fill = active_color
+            tmp.classList.add('svg_active_color')
+        })
+    } else {
+        // 未定时：图标恢复默认色
+        sleep_timer_icon.querySelectorAll('.svg_color').forEach(tmp => {
+            tmp.style.fill = background_color
+            tmp.classList.remove('svg_active_color')
+        })
+    }
+}
