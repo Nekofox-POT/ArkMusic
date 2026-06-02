@@ -13,6 +13,10 @@ export const seek: (time_ms: number) => void
 export const get_current_time: () => number
 export const register_time_callback: (callback: (time_ms: number) => void) => void
 export const set_start_ready: (ready: boolean) => void
+export const get_start_ready: () => boolean
+export const register_ready_callback: (callback: () => void) => void
+export const register_status_callback: (callback: (status: string) => void) => void
+export const get_status: () => string
 
 // EQ/PEQ
 export const switch_eq: () => number

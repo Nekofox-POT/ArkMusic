@@ -38,6 +38,22 @@ napi_value register_time_callback(napi_env env, napi_callback_info info);
 // 参数: boolean
 napi_value set_start_ready(napi_env env, napi_callback_info info);
 
+// 获取 start_ready
+// 返回: boolean
+napi_value get_start_ready(napi_env env, napi_callback_info info);
+
+// 注册准备就绪回调
+// 参数: 回调函数 (function)，无参数
+napi_value register_ready_callback(napi_env env, napi_callback_info info);
+
+// 注册播放状态回调
+// 参数: 回调函数 (function)，回调参数为状态字符串 ("playing" / "pause" / "complete")
+napi_value register_status_callback(napi_env env, napi_callback_info info);
+
+// 主动获取当前播放状态
+// 返回: 状态字符串 ("playing" / "pause" / "complete")
+napi_value get_status(napi_env env, napi_callback_info info);
+
 // --- EQ/PEQ ---
 
 // 切换 EQ 模式（循环: OFF(0) → GEQ(1) → PEQ(2) → OFF(0)）

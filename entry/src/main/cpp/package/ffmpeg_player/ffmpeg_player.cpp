@@ -13,6 +13,7 @@ extern "C" {
 #include <cstdint>
 #include <cmath>
 #include <cstring>
+#include <cstdlib>
 #include <mutex>
 #include <atomic>
 #include <algorithm>
@@ -220,6 +221,13 @@ struct PlayerContext {
     // ArkTS 时间回调
     napi_threadsafe_function time_callback = nullptr;
     int64_t last_callback_time_ms = 0;
+
+    // ArkTS 准备就绪回调（JS 线程调用，存 napi_ref）
+    napi_ref ready_callback_ref = nullptr;
+
+    // ArkTS 状态回调（TSFN，可从音频线程调用）
+    napi_threadsafe_function status_callback = nullptr;
+    std::atomic<bool> ended_naturally{false};  // 是否自然播放完毕
 
     // EQ/PEQ
     std::atomic<int> eq_mode{EQ_OFF};
@@ -603,6 +611,34 @@ static void notify_time_callback(PlayerContext* ctx) {
 }
 
 // ============================================================================
+// 通知 ArkTS 状态回调（TSFN，可从任意线程调用）
+// ============================================================================
+static void notify_status_callback(PlayerContext* ctx, const char* status) {
+    if (!ctx->status_callback) { return; }
+
+    // 复制字符串到堆上，TSFN 回调中释放
+    char* status_copy = strdup(status);
+    if (!status_copy) { return; }
+    napi_call_threadsafe_function(ctx->status_callback, status_copy, napi_tsfn_blocking);
+}
+
+// ============================================================================
+// 状态回调的 TSFN 调用函数
+// ============================================================================
+static void status_callback_tsfn(napi_env env, napi_value js_callback, void* context, void* data) {
+    char* status = (char*)data;
+    if (!status) { return; }
+
+    napi_value arg;
+    napi_create_string_utf8(env, status, NAPI_AUTO_LENGTH, &arg);
+
+    napi_value result;
+    napi_call_function(env, nullptr, js_callback, 1, &arg, &result);
+
+    free(status);
+}
+
+// ============================================================================
 // OHAudio 写数据回调
 // ============================================================================
 static OH_AudioData_Callback_Result on_write_data(
@@ -648,6 +684,8 @@ static OH_AudioData_Callback_Result on_write_data(
                         memset(out_buf, 0, out_buf_remaining);
                     }
                     ctx->play_state = STATE_IDLE;
+                    ctx->ended_naturally = true;
+                    notify_status_callback(ctx, "complete");
                     return AUDIO_DATA_CALLBACK_RESULT_VALID;
                 }
                 // fall through: 有最后几帧数据
@@ -919,6 +957,16 @@ static void complete_set_audio(napi_env env, napi_status status, void* data) {
         if (g_player.start_ready.load()) {
             OH_AudioRenderer_Start(g_player.renderer);
             g_player.play_state = STATE_PLAYING;
+            g_player.ended_naturally = false;
+            notify_status_callback(&g_player, "playing");
+        }
+
+        // 通知准备就绪回调
+        if (g_player.ready_callback_ref) {
+            napi_value callback;
+            napi_get_reference_value(env, g_player.ready_callback_ref, &callback);
+            napi_value unused;
+            napi_call_function(env, nullptr, callback, 0, nullptr, &unused);
         }
 
         napi_value result;
@@ -996,6 +1044,8 @@ napi_value playing(napi_env env, napi_callback_info info) {
         if (ctx->renderer) {
             OH_AudioRenderer_Start(ctx->renderer);
             ctx->play_state = STATE_PLAYING;
+            ctx->ended_naturally = false;
+            notify_status_callback(ctx, "playing");
         }
     }
 
@@ -1014,6 +1064,7 @@ napi_value pause(napi_env env, napi_callback_info info) {
         if (ctx->renderer) {
             OH_AudioRenderer_Pause(ctx->renderer);
             ctx->play_state = STATE_PAUSED;
+            notify_status_callback(ctx, "pause");
         }
     }
 
@@ -1326,5 +1377,105 @@ napi_value get_peq(napi_env env, napi_callback_info info) {
         napi_set_element(env, result, i, band);
     }
 
+    return result;
+}
+
+// ============================================================================
+// NAPI: get_start_ready() → boolean
+// ============================================================================
+napi_value get_start_ready(napi_env env, napi_callback_info info) {
+    napi_value result;
+    napi_get_boolean(env, g_player.start_ready.load(), &result);
+    return result;
+}
+
+// ============================================================================
+// NAPI: register_ready_callback(callback: function)
+// ============================================================================
+napi_value register_ready_callback(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc < 1) {
+        napi_throw_error(env, nullptr, "需要传入一个回调函数");
+        return nullptr;
+    }
+
+    napi_valuetype valuetype;
+    napi_typeof(env, args[0], &valuetype);
+    if (valuetype != napi_function) {
+        napi_throw_error(env, nullptr, "参数类型必须是函数");
+        return nullptr;
+    }
+
+    // 释放旧的回调
+    if (g_player.ready_callback_ref) {
+        napi_delete_reference(env, g_player.ready_callback_ref);
+        g_player.ready_callback_ref = nullptr;
+    }
+
+    napi_create_reference(env, args[0], 1, &g_player.ready_callback_ref);
+
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+// ============================================================================
+// NAPI: register_status_callback(callback: function)
+// ============================================================================
+napi_value register_status_callback(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc < 1) {
+        napi_throw_error(env, nullptr, "需要传入一个回调函数");
+        return nullptr;
+    }
+
+    napi_valuetype valuetype;
+    napi_typeof(env, args[0], &valuetype);
+    if (valuetype != napi_function) {
+        napi_throw_error(env, nullptr, "参数类型必须是函数");
+        return nullptr;
+    }
+
+    // 释放旧的 tsfn
+    if (g_player.status_callback) {
+        napi_release_threadsafe_function(g_player.status_callback, napi_tsfn_release);
+        g_player.status_callback = nullptr;
+    }
+
+    napi_value resource_name;
+    napi_create_string_utf8(env, "StatusCallback", NAPI_AUTO_LENGTH, &resource_name);
+
+    napi_create_threadsafe_function(env, args[0], nullptr, resource_name,
+                                     0, 1, nullptr, nullptr, nullptr,
+                                     status_callback_tsfn, &g_player.status_callback);
+
+    napi_value result;
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+// ============================================================================
+// NAPI: get_status() → string ("playing" / "pause" / "complete")
+// ============================================================================
+napi_value get_status(napi_env env, napi_callback_info info) {
+    PlayerContext* ctx = &g_player;
+    int state = ctx->play_state.load();
+    const char* status_str = "pause";  // 默认
+
+    if (state == STATE_PLAYING) {
+        status_str = "playing";
+    } else if (state == STATE_IDLE && ctx->ended_naturally.load()) {
+        status_str = "complete";
+    }
+    // STATE_PAUSED / STATE_READY / other IDLE → "pause"
+
+    napi_value result;
+    napi_create_string_utf8(env, status_str, NAPI_AUTO_LENGTH, &result);
     return result;
 }

@@ -247,6 +247,10 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"get_current_time", nullptr, get_current_time, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"register_time_callback", nullptr, register_time_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"set_start_ready", nullptr, set_start_ready, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"get_start_ready", nullptr, get_start_ready, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"register_ready_callback", nullptr, register_ready_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"register_status_callback", nullptr, register_status_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"get_status", nullptr, get_status, nullptr, nullptr, nullptr, napi_default, nullptr},
         // EQ/PEQ
         {"switch_eq", nullptr, switch_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"set_eq", nullptr, set_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
