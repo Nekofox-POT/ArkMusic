@@ -14,6 +14,7 @@ extern "C" {
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
+#include <hilog/log.h>
 #include <mutex>
 #include <atomic>
 #include <algorithm>
@@ -21,6 +22,13 @@ extern "C" {
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+// ---- 调试日志宏（hilog） ----
+#define FFMPEG_LOG_DOMAIN 0x0001
+#define FFMPEG_LOG_TAG "ffmpeg_player"
+// 用 OH_LOG_Print 代替 fprintf(stderr)，鸿蒙原生日志系统才能看到
+#define FF_LOG(fmt, ...) \
+    OH_LOG_Print(LOG_APP, LOG_INFO, FFMPEG_LOG_DOMAIN, FFMPEG_LOG_TAG, fmt, ##__VA_ARGS__)
 
 // ============================================================================
 // EQ 常量
@@ -220,7 +228,7 @@ struct PlayerContext {
 
     // ArkTS 时间回调
     napi_threadsafe_function time_callback = nullptr;
-    int64_t last_callback_time_ms = 0;
+    int32_t last_callback_time_ms = 0;
 
     // ArkTS 准备就绪回调（JS 线程调用，存 napi_ref）
     napi_ref ready_callback_ref = nullptr;
@@ -228,6 +236,10 @@ struct PlayerContext {
     // ArkTS 状态回调（TSFN，可从音频线程调用）
     napi_threadsafe_function status_callback = nullptr;
     std::atomic<bool> ended_naturally{false};  // 是否自然播放完毕
+
+    // 调试：首次解码日志标记（每次 set_audio 重置）
+    bool first_frame_logged = false;
+    bool first_callback_logged = false;
 
     // EQ/PEQ
     std::atomic<int> eq_mode{EQ_OFF};
@@ -240,6 +252,12 @@ struct PlayerContext {
     // Resample 缓冲区
     AVFrame* resampled_frame = nullptr;
     int resample_buf_samples = 0;
+
+    // 部分帧缓冲：当 OHAudio buffer 不够装完整帧时，剩余采样暂存于此
+    // 存储的是已转换为目标格式的字节数据
+    uint8_t* pending_data = nullptr;
+    int pending_size = 0;       // 待写入字节数
+    int pending_capacity = 0;
 };
 static PlayerContext g_player;
 
@@ -251,6 +269,23 @@ static bool is_dsd_codec(AVCodecID codec_id) {
            codec_id == AV_CODEC_ID_DSD_MSBF ||
            codec_id == AV_CODEC_ID_DSD_LSBF_PLANAR ||
            codec_id == AV_CODEC_ID_DSD_MSBF_PLANAR;
+}
+
+// 有损格式 → 无原生位深概念 → 输出统一 16bit
+static bool is_lossy_codec(AVCodecID codec_id) {
+    switch (codec_id) {
+        case AV_CODEC_ID_MP3:       case AV_CODEC_ID_MP2:
+        case AV_CODEC_ID_AAC:       case AV_CODEC_ID_AAC_LATM:
+        case AV_CODEC_ID_VORBIS:    case AV_CODEC_ID_OPUS:
+        case AV_CODEC_ID_WMAV1:     case AV_CODEC_ID_WMAV2:
+        case AV_CODEC_ID_WMAPRO:
+        case AV_CODEC_ID_RA_144:    case AV_CODEC_ID_RA_288:
+        case AV_CODEC_ID_COOK:      case AV_CODEC_ID_ATRAC3:
+        case AV_CODEC_ID_SPEEX:     case AV_CODEC_ID_AMR_NB:
+        case AV_CODEC_ID_AMR_WB:
+            return true;
+        default: return false;
+    }
 }
 
 // ============================================================================
@@ -315,6 +350,11 @@ static void release_player() {
     ctx->frame = nullptr;
     ctx->resampled_frame = nullptr;
     ctx->resample_buf_samples = 0;
+
+    delete[] ctx->pending_data;
+    ctx->pending_data = nullptr;
+    ctx->pending_size = 0;
+    ctx->pending_capacity = 0;
 
     ctx->play_state = STATE_IDLE;
     ctx->total_frames_written = 0;
@@ -420,7 +460,12 @@ static void apply_eq_float(float* samples, int frame_count, int channels) {
 static AVFrame* resample_frame(AVFrame* src, int dst_rate) {
     PlayerContext* ctx = &g_player;
     int src_rate = src->sample_rate;
-    if (src_rate == dst_rate) { return src; }
+    // 只有当源采样率和目标采样率一致且源格式已是交织 FLT 时才跳过。
+    // FLTP（平面 float）也不行 —— data[0] 只有单声道，convert_and_copy_to_buffer 按交织读取
+    // 会导致只读到一半采样加垃圾数据，表现为加速+断音。
+    if (src_rate == dst_rate && src->format == AV_SAMPLE_FMT_FLT) {
+        return src;
+    }
 
     int channels = src->ch_layout.nb_channels;
     int64_t delay = (int64_t)src->nb_samples * dst_rate / src_rate;
@@ -538,6 +583,26 @@ static int convert_and_copy_to_buffer(AVFrame* src_float, uint8_t* buffer, int b
             }
             return required;
         }
+        case AUDIOSTREAM_SAMPLE_S24LE: {
+            // 24-bit packed LE: 3 bytes per sample
+            int required = frame_count * channels * 3;
+            if (required > buffer_size) {
+                frame_count = buffer_size / (channels * 3);
+                required = frame_count * channels * 3;
+            }
+            uint8_t* dst8 = (uint8_t*)buffer;
+            int total = frame_count * channels;
+            for (int i = 0; i < total; i++) {
+                float v = src[i] * 8388607.0f;  // 2^23 - 1
+                if (v >  8388607.0f) { v =  8388607.0f; }
+                if (v < -8388608.0f) { v = -8388608.0f; }
+                int32_t sample = (int32_t)v;
+                *dst8++ = (uint8_t)(sample & 0xFF);
+                *dst8++ = (uint8_t)((sample >> 8) & 0xFF);
+                *dst8++ = (uint8_t)((sample >> 16) & 0xFF);
+            }
+            return required;
+        }
         case AUDIOSTREAM_SAMPLE_U8: {
             int required = frame_count * channels;
             if (required > buffer_size) {
@@ -602,12 +667,13 @@ static void perform_seek(PlayerContext* ctx) {
 static void notify_time_callback(PlayerContext* ctx) {
     if (!ctx->time_callback) { return; }
 
-    int64_t current_ms = ctx->total_frames_written.load() * 1000 / ctx->output_sample_rate;
-    if (current_ms - ctx->last_callback_time_ms < 50) { return; }  // 节流 ~50ms
+    int32_t current_ms = (int32_t)(ctx->total_frames_written.load() * 1000 / ctx->output_sample_rate);
+    if (abs(current_ms - ctx->last_callback_time_ms) < 50) { return; }  // 节流 ~50ms
     ctx->last_callback_time_ms = current_ms;
 
-    // 通过 threadsafe function 回调 ArkTS
-    napi_call_threadsafe_function(ctx->time_callback, &current_ms, napi_tsfn_blocking);
+    // 堆分配 int32，避免栈变量在非阻塞 TSFN 中被销毁
+    int32_t* data = new int32_t(current_ms);
+    napi_call_threadsafe_function(ctx->time_callback, data, napi_tsfn_blocking);
 }
 
 // ============================================================================
@@ -659,6 +725,13 @@ static OH_AudioData_Callback_Result on_write_data(
         perform_seek(ctx);
     }
 
+    // ---- 首次回调：打印运行时 buffer 大小（排查用） ----
+    if (!ctx->first_callback_logged) {
+        ctx->first_callback_logged = true;
+        FF_LOG("on_write_data first call: buffer_size=%{public}d, out_fmt=%{public}d, out_rate=%{public}d, ch=%{public}d, bps=%{public}d",
+               buffer_size, ctx->output_sample_fmt, ctx->output_sample_rate, ctx->channels, ctx->bytes_per_sample);
+    }
+
     // 3. 解码 + 填充 buffer
     uint8_t* out_buf = (uint8_t*)buffer;
     int out_buf_remaining = buffer_size;
@@ -666,6 +739,28 @@ static OH_AudioData_Callback_Result on_write_data(
     int out_fmt = ctx->output_sample_fmt;
     int ch = ctx->channels;
     int dst_rate = ctx->output_sample_rate;
+    int bytes_per_frame = ch * ctx->bytes_per_sample;
+
+    // 3a. 先写完上次截断遗留的数据
+    if (ctx->pending_size > 0) {
+        int copy = ctx->pending_size;
+        if (copy > out_buf_remaining) { copy = out_buf_remaining; }
+        memcpy(out_buf, ctx->pending_data, copy);
+        out_buf += copy;
+        out_buf_remaining -= copy;
+        total_filled += copy;
+        ctx->total_frames_written += copy / bytes_per_frame;
+
+        if (copy < ctx->pending_size) {
+            // 还没写完，前移剩余数据
+            memmove(ctx->pending_data, ctx->pending_data + copy, ctx->pending_size - copy);
+            ctx->pending_size -= copy;
+            // buffer 满，直接返回
+            if (total_filled > 0) { notify_time_callback(ctx); }
+            return AUDIO_DATA_CALLBACK_RESULT_VALID;
+        }
+        ctx->pending_size = 0;
+    }
 
     while (out_buf_remaining > 0) {
         // 先尝试从解码器取帧
@@ -676,7 +771,6 @@ static OH_AudioData_Callback_Result on_write_data(
             if (ret == AVERROR_EOF) {
                 // 刷新解码器
                 avcodec_send_packet(ctx->codec_ctx, nullptr);
-                // 继续循环尝试取剩余帧
                 ret = avcodec_receive_frame(ctx->codec_ctx, ctx->frame);
                 if (ret == AVERROR_EOF || ret == AVERROR(EAGAIN)) {
                     // 播放完毕
@@ -690,7 +784,6 @@ static OH_AudioData_Callback_Result on_write_data(
                 }
                 // fall through: 有最后几帧数据
             } else if (ret < 0) {
-                // 读取错误，填充静音
                 memset(out_buf, 0, out_buf_remaining);
                 total_filled = buffer_size;
                 break;
@@ -701,7 +794,7 @@ static OH_AudioData_Callback_Result on_write_data(
                 ret = avcodec_send_packet(ctx->codec_ctx, ctx->packet);
                 av_packet_unref(ctx->packet);
                 if (ret < 0) { continue; }
-                continue;  // 循环回去 receive
+                continue;
             }
         } else if (ret < 0) {
             memset(out_buf, 0, out_buf_remaining);
@@ -712,17 +805,25 @@ static OH_AudioData_Callback_Result on_write_data(
         // 有解码帧，处理
         AVFrame* proc_frame = ctx->frame;
 
+        // ---- 首次解码帧：打印实际格式 ----
+        if (!ctx->first_frame_logged) {
+            ctx->first_frame_logged = true;
+            const char* actual_fmt = av_get_sample_fmt_name((AVSampleFormat)proc_frame->format);
+            FF_LOG("first decoded frame: %{public}d Hz / %{public}s / %{public}d ch / %{public}d samples",
+                   proc_frame->sample_rate, actual_fmt,
+                   proc_frame->ch_layout.nb_channels, proc_frame->nb_samples);
+        }
+
         // 重采样（如果需要）
         if (dst_rate != proc_frame->sample_rate) {
             proc_frame = resample_frame(proc_frame, dst_rate);
         }
 
-        // 要求输出格式统一为 FLT（resample_frame 已输出 FLT）
-        // 如果不需要重采样但原始帧不是 FLT，需要先转为 FLT
+        // 只要不是交织 FLT 就需要格式转换
         AVFrame* float_frame = proc_frame;
         AVFrame* temp_float = nullptr;
-        if (proc_frame->format != AV_SAMPLE_FMT_FLT && proc_frame->format != AV_SAMPLE_FMT_FLTP) {
-            temp_float = resample_frame(proc_frame, proc_frame->sample_rate);  // 仅格式转换，不重采样
+        if (proc_frame->format != AV_SAMPLE_FMT_FLT) {
+            temp_float = resample_frame(proc_frame, proc_frame->sample_rate);
             float_frame = temp_float;
         }
 
@@ -732,15 +833,47 @@ static OH_AudioData_Callback_Result on_write_data(
             apply_eq_float((float*)float_frame->data[0], frame_count, ch);
         }
 
-        // 转换到目标格式并复制
-        int filled = convert_and_copy_to_buffer(
-            float_frame, out_buf, out_buf_remaining, ch, out_fmt);
-        total_filled += filled;
-        out_buf += filled;
-        out_buf_remaining -= filled;
+        // 检查整帧是否能放入剩余 buffer
+        int frame_out_bytes = frame_count * bytes_per_frame;
+        if (frame_out_bytes <= out_buf_remaining) {
+            // 整帧完整写入
+            int filled = convert_and_copy_to_buffer(
+                float_frame, out_buf, out_buf_remaining, ch, out_fmt);
+            total_filled += filled;
+            out_buf += filled;
+            out_buf_remaining -= filled;
+            ctx->total_frames_written += filled / bytes_per_frame;
+        } else {
+            // buffer 不够装整帧 —— 先转换到 pending buffer，再分次写出
+            // 确保 pending buffer 够大
+            if (ctx->pending_capacity < frame_out_bytes) {
+                delete[] ctx->pending_data;
+                ctx->pending_data = new uint8_t[frame_out_bytes];
+                ctx->pending_capacity = frame_out_bytes;
+            }
+            // 完整转换到 pending buffer
+            int full_bytes = convert_and_copy_to_buffer(
+                float_frame, ctx->pending_data, frame_out_bytes, ch, out_fmt);
+            ctx->pending_size = full_bytes;
 
-        // 更新位置（只计算通过 resample 或直接输出的帧）
-        ctx->total_frames_written += frame_count;
+            // 写出能放下的部分
+            int copy = full_bytes;
+            if (copy > out_buf_remaining) { copy = out_buf_remaining; }
+            memcpy(out_buf, ctx->pending_data, copy);
+            total_filled += copy;
+            ctx->total_frames_written += copy / bytes_per_frame;
+
+            if (copy < full_bytes) {
+                // 还没写完，前移剩余数据
+                memmove(ctx->pending_data, ctx->pending_data + copy, full_bytes - copy);
+                ctx->pending_size = full_bytes - copy;
+            } else {
+                ctx->pending_size = 0;
+            }
+
+            av_frame_unref(ctx->frame);
+            break;  // buffer 满，下个回调继续
+        }
 
         av_frame_unref(ctx->frame);
     }
@@ -771,9 +904,19 @@ static bool create_ohaudio_renderer(PlayerContext* ctx) {
     OH_AudioStreamBuilder_SetRendererInfo(builder, AUDIOSTREAM_USAGE_MUSIC);
     OH_AudioStreamBuilder_SetRendererWriteDataCallback(builder, on_write_data, nullptr);
 
+    // 调试日志：OHAudio 实际配置
+    const char* fmt_names[] = {"U8","S16LE","S24LE","S32LE","F32LE"};
+    const char* fmt_name = (ctx->output_sample_fmt >= 0 && ctx->output_sample_fmt <= 4)
+                           ? fmt_names[ctx->output_sample_fmt] : "???";
+    FF_LOG("OHAudio config: %{public}d Hz / %{public}s / %{public}d ch / %{public}d bps",
+            ctx->output_sample_rate, fmt_name, ctx->channels, ctx->bytes_per_sample);
+
     result = OH_AudioStreamBuilder_GenerateRenderer(builder, &ctx->renderer);
     OH_AudioStreamBuilder_Destroy(builder);
 
+    if (result != AUDIOSTREAM_SUCCESS) {
+        FF_LOG("OHAudio renderer create FAILED: %{public}d", result);
+    }
     return result == AUDIOSTREAM_SUCCESS;
 }
 
@@ -883,15 +1026,26 @@ static void execute_set_audio(napi_env env, void* data) {
     int src_rate = codec_ctx->sample_rate;
     bool is_dsd = is_dsd_codec(codec_par->codec_id);
 
+    // 解码器实际输出格式（可能与文件原始格式不同！解码器可能输出 planar）
+    const char* dec_fmt_name = av_get_sample_fmt_name(codec_ctx->sample_fmt);
+    bool dec_is_planar = av_sample_fmt_is_planar(codec_ctx->sample_fmt);
+    FF_LOG("decoder output: %{public}d Hz / %{public}s (%{public}s) / %{public}d ch",
+            src_rate, dec_fmt_name, dec_is_planar ? "planar" : "interleaved", channels);
+
     int out_rate = src_rate;
     int out_fmt;
+    bool lossy = is_lossy_codec(codec_par->codec_id);
 
     if (is_dsd) {
         // DSD: 176.4kHz F32LE
         out_rate = 176400;
         out_fmt = AUDIOSTREAM_SAMPLE_F32LE;
+    } else if (lossy) {
+        // 有损格式无原生位深 → 强制 16-bit S16LE
+        out_rate = src_rate;
+        out_fmt = AUDIOSTREAM_SAMPLE_S16LE;
     } else if (src_rate > 192000) {
-        // 高采样率无损：按家族降采样
+        // 高采样率无损：按家族降采样，输出 F32LE
         if (src_rate % 44100 == 0) {
             out_rate = 176400;
         } else if (src_rate % 48000 == 0) {
@@ -899,8 +1053,21 @@ static void execute_set_audio(napi_env env, void* data) {
         }
         out_fmt = AUDIOSTREAM_SAMPLE_F32LE;
     } else {
-        // 普通音频：匹配源格式
-        out_fmt = ffmpeg_fmt_to_ohaudio(codec_ctx->sample_fmt);
+        // 普通无损：使用文件的原始采样格式（codec_par，而非解码器 codec_ctx）
+        AVSampleFormat file_fmt = (AVSampleFormat)codec_par->format;
+        int raw_bits = codec_par->bits_per_raw_sample;
+        if (file_fmt == AV_SAMPLE_FMT_NONE) {
+            // 回退：根据 bits_per_raw_sample 推断
+            if (raw_bits <= 8)       file_fmt = AV_SAMPLE_FMT_U8;
+            else if (raw_bits <= 16) file_fmt = AV_SAMPLE_FMT_S16;
+            else                     file_fmt = AV_SAMPLE_FMT_S32;
+        }
+        // S32 容器但实际只有 24-bit → 用 S24LE 节省带宽
+        if (file_fmt == AV_SAMPLE_FMT_S32 && raw_bits == 24) {
+            out_fmt = AUDIOSTREAM_SAMPLE_S24LE;
+        } else {
+            out_fmt = ffmpeg_fmt_to_ohaudio(file_fmt);
+        }
     }
 
     // 5. 保存解码器状态
@@ -913,6 +1080,33 @@ static void execute_set_audio(napi_env env, void* data) {
     player->output_sample_fmt = out_fmt;
     player->bytes_per_sample = ohaudio_bytes_per_sample(out_fmt);
     player->is_dsd = is_dsd;
+    player->first_frame_logged = false;
+    player->first_callback_logged = false;
+
+    // ---------- 调试日志：打印源格式与输出格式 ----------
+    {
+        // 文件原始格式（codec_par），解码器输出格式（codec_ctx），输出格式
+        const char* file_fmt_name = av_get_sample_fmt_name((AVSampleFormat)codec_par->format);
+        const char* dec_fmt_name2 = av_get_sample_fmt_name(codec_ctx->sample_fmt);
+        const char* out_fmt_str[] = {"U8","S16LE","S24LE","S32LE","F32LE"};
+        const char* out_fmt_name = (out_fmt >= 0 && out_fmt < 5) ? out_fmt_str[out_fmt] : "???";
+        const AVCodec* codec_info = avcodec_find_decoder(codec_par->codec_id);
+        const char* codec_name = codec_info ? codec_info->name : "unknown";
+
+        FF_LOG("====== set_audio ======");
+        FF_LOG("codec    : %{public}s %{public}s%{public}s",
+                codec_name, is_dsd ? "(DSD)" : "", lossy ? "(lossy→S16)" : "");
+        FF_LOG("file_fmt : %{public}d Hz / %{public}s / %{public}d ch",
+                src_rate, file_fmt_name, channels);
+        FF_LOG("dec_fmt  : %{public}s", dec_fmt_name2);
+        FF_LOG("out      : %{public}d Hz / %{public}s / %{public}d ch / %{public}d bps",
+                out_rate, out_fmt_name, channels, player->bytes_per_sample);
+        FF_LOG("resample : %{public}s",
+                (out_rate != src_rate) ? "YES" : "no");
+        FF_LOG("duration : %{public}lld ms",
+                (long long)player->duration_ms);
+        FF_LOG("==============================");
+    }
 
     // 6. 计算总时长
     double duration_sec = 0.0;
@@ -1087,10 +1281,21 @@ napi_value seek(napi_env env, napi_callback_info info) {
     napi_get_value_int64(env, args[0], &target_ms);
 
     PlayerContext* ctx = &g_player;
+    if (!ctx->format_ctx || !ctx->codec_ctx || !ctx->audio_stream) {
+        // 播放器未初始化，无法 seek
+        napi_value result;
+        napi_get_undefined(env, &result);
+        return result;
+    }
+
     ctx->seek_target_ms = target_ms;
 
-    // 立即触发 seek（在下次写回调前完成）
-    perform_seek(ctx);
+    // 只在非播放状态直接执行 seek（此时无并发解码，安全）。
+    // 播放中时，on_write_data 音频线程会在下次回调中处理 seek。
+    int state = ctx->play_state.load();
+    if (state != STATE_PLAYING) {
+        perform_seek(ctx);
+    }
 
     napi_value result;
     napi_get_undefined(env, &result);
@@ -1105,14 +1310,14 @@ napi_value get_current_time(napi_env env, napi_callback_info info) {
 
     if (ctx->output_sample_rate <= 0) {
         napi_value result;
-        napi_create_int64(env, 0, &result);
+        napi_create_int32(env, 0, &result);
         return result;
     }
 
-    int64_t current_ms = ctx->total_frames_written.load() * 1000 / ctx->output_sample_rate;
+    int32_t current_ms = (int32_t)(ctx->total_frames_written.load() * 1000 / ctx->output_sample_rate);
 
     napi_value result;
-    napi_create_int64(env, current_ms, &result);
+    napi_create_int32(env, current_ms, &result);
     return result;
 }
 
@@ -1120,10 +1325,11 @@ napi_value get_current_time(napi_env env, napi_callback_info info) {
 // NAPI: register_time_callback(callback: function)
 // ============================================================================
 static void time_callback_tsfn(napi_env env, napi_value js_callback, void* context, void* data) {
-    int64_t time_ms = *(int64_t*)data;
+    int32_t time_ms = *(int32_t*)data;
+    delete (int32_t*)data;  // 释放堆分配的 int32
 
     napi_value arg;
-    napi_create_int64(env, time_ms, &arg);
+    napi_create_int32(env, time_ms, &arg);
 
     napi_value result;
     napi_call_function(env, nullptr, js_callback, 1, &arg, &result);

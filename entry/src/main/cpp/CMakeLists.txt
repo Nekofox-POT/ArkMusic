@@ -37,6 +37,7 @@ target_link_libraries(entry PUBLIC
                       libace_napi.z.so
                       libc++.so
                       libohaudio.so
+                      libhilog_ndk.z.so
                       ${NATIVERENDER_ROOT_PATH}/package/ffmpeg_player/ffmpeg_core/lib/libavformat.so.62.12.101
                       ${NATIVERENDER_ROOT_PATH}/package/ffmpeg_player/ffmpeg_core/lib/libavcodec.so.62.28.101
                       ${NATIVERENDER_ROOT_PATH}/package/ffmpeg_player/ffmpeg_core/lib/libavutil.so.60.26.101

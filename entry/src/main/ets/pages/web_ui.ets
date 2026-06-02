@@ -143,6 +143,7 @@ export default struct web_ui {
     })
     // 播放状态监听 //
     emitter.on({ eventId: 714 }, (eventData: emitter.EventData) => {
+      console.log(eventData.data?.status)
       if (eventData.data?.status == 'playing') {
         this.lin_music_ui.runJavaScript(`set_play_status(true)`)
       } else {

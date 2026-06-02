@@ -149,7 +149,7 @@ export async function get_meta(path: string): Promise<string[][]> {
   //
   // 获取音频的元数据
   // 分为两个部分
-  // 第一个部分是基础数据，包括 [文件名, 文件类型, 声道, 采样率, 位深, 比特率, 时长]
+  // 第一个部分是基础数据，包括 [文件名, 文件类型, 声道, 采样率, 位深, 比特率, 时长, 时长(毫秒)]
   // 第二个部分是制作数据，包括 [标题, 歌手/作曲家, 专辑名, 专辑作家, 流派]
   //
 
@@ -165,6 +165,7 @@ export async function get_meta(path: string): Promise<string[][]> {
     const bit_depth = meta_data.bitDepth                  // 位深（C++ 已修正有损格式）
     const bit_rate = (meta_data.bitrate / 1000).toFixed(1)// 比特率
     const duration = meta_data.durationFormat             // 时长（C++ 已格式化为 "分:秒"）
+    const duration_ms = meta_data.duration                // 时长毫秒（C++ 已计算）
 
     let title = file_name             // 歌曲名
     let artist = '未知歌手'            // 歌手
@@ -185,11 +186,11 @@ export async function get_meta(path: string): Promise<string[][]> {
     if (meta_data.albumArtist) {album_artist = meta_data.albumArtist}
     if (meta_data.genre) {genre = meta_data.genre}
 
-    return [[
-      file_name, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, duration
-    ], [
-      title, artist, album, album_artist, genre
-    ]]
+    const base_data: string[] = [
+      file_name, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, duration, `${duration_ms}`
+    ]
+    const meta_data_arr: string[] = [title, artist, album, album_artist, genre]
+    return [base_data, meta_data_arr]
 
   } catch (e) {
     log(`get_meta：元数据获取失败 ${e}`, 'error')
