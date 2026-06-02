@@ -237,6 +237,7 @@ export class class_audio_player {
       let result = await this.ffmpeg_player.set_audio(this.play_list[this.play_list_index])
 
       // 加载失败，报错
+      console.log(`读取结果：${result}`)
       if (!result) {
         log(`歌曲加载失败。`, 'error')
         notice(`歌曲加载失败了 (੭ ᐕ)੭？ 切换下一首.`)

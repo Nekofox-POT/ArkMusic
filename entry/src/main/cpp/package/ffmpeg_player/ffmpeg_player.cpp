@@ -14,6 +14,7 @@ extern "C" {
 #include <cmath>
 #include <cstring>
 #include <cstdlib>
+#include <cstdio>
 #include <hilog/log.h>
 #include <mutex>
 #include <atomic>
@@ -1059,7 +1060,7 @@ static bool create_ohaudio_renderer(PlayerContext* ctx) {
     OH_AudioStreamBuilder_SetChannelCount(builder, ctx->channels);
     OH_AudioStreamBuilder_SetSampleFormat(builder, (OH_AudioStream_SampleFormat)ctx->output_sample_fmt);
     OH_AudioStreamBuilder_SetEncodingType(builder, AUDIOSTREAM_ENCODING_TYPE_RAW);
-    OH_AudioStreamBuilder_SetLatencyMode(builder, AUDIOSTREAM_LATENCY_MODE_NORMAL);
+    OH_AudioStreamBuilder_SetLatencyMode(builder, AUDIOSTREAM_LATENCY_MODE_FAST);
     OH_AudioStreamBuilder_SetRendererInfo(builder, AUDIOSTREAM_USAGE_MUSIC);
     OH_AudioStreamBuilder_SetRendererWriteDataCallback(builder, on_write_data, nullptr);
     OH_AudioStreamBuilder_SetRendererInterruptCallback(builder, on_audio_interrupt, nullptr);
@@ -1387,6 +1388,23 @@ napi_value set_audio(napi_env env, napi_callback_info info) {
 
     std::string file_path(str_size, '\0');
     napi_get_value_string_utf8(env, args[0], &file_path[0], str_size + 1, &str_size);
+
+    // 检查文件是否存在，不存在直接返回 false
+    {
+        FILE* test_file = fopen(file_path.c_str(), "r");
+        if (!test_file) {
+            napi_value promise;
+            napi_deferred deferred;
+            napi_create_promise(env, &deferred, &promise);
+
+            napi_value result;
+            napi_get_boolean(env, false, &result);
+            napi_resolve_deferred(env, deferred, result);
+
+            return promise;
+        }
+        fclose(test_file);
+    }
 
     auto* ctx = new SetAudioContext();
     ctx->env = env;
