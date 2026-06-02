@@ -1,12 +1,25 @@
 export const encodeImageToBase64: (buffer: ArrayBuffer) => string
 export const getImageAverageColor: (buffer: ArrayBuffer, width: number, height: number) => number
 export const extractFilename: (path: string) => string
-export const getAudioMetadata: (filePath: string) => Promise<AudioMetadata>
-export const getAudioMetadataBatch: (filePaths: string[]) => Promise<Array<BatchAudioMetadata>>
+export const getAudioMetadata: (filePath: string | string[]) => Promise<AudioMetadata | BatchAudioMetadata[]>
 export const base64urlCode: (input: string, isEncode: boolean) => string
 export const sortStringArray: (arr: string[]) => string[]
-export const dsdToWav: (inputPath: string, outputPath: string) => Promise<void>
-export const dsdToWavBatch: (tasks: DsdTask[]) => Promise<DsdResult[]>
+
+// 播放器控制
+export const set_audio: (path: string) => Promise<boolean>
+export const playing: () => void
+export const pause: () => void
+export const seek: (time_ms: number) => void
+export const get_current_time: () => number
+export const register_time_callback: (callback: (time_ms: number) => void) => void
+export const set_start_ready: (ready: boolean) => void
+
+// EQ/PEQ
+export const switch_eq: () => number
+export const set_eq: (gains: number[]) => void
+export const set_peq: (params: [boolean, number, number, number, number][]) => void
+export const get_eq: () => number[]
+export const get_peq: () => [boolean, number, number, number, number][]
 
 export interface AudioMetadata {
   channels: number
@@ -14,6 +27,7 @@ export interface AudioMetadata {
   bitDepth: number
   bitrate: number
   duration: number
+  durationFormat: string
   filename: string
   title: string
   artist: string
@@ -32,21 +46,12 @@ export interface BatchAudioMetadata {
   bitDepth: number
   bitrate: number
   duration: number
+  durationFormat: string
   title: string
   artist: string
   composer: string
   album: string
   albumArtist: string
   genre: string
-}
-
-export interface DsdTask {
-  inputPath: string
-  outputPath: string
-}
-
-export interface DsdResult {
-  inputPath: string
-  success: boolean
   error?: string
 }

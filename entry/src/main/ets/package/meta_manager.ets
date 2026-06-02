@@ -6,7 +6,7 @@ import media from '@ohos.multimedia.media'
 import { image } from '@kit.ImageKit'
 import { picker, fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs, ListFileOptions } from '@kit.CoreFileKit'
-import nativeModule, { AudioMetadata, BatchAudioMetadata, DsdTask, DsdResult } from 'libentry.so'
+import nativeModule, { AudioMetadata, BatchAudioMetadata } from 'libentry.so'
 
 import { log } from './system_function'
 
@@ -14,23 +14,8 @@ import { log } from './system_function'
 // 内部函数 //
 ////////////
 
-// 秒 转化 分:秒
-function translate_second(duration: number): string {
-  const minutes = Math.floor(duration / 60)
-  const seconds = Math.floor(duration % 60)
-  const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`
-  return formattedDuration
-}
-
-// 位深修正 // 由于 nativeModule 返回的位深有时不准确（如 MP3 解码为 S32P、FLAC 24bit 容器为 S32 等），根据文件类型二次修正
-function fix_bit_depth(file_type: string, bit_depth: number): number {
-  // 有损格式无原生位深概念，上报常见标称位深 16bit
-  const lossy_types: string[] = ['mp3', 'mp2', 'aac', 'ogg', 'opus', 'wma', 'ra', 'rm']
-  if (lossy_types.includes(file_type)) {
-    return 16
-  }
-  return bit_depth
-}
+// warning removed: fix_bit_depth 已集成到 C++ 层 get_meta.cpp（有损格式自动上报 16bit）
+// warning removed: translate_second 不再需要，直接用 C++ 返回的 durationFormat
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 外部函数 //
@@ -100,7 +85,7 @@ export async function get_meta_batch(paths: string[]): Promise<Map<string, strin
   const result_map = new Map<string, string[][]>()
 
   try {
-    const batch_results: BatchAudioMetadata[] = await nativeModule.getAudioMetadataBatch(paths)
+    const batch_results = await nativeModule.getAudioMetadata(paths) as BatchAudioMetadata[]
 
     for (const item of batch_results) {
       const file_path = item['filePath'] as string
@@ -114,9 +99,9 @@ export async function get_meta_batch(paths: string[]): Promise<Map<string, strin
       const file_type = file_path.substring(file_path.lastIndexOf('.') + 1).toLowerCase()
       const channels = item['channels'] as number
       const sample_rate = (item['sampleRate'] as number) / 1000
-      const bit_depth = fix_bit_depth(file_type, item['bitDepth'] as number)
+      const bit_depth = item['bitDepth'] as number                      // C++ 已修正有损格式为 16bit
       const bit_rate = ((item['bitrate'] as number) / 1000).toFixed(1)
-      const duration = translate_second(item['duration'] as number)
+      const duration = item['durationFormat'] as string                 // C++ 已格式化为 "分:秒"
 
       let title = file_name
       let artist = '未知歌手'
@@ -158,23 +143,6 @@ export async function get_meta_batch(paths: string[]): Promise<Map<string, strin
   return result_map
 }
 
-// 批量 DSD 转换（多线程并行）//
-export async function dsd_to_wav_batch(tasks: DsdTask[]): Promise<DsdResult[]> {
-
-  //
-  // 批量转换 DSD 文件为 WAV
-  // 返回 Array<{inputPath, success, error?}>
-  //
-
-  try {
-    return await nativeModule.dsdToWavBatch(tasks)
-  } catch (e) {
-    log(`dsd_to_wav_batch：批量 DSD 转换失败 ${e}`, 'error')
-    return []
-  }
-
-}
-
 // 元数据获取 //
 export async function get_meta(path: string): Promise<string[][]> {
 
@@ -188,15 +156,15 @@ export async function get_meta(path: string): Promise<string[][]> {
   try {
 
     // 获取元数据集
-    let meta_data = await nativeModule.getAudioMetadata(path)
+    let meta_data = await nativeModule.getAudioMetadata(path) as AudioMetadata
 
     const file_name = nativeModule.extractFilename(path)  // 文件名
     const file_type = path.substring(path.lastIndexOf('.') + 1).toLowerCase() // 文件类型
     const channels = meta_data.channels                   // 声道
     const sample_rate = meta_data.sampleRate / 1000       // 采样率
-    const bit_depth = fix_bit_depth(file_type, meta_data.bitDepth) // 位深（修正后）
+    const bit_depth = meta_data.bitDepth                  // 位深（C++ 已修正有损格式）
     const bit_rate = (meta_data.bitrate / 1000).toFixed(1)// 比特率
-    const duration = translate_second(meta_data.duration) // 时长
+    const duration = meta_data.durationFormat             // 时长（C++ 已格式化为 "分:秒"）
 
     let title = file_name             // 歌曲名
     let artist = '未知歌手'            // 歌手

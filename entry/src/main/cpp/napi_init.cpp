@@ -3,9 +3,7 @@
 #include "package/buffer_to_base64/buffer_to_base64.h" // 引用我们的头文件
 #include "package/image_color_calculate/image_color_calculate.h"
 #include "package/extract_filename/extract_filename.h"
-#include "package/ffmpeg_manager/ffmpeg_manager.h"
-#include "package/ffmpeg_manager/get_meta_batch.h"
-#include "package/ffmpeg_manager/dsd_to_wav_batch.h"
+#include "package/ffmpeg_player/ffmpeg_player.h"
 #include "package/base64url_code/base64url_code.h"
 #include "package/sort_manager/sort_manager.h"
 
@@ -234,16 +232,27 @@ static napi_value SortStringArray(napi_env env, napi_callback_info info) {
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
-        // 暴露九个函数给 ArkTS
+        // 原有函数
         {"encodeImageToBase64", nullptr, EncodeImageToBase64, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getImageAverageColor", nullptr, GetImageAverageColor, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"extractFilename", nullptr, ExtractFilename, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getAudioMetadata", nullptr, GetAudioMetadata, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"base64urlCode", nullptr, Base64UrlCode, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"sortStringArray", nullptr, SortStringArray, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"dsdToWav", nullptr, DsdToWav, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"dsdToWavBatch", nullptr, DsdToWavBatch, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"getAudioMetadataBatch", nullptr, GetAudioMetadataBatch, nullptr, nullptr, nullptr, napi_default, nullptr}
+        // 播放器控制
+        {"set_audio", nullptr, set_audio, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"playing", nullptr, playing, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"pause", nullptr, pause, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"seek", nullptr, seek, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"get_current_time", nullptr, get_current_time, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"register_time_callback", nullptr, register_time_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"set_start_ready", nullptr, set_start_ready, nullptr, nullptr, nullptr, napi_default, nullptr},
+        // EQ/PEQ
+        {"switch_eq", nullptr, switch_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"set_eq", nullptr, set_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"set_peq", nullptr, set_peq, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"get_eq", nullptr, get_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"get_peq", nullptr, get_peq, nullptr, nullptr, nullptr, napi_default, nullptr},
     };
     napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
     return exports;
