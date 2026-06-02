@@ -136,6 +136,26 @@ static void calc_biquad_lowshelf(BiquadState* st, float freq, float sample_rate,
     st->a2 = a2_ / a0;
 }
 
+static void calc_biquad_lowpass(BiquadState* st, float freq, float sample_rate, float q) {
+    float w0 = 2.0f * (float)M_PI * freq / sample_rate;
+    float cos_w0 = cosf(w0);
+    float sin_w0 = sinf(w0);
+    float alpha = sin_w0 / (2.0f * q);
+
+    float b0 = (1.0f - cos_w0) / 2.0f;
+    float b1 =  1.0f - cos_w0;
+    float b2 = (1.0f - cos_w0) / 2.0f;
+    float a0 =  1.0f + alpha;
+    float a1_ = -2.0f * cos_w0;
+    float a2_ =  1.0f - alpha;
+
+    st->b0 = b0 / a0;
+    st->b1 = b1 / a0;
+    st->b2 = b2 / a0;
+    st->a1 = a1_ / a0;
+    st->a2 = a2_ / a0;
+}
+
 static void calc_biquad_notch(BiquadState* st, float freq, float sample_rate, float q) {
     float w0 = 2.0f * (float)M_PI * freq / sample_rate;
     float cos_w0 = cosf(w0);
@@ -249,6 +269,17 @@ struct PlayerContext {
     std::mutex eq_mutex;
     bool eq_dirty = true;            // 需要重新计算 biquad 系数
 
+    // 抗混叠低通滤波器（重采样降采前使用，4 级联 Biquad，每声道独立）
+    // 用于替换最近邻插值的粗暴降采，避免超声噪声混叠到可听频段
+    BiquadState aa_lpf[MAX_CHANNELS][4];
+    int aa_lpf_src_rate = 0;
+    int aa_lpf_dst_rate = 0;
+    bool aa_lpf_need_init = true;
+
+    // 重采样中间缓冲区（避免每帧 malloc：平面→交织→滤波→降采）
+    float* aa_work_buf = nullptr;
+    int aa_work_buf_capacity = 0;  // 单位：float 个数
+
     // Resample 缓冲区
     AVFrame* resampled_frame = nullptr;
     int resample_buf_samples = 0;
@@ -356,6 +387,16 @@ static void release_player() {
     ctx->pending_size = 0;
     ctx->pending_capacity = 0;
 
+    // 重置抗混叠滤波状态（下次 set_audio 时根据新采样率重新初始化）
+    memset(ctx->aa_lpf, 0, sizeof(ctx->aa_lpf));
+    ctx->aa_lpf_src_rate = 0;
+    ctx->aa_lpf_dst_rate = 0;
+    ctx->aa_lpf_need_init = true;
+
+    delete[] ctx->aa_work_buf;
+    ctx->aa_work_buf = nullptr;
+    ctx->aa_work_buf_capacity = 0;
+
     ctx->play_state = STATE_IDLE;
     ctx->total_frames_written = 0;
     ctx->seek_target_ms = -1;
@@ -455,7 +496,62 @@ static void apply_eq_float(float* samples, int frame_count, int channels) {
 }
 
 // ============================================================================
-// 重采样帧（最近邻插值，参考 dsd_to_wav.cpp 的 convert_frame）
+// 初始化抗混叠低通滤波器（4 级联 Biquad，用于降采前滤除超声成分）
+// cutoff 按 target Nyquist * 0.9（留 10% 过渡带避免边缘混叠）
+// ============================================================================
+static void init_aa_filter(PlayerContext* ctx, int src_rate, int dst_rate) {
+    if (src_rate == dst_rate) { return; }
+
+    // 只在降采样时启用；升采样不需要抗混叠
+    if (dst_rate > src_rate) { return; }
+
+    int ch = ctx->channels;
+    if (ch <= 0) { ch = 2; }
+    if (ch > MAX_CHANNELS) { ch = MAX_CHANNELS; }
+
+    float nyquist = dst_rate * 0.5f;
+    float cutoff = nyquist * 0.9f;       // 截止频率 = 目标 Nyquist 的 90%
+    // 使用 4 级联，Q 值递增，获得更平坦的通带 + 更陡的滚降
+    float q_values[4] = { 0.5f, 0.7f, 0.9f, 1.1f };
+
+    for (int c = 0; c < ch; c++) {
+        for (int i = 0; i < 4; i++) {
+            calc_biquad_lowpass(&ctx->aa_lpf[c][i],
+                cutoff, (float)src_rate, q_values[i]);
+        }
+    }
+
+    ctx->aa_lpf_src_rate = src_rate;
+    ctx->aa_lpf_dst_rate = dst_rate;
+    ctx->aa_lpf_need_init = false;
+
+    FF_LOG("aa_filter init: cutoff=%{public}.0f Hz, src=%{public}d, dst=%{public}d",
+            (double)cutoff, src_rate, dst_rate);
+}
+
+// ============================================================================
+// 对单帧应用抗混叠低通滤波器（在降采前调用）
+// ============================================================================
+static void apply_aa_filter(float* interleaved, int frame_count, int channels) {
+    PlayerContext* ctx = &g_player;
+
+    if (ctx->aa_lpf_need_init) { return; }
+
+    int total_samples = frame_count * channels;
+    for (int i = 0; i < total_samples; i++) {
+        int ch = i % channels;
+        float x = interleaved[i];
+        // 4 级联低通，逐步滤除超声
+        for (int stage = 0; stage < 4; stage++) {
+            BiquadState* st = &ctx->aa_lpf[ch][stage];
+            x = process_biquad(st, x);
+        }
+        interleaved[i] = x;
+    }
+}
+
+// ============================================================================
+// 重采样帧（先交织→滤波→线性插值降采，三步分离避免缓冲区溢出）
 // ============================================================================
 static AVFrame* resample_frame(AVFrame* src, int dst_rate) {
     PlayerContext* ctx = &g_player;
@@ -472,7 +568,7 @@ static AVFrame* resample_frame(AVFrame* src, int dst_rate) {
     int dst_nb = (int)delay;
     if (dst_nb < 1) { dst_nb = 1; }
 
-    // 检查缓冲区是否足够大
+    // 检查输出 buffer 是否够大
     if (!ctx->resampled_frame || ctx->resample_buf_samples < dst_nb) {
         av_frame_free(&ctx->resampled_frame);
         ctx->resampled_frame = av_frame_alloc();
@@ -489,43 +585,86 @@ static AVFrame* resample_frame(AVFrame* src, int dst_rate) {
     }
 
     AVFrame* dst = ctx->resampled_frame;
+    float* dst_data = (float*)dst->data[0];
     int src_fmt = src->format;
     bool is_planar = av_sample_fmt_is_planar((AVSampleFormat)src_fmt);
 
+    // 如果是降采样且抗混叠滤波尚未初始化，先初始化
+    if (dst_rate < src_rate) {
+        if (ctx->aa_lpf_need_init ||
+            ctx->aa_lpf_src_rate != src_rate ||
+            ctx->aa_lpf_dst_rate != dst_rate) {
+            init_aa_filter(ctx, src_rate, dst_rate);
+        }
+    }
+
+    // --- 分配/确保中间工作 buffer（大小 = src->nb_samples × channels）---
+    int work_floats = src->nb_samples * channels;
+    if (!ctx->aa_work_buf || ctx->aa_work_buf_capacity < work_floats) {
+        delete[] ctx->aa_work_buf;
+        ctx->aa_work_buf = new float[work_floats];
+        ctx->aa_work_buf_capacity = work_floats;
+    }
+    float* work = ctx->aa_work_buf;
+
+    // --- 第一步：平面→交织（写入 work buffer，不会溢出 dst）---
     for (int ch = 0; ch < channels; ch++) {
-        float* d = (float*)dst->data[0];
         uint8_t* s = is_planar ? src->data[ch] : src->data[0];
         int s_stride = is_planar ? 1 : channels;
         int s_idx = is_planar ? 0 : ch;
 
-        for (int i = 0; i < dst_nb; i++) {
-            int si = (int)((int64_t)i * src_rate / dst_rate);
-            if (si >= src->nb_samples) { si = src->nb_samples - 1; }
-
+        for (int i = 0; i < src->nb_samples; i++) {
             float val = 0.0f;
             switch (src_fmt) {
                 case AV_SAMPLE_FMT_FLT:
                 case AV_SAMPLE_FMT_FLTP:
-                    val = ((float*)s)[si * s_stride + s_idx]; break;
+                    val = ((float*)s)[i * s_stride + s_idx]; break;
                 case AV_SAMPLE_FMT_S32:
                 case AV_SAMPLE_FMT_S32P:
-                    val = ((int32_t*)s)[si * s_stride + s_idx] / 2147483648.0f; break;
+                    val = ((int32_t*)s)[i * s_stride + s_idx] / 2147483648.0f; break;
                 case AV_SAMPLE_FMT_S16:
                 case AV_SAMPLE_FMT_S16P:
-                    val = ((int16_t*)s)[si * s_stride + s_idx] / 32768.0f; break;
+                    val = ((int16_t*)s)[i * s_stride + s_idx] / 32768.0f; break;
                 case AV_SAMPLE_FMT_U8:
                 case AV_SAMPLE_FMT_U8P:
-                    val = (((uint8_t*)s)[si * s_stride + s_idx] - 128) / 128.0f; break;
+                    val = (((uint8_t*)s)[i * s_stride + s_idx] - 128) / 128.0f; break;
                 case AV_SAMPLE_FMT_DBL:
                 case AV_SAMPLE_FMT_DBLP:
-                    val = (float)((double*)s)[si * s_stride + s_idx]; break;
+                    val = (float)((double*)s)[i * s_stride + s_idx]; break;
                 case AV_SAMPLE_FMT_S64:
                 case AV_SAMPLE_FMT_S64P:
-                    val = ((int64_t*)s)[si * s_stride + s_idx] / 9223372036854775808.0f; break;
+                    val = ((int64_t*)s)[i * s_stride + s_idx] / 9223372036854775808.0f; break;
                 default: break;
             }
-            d[i * channels + ch] = val;
+            work[i * channels + ch] = val;
         }
+    }
+
+    // --- 第二步：降采前在源率域应用抗混叠低通 ---
+    if (dst_rate < src_rate) {
+        apply_aa_filter(work, src->nb_samples, channels);
+        // 滤波后重新计算 work_floats（nb_samples 未变，但以防万一）
+    }
+
+    // --- 第三步：线性插值从 work → dst_data ---
+    if (src_rate != dst_rate) {
+        float ratio = (float)src_rate / (float)dst_rate;
+        for (int i = 0; i < dst_nb; i++) {
+            float src_pos = (float)i * ratio;
+            int si0 = (int)src_pos;
+            int si1 = si0 + 1;
+            if (si1 >= src->nb_samples) { si1 = src->nb_samples - 1; }
+            float frac = src_pos - (float)si0;
+
+            for (int ch = 0; ch < channels; ch++) {
+                float v0 = work[si0 * channels + ch];
+                float v1 = work[si1 * channels + ch];
+                dst_data[i * channels + ch] = v0 + frac * (v1 - v0);
+            }
+        }
+    } else {
+        // 速率一致：直接 memcpy（平面→交织的最终结果）
+        memcpy(dst_data, work, work_floats * sizeof(float));
     }
 
     dst->pts = src->pts;
@@ -1063,8 +1202,18 @@ static void execute_set_audio(napi_env env, void* data) {
     bool lossy = is_lossy_codec(codec_par->codec_id);
 
     if (is_dsd) {
-        // DSD: 176.4kHz F32LE
-        out_rate = 176400;
+        // DSD: 解码器输出 fltp @ DSD率/8（例如 DSD64→352.8kHz）
+        // DSD 噪声整形将量化噪声推入超声段（>50kHz），不做抗混叠滤波直接降采会混叠
+        // 两级策略：352.8k→176.4k (family 44100)，或按需降采到安全上限
+        if (src_rate <= 192000) {
+            out_rate = src_rate;  // 无需降采
+        } else if (src_rate <= 384000) {
+            // DSD64 典型：352.8k → 176.4k
+            out_rate = (src_rate % 44100 == 0) ? src_rate / 2 : 192000;
+        } else {
+            // DSD128/256：多级降采到安全上限
+            out_rate = (src_rate % 44100 == 0) ? 352800 : 384000;
+        }
         out_fmt = AUDIOSTREAM_SAMPLE_F32LE;
     } else if (lossy) {
         // 有损格式无原生位深 → 强制 16-bit S16LE
@@ -1111,25 +1260,31 @@ static void execute_set_audio(napi_env env, void* data) {
 
     // ---------- 调试日志：打印源格式与输出格式 ----------
     {
-        // 文件原始格式（codec_par），解码器输出格式（codec_ctx），输出格式
-        const char* file_fmt_name = av_get_sample_fmt_name((AVSampleFormat)codec_par->format);
-        const char* dec_fmt_name2 = av_get_sample_fmt_name(codec_ctx->sample_fmt);
+        // 容器/文件原始参数 (codec_par)，解码器输出参数 (codec_ctx)，最终 OHAudio 输出
+        int container_rate = codec_par->sample_rate;  // 容器采样率（DSD64 = 2822400）
+        const char* container_fmt = av_get_sample_fmt_name((AVSampleFormat)codec_par->format);
+        const char* file_fmt_str = (codec_par->format == AV_SAMPLE_FMT_NONE) ? "DSD(1-bit)" : container_fmt;
+        const char* dec_fmt_name3 = av_get_sample_fmt_name(codec_ctx->sample_fmt);
         const char* out_fmt_str[] = {"U8","S16LE","S24LE","S32LE","F32LE"};
         const char* out_fmt_name = (out_fmt >= 0 && out_fmt < 5) ? out_fmt_str[out_fmt] : "???";
         const AVCodec* codec_info = avcodec_find_decoder(codec_par->codec_id);
         const char* codec_name = codec_info ? codec_info->name : "unknown";
 
         FF_LOG("====== set_audio ======");
-        FF_LOG("codec    : %{public}s %{public}s%{public}s",
+        FF_LOG("codec      : %{public}s %{public}s%{public}s",
                 codec_name, is_dsd ? "(DSD)" : "", lossy ? "(lossy→S16)" : "");
-        FF_LOG("file_fmt : %{public}d Hz / %{public}s / %{public}d ch",
-                src_rate, file_fmt_name, channels);
-        FF_LOG("dec_fmt  : %{public}s", dec_fmt_name2);
-        FF_LOG("out      : %{public}d Hz / %{public}s / %{public}d ch / %{public}d bps",
+        FF_LOG("container  : %{public}d Hz / %{public}s / %{public}d ch / %{public}d bit",
+                container_rate, file_fmt_str, channels,
+                is_dsd ? 1 : codec_par->bits_per_raw_sample);
+        FF_LOG("decoder    : %{public}d Hz / %{public}s / %{public}d ch",
+                src_rate, dec_fmt_name3, channels);
+        FF_LOG("out        : %{public}d Hz / %{public}s / %{public}d ch / %{public}d bps",
                 out_rate, out_fmt_name, channels, player->bytes_per_sample);
-        FF_LOG("resample : %{public}s",
+        FF_LOG("resample   : %{public}s (container→dec=%{public}s, dec→out=%{public}s)",
+                (out_rate != src_rate || container_rate != src_rate) ? "YES" : "no",
+                (container_rate != src_rate) ? "YES" : "no",
                 (out_rate != src_rate) ? "YES" : "no");
-        FF_LOG("duration : %{public}lld ms",
+        FF_LOG("duration   : %{public}lld ms",
                 (long long)player->duration_ms);
         FF_LOG("==============================");
     }
