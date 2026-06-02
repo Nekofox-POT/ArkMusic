@@ -887,6 +887,26 @@ static OH_AudioData_Callback_Result on_write_data(
 }
 
 // ============================================================================
+// OHAudio 音频中断回调：系统/其他软件打断播放时触发
+// ============================================================================
+static void on_audio_interrupt(OH_AudioRenderer* renderer, void* userData,
+                                OH_AudioInterrupt_ForceType type, OH_AudioInterrupt_Hint hint) {
+    PlayerContext* ctx = &g_player;
+
+    // 系统强中断（如来电）且建议暂停/停止 → 暂停并回调 pause 状态
+    if (type == AUDIOSTREAM_INTERRUPT_FORCE &&
+        (hint == AUDIOSTREAM_INTERRUPT_HINT_PAUSE || hint == AUDIOSTREAM_INTERRUPT_HINT_STOP)) {
+        if (ctx->play_state.load() == STATE_PLAYING && ctx->renderer) {
+            OH_AudioRenderer_Pause(ctx->renderer);
+            ctx->play_state = STATE_PAUSED;
+            notify_status_callback(ctx, "pause");
+            FF_LOG("Audio interrupted by system, paused (hint=%{public}d)", (int)hint);
+        }
+    }
+    // AUDIOSTREAM_INTERRUPT_HINT_RESUME: 中断结束，保持暂停让用户手动恢复
+}
+
+// ============================================================================
 // 创建 OHAudio renderer
 // ============================================================================
 static bool create_ohaudio_renderer(PlayerContext* ctx) {
@@ -903,6 +923,7 @@ static bool create_ohaudio_renderer(PlayerContext* ctx) {
     OH_AudioStreamBuilder_SetLatencyMode(builder, AUDIOSTREAM_LATENCY_MODE_NORMAL);
     OH_AudioStreamBuilder_SetRendererInfo(builder, AUDIOSTREAM_USAGE_MUSIC);
     OH_AudioStreamBuilder_SetRendererWriteDataCallback(builder, on_write_data, nullptr);
+    OH_AudioStreamBuilder_SetRendererInterruptCallback(builder, on_audio_interrupt, nullptr);
 
     // 调试日志：OHAudio 实际配置
     const char* fmt_names[] = {"U8","S16LE","S24LE","S32LE","F32LE"};
@@ -941,6 +962,13 @@ struct SetAudioContext {
 static void execute_set_audio(napi_env env, void* data) {
     auto* ctx = static_cast<SetAudioContext*>(data);
 
+    PlayerContext* player = &g_player;
+
+    // 载入新歌曲前，先回调 pause 状态通知 ArkTS 层
+    if (player->play_state.load() == STATE_PLAYING) {
+        notify_status_callback(player, "pause");
+    }
+
     // 先释放旧的播放器
     release_player();
     // 重置 EQ 状态
@@ -955,8 +983,6 @@ static void execute_set_audio(napi_env env, void* data) {
         }
         p->eq_dirty = true;
     }
-
-    PlayerContext* player = &g_player;
 
     // 1. 打开文件
     AVFormatContext* format_ctx = nullptr;
