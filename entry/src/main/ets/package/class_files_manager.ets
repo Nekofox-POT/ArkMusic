@@ -14,7 +14,7 @@ import picker from '@ohos.file.picker'
 import nativeModule from 'libentry.so'
 import { log, notice as notice_down } from './system_function'
 import { get_meta_batch } from './meta_manager'
-import { array_to_json_save, load_json_to_array } from './array_save_load'
+import { save_array, load_array } from './array_save_load'
 
 // 导入类
 import { class_global_config } from './class_global_config'
@@ -234,11 +234,11 @@ export class class_files_manager {
     // 所有歌曲
     log('保存 所有歌曲')
     this.all_songs_list = nativeModule.sortStringArray(this.all_songs_list)
-    array_to_json_save(this.all_songs_list, files_manager_path + '/all_songs.json')
+    save_array(this.all_songs_list, files_manager_path + '/all_songs.json')
     // 外部歌曲
     log('保存 外部歌曲')
     this.external_songs_list = nativeModule.sortStringArray(this.external_songs_list)
-    array_to_json_save(this.external_songs_list, files_manager_path + '/external_songs.json')
+    save_array(this.external_songs_list, files_manager_path + '/external_songs.json')
     // 歌手 / 作曲家
     log('保存 歌手 / 作曲家')
     tick = 0
@@ -248,7 +248,7 @@ export class class_files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.artist_composer_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, files_manager_path + '/artist_composer/' + tick++ + '.json')
+      save_array(tmp_values, files_manager_path + '/artist_composer/' + tick++ + '.json')
     }
     // 专辑
     log('保存 专辑')
@@ -259,7 +259,7 @@ export class class_files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.album_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, files_manager_path + '/album/' + tick++ + '.json')
+      save_array(tmp_values, files_manager_path + '/album/' + tick++ + '.json')
     }
     // 专辑作家
     log('保存 专辑作家')
@@ -270,7 +270,7 @@ export class class_files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.album_artist_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, files_manager_path + '/album_artist/' + tick++ + '.json')
+      save_array(tmp_values, files_manager_path + '/album_artist/' + tick++ + '.json')
     }
     // 流派
     log('保存 流派')
@@ -281,13 +281,13 @@ export class class_files_manager {
       notice(`正在保存 (${i}/${tmp_keys_length})`)
       tmp_values = nativeModule.sortStringArray(this.genre_list.get(tmp_keys[i]) ?? [])
       tmp_values.push(tmp_keys[i])
-      array_to_json_save(tmp_values, files_manager_path + '/genre/' + tick++ + '.json')
+      save_array(tmp_values, files_manager_path + '/genre/' + tick++ + '.json')
     }
     // 列表
     log('保存 列表')
     tmp_keys = nativeModule.sortStringArray(Array.from(this.play_list.keys()))
     for (const i of tmp_keys) {
-      array_to_json_save(this.play_list.get(i) ?? [], files_manager_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
+      save_array(this.play_list.get(i) ?? [], files_manager_path + '/play_list/' + nativeModule.base64urlCode(i, true) + '.json')
     }
     log('保存完毕！')
     notice_down('扫描完成！')
@@ -307,7 +307,7 @@ export class class_files_manager {
       // 加载 //
       // 加载所有歌曲
       notice('读取 所有歌曲')
-      for (const i of load_json_to_array(files_manager_path + '/all_songs.json')) {
+      for (const i of load_array(files_manager_path + '/all_songs.json')) {
         // 检查有效性
         try {
           fs.openSync(i)
@@ -322,7 +322,7 @@ export class class_files_manager {
       for (const i of fs.listFileSync(files_manager_path + '/artist_composer/', { recursion: false })) {
         const tmp_path = files_manager_path + '/artist_composer/' + i
         // 读取
-        let tmp_list = load_json_to_array(tmp_path)
+        let tmp_list = load_array(tmp_path)
         // 获取文件名
         const tmp_name = tmp_list.pop() ?? ''
         // 载入
@@ -332,32 +332,32 @@ export class class_files_manager {
       notice('读取 专辑')
       for (const i of fs.listFileSync(files_manager_path + '/album/', { recursion: false })) {
         const tmp_path = files_manager_path + '/album/' + i
-        let tmp_list = load_json_to_array(tmp_path)
+        let tmp_list = load_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.album_list.set(tmp_name, load_json_to_array(tmp_path))
+        this.album_list.set(tmp_name, load_array(tmp_path))
       }
       // 加载专辑作家
       notice('读取 专辑作家')
       for (const i of fs.listFileSync(files_manager_path + '/album_artist/', { recursion: false })) {
         const tmp_path = files_manager_path + '/album_artist/' + i
-        let tmp_list = load_json_to_array(tmp_path)
+        let tmp_list = load_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.album_artist_list.set(tmp_name, load_json_to_array(tmp_path))
+        this.album_artist_list.set(tmp_name, load_array(tmp_path))
       }
       // 加载流派
       notice('读取 流派')
       for (const i of fs.listFileSync(files_manager_path + '/genre/', { recursion: false })) {
         const tmp_path = files_manager_path + '/genre/' + i
-        let tmp_list = load_json_to_array(tmp_path)
+        let tmp_list = load_array(tmp_path)
         const tmp_name = tmp_list.pop() ?? ''
-        this.genre_list.set(tmp_name, load_json_to_array(tmp_path))
+        this.genre_list.set(tmp_name, load_array(tmp_path))
       }
       // 加载列表
       notice('读取 列表')
       for (const i of fs.listFileSync(files_manager_path + '/play_list/', { recursion: false })) {
         const tmp_path = files_manager_path + '/play_list/' + i
         const tmp_name = nativeModule.extractFilename(tmp_path)
-        this.play_list.set(nativeModule.base64urlCode(tmp_name, false), load_json_to_array(tmp_path))
+        this.play_list.set(nativeModule.base64urlCode(tmp_name, false), load_array(tmp_path))
       }
       // 加载dsd文件
 

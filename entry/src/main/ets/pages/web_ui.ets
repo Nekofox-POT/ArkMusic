@@ -16,7 +16,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
 import { log, notice, vib } from '../package/system_function'
-import { array_to_json_save, load_json_to_array } from '../package/array_save_load'
+import { save_array, load_array } from '../package/array_save_load'
 import { get_image, get_meta, image_to_base64, check_meta_image } from '../package/meta_manager'
 
 // 导入类 //
@@ -224,7 +224,7 @@ export default struct web_ui {
   load_data() {
 
     // 加载设置 //
-    let tmp = load_json_to_array(web_ui_path + '/' + 'web_ui.json')
+    let tmp = load_array(web_ui_path + '/' + 'web_ui.json')
     if (tmp.length != 0) {
       this.active_color = tmp[0]
       this.enable_active_color = (tmp[1] === '1') ? true : false
@@ -248,7 +248,7 @@ export default struct web_ui {
         (this.enable_active_color) ? '1' : '0',
         this.setting_head_image,
       ]
-      array_to_json_save(tmp, web_ui_path + '/' + 'web_ui.json')
+      save_array(tmp, web_ui_path + '/' + 'web_ui.json')
     }
   }
 
@@ -265,7 +265,7 @@ export default struct web_ui {
         log('页面准备完成')
         this.listen_broadcast()  // 监听广播
         // 加载audio
-        try {await this.lin_music_player.play_data_load()} catch {}
+        try {this.lin_music_player.load_data()} catch {}
         // 加载数据
         this.load_data()
         this.ready = true
@@ -279,13 +279,13 @@ export default struct web_ui {
       // 暂停 //
       pause: () => {this.lin_music_player.pause()},
       // 上一首 //
-      last_song: () => {this.lin_music_player.last_song()},
+      last_song: () => {this.lin_music_player.previous()},
       // 下一首 //
-      next_song: () => {this.lin_music_player.next_song()},
+      next_song: () => {this.lin_music_player.next()},
       // 更改播放进度 //
       seek: (time: string) => {this.lin_music_player.seek(parseInt(time))},
       // 跳转歌曲 //
-      seek_song: (index: number) => {this.lin_music_player.seek_song(index)},
+      seek_song: (index: number) => {this.lin_music_player.seek(index)},
       // 喜欢切换 //
       toggle_like: () => {this.lin_music_player.toggle_like()},
       // 设置播放模式 //
@@ -507,7 +507,7 @@ export default struct web_ui {
         this.lin_music_ui.runJavaScript(`set_dsd(${status})`)
         if (status) {
           this.lin_music_player.pause()
-          this.lin_music_player.drop_it()
+          this.lin_music_player.save_data()
           this.files_manager.reset_song_data()
           this.start_ui = false
         }
@@ -516,7 +516,7 @@ export default struct web_ui {
       rescan_data: () => {
         log('重新扫描')
         this.lin_music_player.pause()
-        this.lin_music_player.drop_it()
+        this.lin_music_player.save_data()
         this.files_manager.reset_song_data()
         this.start_ui = false
       },
@@ -528,27 +528,12 @@ export default struct web_ui {
 
       // 保存web_ui的配置文件 //
       save_data: (name: string, data: string[]) => {
-        return array_to_json_save(data, web_ui_path + '/' + name + '.json')
+        return save_array(data, web_ui_path + '/' + name + '.json')
       },
       // 打开web_ui的配置文件 //
       load_data: (name: string) => {
-        return load_json_to_array(web_ui_path + '/' + name + '.json')
+        return load_array(web_ui_path + '/' + name + '.json')
       },
-
-      // 定时部分 //
-      // 开始睡眠定时
-      start_sleep_timer: (hours: number, minutes: number, waitEnd: boolean) => {
-        this.lin_music_player.start_timing(hours, minutes, waitEnd)
-      },
-      // 取消睡眠定时
-      cancel_sleep_timer: () => {
-        this.lin_music_player.end_timing()
-      },
-      // 获取定时信息
-      get_sleep_timer: (): [number, number, number, boolean] => {
-        return this.lin_music_player.get_timing()
-      },
-
 
     },
       /////////////

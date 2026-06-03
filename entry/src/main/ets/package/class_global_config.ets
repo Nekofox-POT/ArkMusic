@@ -12,7 +12,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { array_to_json_save, load_json_to_array } from './array_save_load'
+import { save_array, load_array } from './array_save_load'
 
 ///////////
 // 变量池 //
@@ -62,7 +62,7 @@ export class class_global_config {
   save() {
     if (!this.reset) {
       // 保存文件
-      array_to_json_save([
+      save_array([
 
         (this.dsd_support) ? '1' : '0',   // dsd播放支持
 
@@ -76,7 +76,7 @@ export class class_global_config {
 
   constructor() {
     // 检测文件存在性
-    const tmp = load_json_to_array(global_config_json)
+    const tmp = load_array(global_config_json)
     if (tmp.length != 0) {
 
       // 加载文件

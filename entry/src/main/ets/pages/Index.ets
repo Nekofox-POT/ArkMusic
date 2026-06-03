@@ -55,7 +55,7 @@ struct Index {
 
   // 类 //
   @State global_config: class_global_config = new class_global_config()   // 全局变量管理
-  @State lin_music_player: class_audio_player = new class_audio_player(this.global_config)   // 播放器核心
+  @State lin_music_player: class_audio_player = new class_audio_player()   // 播放器核心
   @State ark_file_manager: class_files_manager = new class_files_manager(this.global_config)   // 文件管理器核心
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ struct Index {
     // 全局变量保存
     this.global_config.save()
     // 销毁播放器
-    this.lin_music_player.drop_it()
+    this.lin_music_player.save_data()
     log('再见.')
   }
 

@@ -13,7 +13,6 @@ import { CircleShape, RectShape } from '@kit.ArkUI';
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
 import { log, notice, vib } from '../../package/system_function'
-import { array_to_json_save, load_json_to_array } from '../../package/array_save_load'
 import { get_image, get_meta, image_to_base64, check_meta_image } from '../../package/meta_manager'
 
 // 导入类 //

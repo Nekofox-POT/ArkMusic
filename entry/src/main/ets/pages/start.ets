@@ -98,7 +98,6 @@ export default struct lin_music_start {
   // files_manager注册 //
   async reg_files_manager() {
     await this.files_manager.load_data()
-    this.lin_music_player.load_dsd()
     this.ready = true
   }
 

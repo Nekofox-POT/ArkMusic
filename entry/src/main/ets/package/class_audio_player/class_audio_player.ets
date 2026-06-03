@@ -145,7 +145,7 @@ export class class_audio_player {
   }
 
   // 打开配置文件 //
-  load_data() {
+  async load_data() {
 
     log('加载播放数据')
 
@@ -180,7 +180,10 @@ export class class_audio_player {
       this.set_audio()
       // 等待完成/超时1s强制进入
       let tmp_count = 0
-      while ((!this.player_ready) || (tmp_count <= 1000)) {tmp_count++}
+      while ((!this.player_ready) || (tmp_count <= 1000)) {
+        await new Promise<void>(() => setTimeout(() => {}, 1))
+        tmp_count++
+      }
 
       // 跳转 //
       this.seek(Number.parseInt(tmp[2]))
