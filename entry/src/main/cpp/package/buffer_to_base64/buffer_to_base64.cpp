@@ -48,22 +48,22 @@ std::string base64_encode(unsigned char const* bytes_to_encode, size_t in_len) {
 
 // --- 核心业务逻辑实现 ---
 // 职责：从 napi_value 中提取数据，处理业务，返回 C++ 结果
-std::string ProcessArrayBufferToBase64(napi_env env, napi_value arrayBuffer) {
+std::string process_array_buffer_to_base64(napi_env env, napi_value array_buffer) {
     // 1. 获取 ArrayBuffer 的数据和长度
     void* buffer = nullptr;
-    size_t bufferLength = 0;
-    
+    size_t buffer_length = 0;
+
     // 注意：错误处理这里简化了，实际项目中如果 napi 调用失败，可以抛出异常或返回空字符串
-    napi_status status = napi_get_arraybuffer_info(env, arrayBuffer, &buffer, &bufferLength);
-    
+    napi_status status = napi_get_arraybuffer_info(env, array_buffer, &buffer, &buffer_length);
+
     if (status != napi_ok || buffer == nullptr) {
         // 在实际项目中，这里最好抛出一个 JS 异常或者返回特定的错误标记
-        return ""; 
+        return "";
     }
 
     // 2. 执行 Base64 编码
-    std::string base64Result = base64_encode(static_cast<unsigned char*>(buffer), bufferLength);
+    std::string base64_result = base64_encode(static_cast<unsigned char*>(buffer), buffer_length);
 
     // 3. 拼接 Data URL 前缀
-    return "data:image/jpeg;base64," + base64Result;
+    return "data:image/jpeg;base64," + base64_result;
 }

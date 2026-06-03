@@ -1,3 +1,9 @@
+//
+// DSD 转 WAV 转换器
+// 异步解码 DSD 音频文件并编码为 352.8kHz / 32bit FLT WAV 格式
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include "ffmpeg_manager.h"
 
 extern "C" {
@@ -9,6 +15,9 @@ extern "C" {
 #include <cstdint>
 #include <cmath>
 
+// ============================================================================
+// 异步上下文
+// ============================================================================
 struct DsdToWavContext {
     napi_async_work async_work;
     napi_deferred deferred;
@@ -117,7 +126,7 @@ static int encode_frame(AVCodecContext* enc_ctx, AVStream* out_stream,
     return 0;
 }
 
-static void ExecuteDsdToWav(napi_env env, void* data) {
+static void execute_dsd_to_wav(napi_env env, void* data) {
     auto* ctx = static_cast<DsdToWavContext*>(data);
 
     AVFormatContext* in_fmt_ctx = nullptr;
@@ -362,7 +371,7 @@ cleanup:
     }
 }
 
-static void CompleteDsdToWav(napi_env env, napi_status status, void* data) {
+static void complete_dsd_to_wav(napi_env env, napi_status status, void* data) {
     auto* ctx = static_cast<DsdToWavContext*>(data);
 
     if (status == napi_ok) {
@@ -385,7 +394,7 @@ static void CompleteDsdToWav(napi_env env, napi_status status, void* data) {
 // 参数1: DSD 文件路径 (string)
 // 参数2: 输出 WAV 文件路径 (string)
 // 返回: Promise<void>
-napi_value DsdToWav(napi_env env, napi_callback_info info) {
+napi_value dsd_to_wav(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 2;
     napi_value args[2];
@@ -407,29 +416,29 @@ napi_value DsdToWav(napi_env env, napi_callback_info info) {
     }
 
     // 3. 读取输入路径
-    size_t strSize = 0;
-    napi_status status = napi_get_value_string_utf8(env, args[0], nullptr, 0, &strSize);
-    if (status != napi_ok || strSize == 0) {
+    size_t str_size = 0;
+    napi_status status = napi_get_value_string_utf8(env, args[0], nullptr, 0, &str_size);
+    if (status != napi_ok || str_size == 0) {
         napi_throw_error(env, nullptr, "输入路径解析失败");
         return nullptr;
     }
-    std::string inputPath(strSize, '\0');
-    napi_get_value_string_utf8(env, args[0], &inputPath[0], strSize + 1, &strSize);
+    std::string input_path(str_size, '\0');
+    napi_get_value_string_utf8(env, args[0], &input_path[0], str_size + 1, &str_size);
 
     // 4. 读取输出路径
-    strSize = 0;
-    status = napi_get_value_string_utf8(env, args[1], nullptr, 0, &strSize);
-    if (status != napi_ok || strSize == 0) {
+    str_size = 0;
+    status = napi_get_value_string_utf8(env, args[1], nullptr, 0, &str_size);
+    if (status != napi_ok || str_size == 0) {
         napi_throw_error(env, nullptr, "输出路径解析失败");
         return nullptr;
     }
-    std::string outputPath(strSize, '\0');
-    napi_get_value_string_utf8(env, args[1], &outputPath[0], strSize + 1, &strSize);
+    std::string output_path(str_size, '\0');
+    napi_get_value_string_utf8(env, args[1], &output_path[0], str_size + 1, &str_size);
 
     // 5. 创建异步上下文
     auto* ctx = new DsdToWavContext();
-    ctx->input_path = inputPath;
-    ctx->output_path = outputPath;
+    ctx->input_path = input_path;
+    ctx->output_path = output_path;
     ctx->success = false;
 
     // 6. 创建 Promise
@@ -441,7 +450,7 @@ napi_value DsdToWav(napi_env env, napi_callback_info info) {
     napi_create_string_utf8(env, "DsdToWav", NAPI_AUTO_LENGTH, &resource_name);
 
     napi_create_async_work(env, nullptr, resource_name,
-                           ExecuteDsdToWav, CompleteDsdToWav,
+                           execute_dsd_to_wav, complete_dsd_to_wav,
                            ctx, &ctx->async_work);
 
     napi_queue_async_work(env, ctx->async_work);

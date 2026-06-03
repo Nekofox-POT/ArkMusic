@@ -133,13 +133,13 @@ std::string base64url_decode(const std::string& input) {
 // --- Base64URL 辅助代码结束 ---
 
 // --- 核心业务逻辑实现 ---
-// 职责：根据 isEncode 决定编码或解码
-std::string ProcessBase64UrlCode(const std::string& input, bool isEncode) {
+// 职责：根据 is_encode 决定编码或解码
+std::string process_base64url_code(const std::string& input, bool is_encode) {
     if (input.empty()) {
         return "";
     }
 
-    if (isEncode) {
+    if (is_encode) {
         return base64url_encode(input);
     } else {
         return base64url_decode(input);

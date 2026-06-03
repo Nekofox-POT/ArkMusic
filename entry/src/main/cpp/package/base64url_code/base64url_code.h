@@ -18,6 +18,6 @@ std::string base64url_decode(const std::string& input);
 // 参数：input - 待处理的字符串
 // 参数：isEncode - true 为编码，false 为解码
 // 返回：处理后的字符串
-std::string ProcessBase64UrlCode(const std::string& input, bool isEncode);
+std::string process_base64url_code(const std::string& input, bool is_encode);
 
 #endif // BASE64URL_CODE_H

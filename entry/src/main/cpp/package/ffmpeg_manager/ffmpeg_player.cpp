@@ -1,4 +1,4 @@
-#include "ffmpeg_player.h"
+#include "ffmpeg_manager.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -26,7 +26,7 @@ extern "C" {
 
 // ---- 调试日志宏（hilog） ----
 #define FFMPEG_LOG_DOMAIN 0x0001
-#define FFMPEG_LOG_TAG "ffmpeg_player"
+#define FFMPEG_LOG_TAG "ffmpeg_manager"
 // 用 OH_LOG_Print 代替 fprintf(stderr)，鸿蒙原生日志系统才能看到
 #define FF_LOG(fmt, ...) \
     OH_LOG_Print(LOG_APP, LOG_INFO, FFMPEG_LOG_DOMAIN, FFMPEG_LOG_TAG, fmt, ##__VA_ARGS__)
@@ -1029,7 +1029,7 @@ static OH_AudioData_Callback_Result on_write_data(
 // ============================================================================
 // OHAudio 音频中断回调：系统/其他软件打断播放时触发
 // ============================================================================
-static void on_audio_interrupt(OH_AudioRenderer* renderer, void* userData,
+static void on_audio_interrupt(OH_AudioRenderer* renderer, void* user_data,
                                 OH_AudioInterrupt_ForceType type, OH_AudioInterrupt_Hint hint) {
     PlayerContext* ctx = &g_player;
 
@@ -1589,17 +1589,46 @@ napi_value set_start_ready(napi_env env, napi_callback_info info) {
 }
 
 // ============================================================================
-// NAPI: switch_eq() — 切换 EQ 模式（循环） → 返回当前模式 int
+// NAPI: switch_eq(mode: int) — 设置 EQ 模式（0=OFF, 1=GEQ, 2=PEQ）
 // ============================================================================
 napi_value switch_eq(napi_env env, napi_callback_info info) {
+    size_t argc = 1;
+    napi_value args[1];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc < 1) {
+        napi_throw_error(env, nullptr, "需要传入一个整数参数 (0/1/2)");
+        return nullptr;
+    }
+
+    int32_t mode = 0;
+    napi_get_value_int32(env, args[0], &mode);
+
+    // 越界丢弃不修改
+    if (mode < 0 || mode > 2) {
+        napi_value result;
+        napi_get_undefined(env, &result);
+        return result;
+    }
+
     PlayerContext* ctx = &g_player;
-    int current = ctx->eq_mode.load();
-    int next = (current + 1) % 3;  // 0→1→2→0
-    ctx->eq_mode.store(next);
+    ctx->eq_mode.store(mode);
     ctx->eq_dirty = true;
 
     napi_value result;
-    napi_create_int32(env, next, &result);
+    napi_get_undefined(env, &result);
+    return result;
+}
+
+// ============================================================================
+// NAPI: get_eq_mode() — 获取当前 EQ 模式 → int (0/1/2)
+// ============================================================================
+napi_value get_eq_mode(napi_env env, napi_callback_info info) {
+    PlayerContext* ctx = &g_player;
+    int mode = ctx->eq_mode.load();
+
+    napi_value result;
+    napi_create_int32(env, mode, &result);
     return result;
 }
 

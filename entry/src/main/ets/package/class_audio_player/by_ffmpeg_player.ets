@@ -15,7 +15,7 @@ import { log } from '../system_function'
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
-export class ffmpeg_player {
+export class class_ffmpeg_player {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
@@ -35,7 +35,6 @@ export class ffmpeg_player {
 
     // 播放状态回调 //
     nativeModule.register_status_callback((status: string) => {
-      // log(status)
       this.play_status_update?.(status)
     })
 
@@ -51,7 +50,10 @@ export class ffmpeg_player {
   ////////////
 
   // 装载播放歌曲 //
-  async set_audio(path: string): Promise<boolean> {return await nativeModule.set_audio(path)}
+  async set_audio(path: string, auto_play: boolean = true): Promise<boolean> {
+    nativeModule.set_start_ready(auto_play)
+    return await nativeModule.set_audio(path)
+  }
 
   // 播放 //
   playing() {nativeModule.playing()}
@@ -60,18 +62,19 @@ export class ffmpeg_player {
   pause() {nativeModule.pause()}
 
   // 跳转 //
-  seek(time: number) {nativeModule.seek(time)}
-
-  // 自动播放设置 //
-  set_auto_play(status: boolean) {
-    log(`设置自动播放：${status}`)
-    nativeModule.set_start_ready(status)
+  seek(time: number) {
+    nativeModule.seek(time)
   }
 
-  // 切换 EQ 模式（循环: OFF → GEQ → PEQ → OFF）
-  // 返回当前模式 0/1/2
-  switch_eq(): number {
-    return nativeModule.switch_eq()
+  // 设置 EQ 模式（0=OFF, 1=GEQ, 2=PEQ）
+  switch_eq(mode: number): void {
+    nativeModule.switch_eq(mode)
+  }
+
+  // 获取当前 EQ 模式
+  // 返回 0/1/2
+  get_eq_mode(): number {
+    return nativeModule.get_eq_mode()
   }
 
   // 设置 10 段 GEQ 增益（-12 ~ 12 dB）

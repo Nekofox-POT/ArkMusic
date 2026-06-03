@@ -1,5 +1,5 @@
-#ifndef FFMPEG_PLAYER_H
-#define FFMPEG_PLAYER_H
+#ifndef FFMPEG_MANAGER_H
+#define FFMPEG_MANAGER_H
 
 #include <napi/native_api.h>
 #include <string>
@@ -7,7 +7,13 @@
 // 获取音频元信息（异步，自动识别单文件/批量）
 // 参数: 文件路径 (string) 或 文件路径数组 (string[])
 // 返回: Promise<AudioMetadata | AudioMetadata[]>
-napi_value GetAudioMetadata(napi_env env, napi_callback_info info);
+napi_value get_audio_metadata(napi_env env, napi_callback_info info);
+
+// DSD 文件转 WAV（异步）
+// 参数1: DSD 文件路径 (string)
+// 参数2: 输出 WAV 文件路径 (string)
+// 返回: Promise<void>
+napi_value dsd_to_wav(napi_env env, napi_callback_info info);
 
 // --- FFmpeg 播放器 ---
 
@@ -56,9 +62,13 @@ napi_value get_status(napi_env env, napi_callback_info info);
 
 // --- EQ/PEQ ---
 
-// 切换 EQ 模式（循环: OFF(0) → GEQ(1) → PEQ(2) → OFF(0)）
-// 返回: 当前模式 int (0/1/2)
+// 设置 EQ 模式
+// 参数: 模式 int (0=OFF, 1=GEQ, 2=PEQ)，越界无效
 napi_value switch_eq(napi_env env, napi_callback_info info);
+
+// 获取当前 EQ 模式
+// 返回: 当前模式 int (0/1/2)
+napi_value get_eq_mode(napi_env env, napi_callback_info info);
 
 // 设置 10 段 GEQ 增益值
 // 参数: float[10]，每段 -12.0 ~ 12.0 (dB)
@@ -76,4 +86,4 @@ napi_value get_eq(napi_env env, napi_callback_info info);
 // 返回: [boolean, number, number, number, number][10]
 napi_value get_peq(napi_env env, napi_callback_info info);
 
-#endif // FFMPEG_PLAYER_H
+#endif // FFMPEG_MANAGER_H

@@ -4,6 +4,7 @@ export const extractFilename: (path: string) => string
 export const getAudioMetadata: (filePath: string | string[]) => Promise<AudioMetadata | BatchAudioMetadata[]>
 export const base64urlCode: (input: string, isEncode: boolean) => string
 export const sortStringArray: (arr: string[]) => string[]
+export const dsdToWav: (inputPath: string, outputPath: string) => Promise<void>
 
 // 播放器控制
 export const set_audio: (path: string) => Promise<boolean>
@@ -19,7 +20,8 @@ export const register_status_callback: (callback: (status: string) => void) => v
 export const get_status: () => string
 
 // EQ/PEQ
-export const switch_eq: () => number
+export const switch_eq: (mode: number) => void
+export const get_eq_mode: () => number
 export const set_eq: (gains: number[]) => void
 export const set_peq: (params: [boolean, number, number, number, number][]) => void
 export const get_eq: () => number[]

@@ -20,7 +20,7 @@ import { log } from '../system_function'
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
-export class av_player {
+export class class_av_player {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
@@ -106,10 +106,6 @@ export class av_player {
       // 重置
       this.avPlayer?.reset()
     })
-    // 总时长更新
-    this.avPlayer.on('durationUpdate', (time: number) => {
-      this.duration_time_update?.(time)
-    })
     // 进度条时长更新
     this.avPlayer.on('timeUpdate', (time: number) => {
       this.current_time_update?.(time)
@@ -120,11 +116,9 @@ export class av_player {
   // 外部函数 //
   ////////////
 
-  // 播放锁解锁 //
-  unlock_auto_play() {this.auto_play = true}
-
   // 音频设置 //
-  async audio_set(path: string): Promise<[boolean, string]> {
+  async audio_set(path: string, auto_start: boolean = this.auto_play): Promise<boolean> {
+    this.auto_play = auto_start
     try {
       // 销毁av_player
       if (this.avPlayer) {
@@ -142,10 +136,10 @@ export class av_player {
       // 设置播放源
       this.avPlayer.fdSrc = { fd: file.fd, offset: 0, length: fs.statSync(file.fd).size }
       // 返回
-      return [true, '']
+      return true
     } catch (e) {
       // 文件读取失败
-      return [false, `${e}`]
+      return false
     }
   }
 
@@ -174,19 +168,16 @@ export class av_player {
   // 函数头 //
   private set_player_ready?: () => void
   private play_status_update?: (status: string) => void
-  private duration_time_update?: (duration: number) => void
   private current_time_update?: (position: number) => void
 
   // 注册机 //
   set_callback(
     set_player_ready?: () => void,
     play_status_update?: (status: string) => void,
-    duration_time_update?: (duration: number) => void,
     current_time_update?: (position: number) => void
   ): void {
     this.set_player_ready = set_player_ready
     this.play_status_update = play_status_update
-    this.duration_time_update = duration_time_update
     this.current_time_update = current_time_update
   }
 

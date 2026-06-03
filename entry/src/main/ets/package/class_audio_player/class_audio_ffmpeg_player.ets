@@ -564,10 +564,15 @@ export class class_audio_player {
   // EQ/PEQ 接口 //
   ////////////////
 
-  // 切换 EQ 模式（循环: OFF → GEQ → PEQ → OFF）
-  // 返回当前模式 0/1/2
-  switch_eq(): number {
-    return nativeModule.switch_eq()
+  // 设置 EQ 模式（0=OFF, 1=GEQ, 2=PEQ）
+  switch_eq(mode: number): void {
+    nativeModule.switch_eq(mode)
+  }
+
+  // 获取当前 EQ 模式
+  // 返回 0/1/2
+  get_eq_mode(): number {
+    return nativeModule.get_eq_mode()
   }
 
   // 设置 10 段 GEQ 增益（-12 ~ 12 dB）

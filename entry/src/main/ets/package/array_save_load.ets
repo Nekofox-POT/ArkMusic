@@ -1,8 +1,8 @@
 import { fileIo as fs } from '@kit.CoreFileKit'
 import { log, notice } from './system_function'
 
-// string[]转json储存（覆盖） //
-export async function array_to_json_save(data: string[], path: string): Promise<boolean> {
+// string[]储存（覆盖） //
+export async function save_array(data: string[], path: string): Promise<boolean> {
 
   try {fs.rmdirSync(path)} catch {}
 
@@ -22,8 +22,8 @@ export async function array_to_json_save(data: string[], path: string): Promise<
   return true
 
 }
-// json读取转string[] //
-export function load_json_to_array(path: string): string[] {
+// 读取string[] //
+export function load_array(path: string): string[] {
 
   try {
     let json: string = fs.readTextSync(path)

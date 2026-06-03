@@ -1,4 +1,4 @@
-#include "ffmpeg_player.h"
+#include "ffmpeg_manager.h"
 
 extern "C" {
 #include <libavformat/avformat.h>
@@ -471,9 +471,9 @@ static napi_value get_audio_metadata_batch(napi_env env, napi_callback_info info
 }
 
 // ============================================================================
-// GetAudioMetadata 入口：自动识别单文件/批量
+// get_audio_metadata 入口：自动识别单文件/批量
 // ============================================================================
-napi_value GetAudioMetadata(napi_env env, napi_callback_info info) {
+napi_value get_audio_metadata(napi_env env, napi_callback_info info) {
     size_t argc = 1;
     napi_value args[1];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);

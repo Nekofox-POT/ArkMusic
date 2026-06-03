@@ -3,12 +3,12 @@
 #include "package/buffer_to_base64/buffer_to_base64.h" // 引用我们的头文件
 #include "package/image_color_calculate/image_color_calculate.h"
 #include "package/extract_filename/extract_filename.h"
-#include "package/ffmpeg_player/ffmpeg_player.h"
+#include "package/ffmpeg_manager/ffmpeg_manager.h"
 #include "package/base64url_code/base64url_code.h"
 #include "package/sort_manager/sort_manager.h"
 
-// --- 功能1：Base64 编码 (完整代码，请替换原来的省略版本) ---
-static napi_value EncodeImageToBase64(napi_env env, napi_callback_info info) {
+// ---- 功能1：Base64 编码 ----
+static napi_value encode_image_to_base64(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 1;
     napi_value args[1];
@@ -20,31 +20,31 @@ static napi_value EncodeImageToBase64(napi_env env, napi_callback_info info) {
     }
 
     // 2. 校验参数类型
-    bool isArrayBuffer = false;
-    napi_is_arraybuffer(env, args[0], &isArrayBuffer);
-    if (!isArrayBuffer) {
+    bool is_array_buffer = false;
+    napi_is_arraybuffer(env, args[0], &is_array_buffer);
+    if (!is_array_buffer) {
         napi_throw_error(env, nullptr, "参数类型必须是 ArrayBuffer");
         return nullptr;
     }
 
-    // 3. 调用分离出去的业务逻辑函数 (引用你写的 package 里的函数)
-    std::string resultStr = ProcessArrayBufferToBase64(env, args[0]);
+    // 3. 调用分离出去的业务逻辑函数
+    std::string result_str = process_array_buffer_to_base64(env, args[0]);
 
     // 4. 错误检查
-    if (resultStr.empty()) {
+    if (result_str.empty()) {
         napi_throw_error(env, nullptr, "Base64 编码失败或数据为空");
         return nullptr;
     }
 
     // 5. 将 C++ string 转换为 napi_value 返回
     napi_value result;
-    napi_create_string_utf8(env, resultStr.c_str(), resultStr.length(), &result);
+    napi_create_string_utf8(env, result_str.c_str(), result_str.length(), &result);
 
     return result;
 }
 
-// --- 功能2：计算平均色值 (新增) ---
-static napi_value GetImageAverageColor(napi_env env, napi_callback_info info) {
+// ---- 功能2：计算平均色值 ----
+static napi_value get_image_average_color(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 3;
     napi_value args[3];
@@ -56,9 +56,9 @@ static napi_value GetImageAverageColor(napi_env env, napi_callback_info info) {
     }
 
     // 2. 校验与解析
-    bool isArrayBuffer = false;
-    napi_is_arraybuffer(env, args[0], &isArrayBuffer);
-    if (!isArrayBuffer) {
+    bool is_array_buffer = false;
+    napi_is_arraybuffer(env, args[0], &is_array_buffer);
+    if (!is_array_buffer) {
         napi_throw_error(env, nullptr, "参数必须是 ArrayBuffer");
         return nullptr;
     }
@@ -68,18 +68,17 @@ static napi_value GetImageAverageColor(napi_env env, napi_callback_info info) {
     napi_get_value_int32(env, args[2], &height);
 
     // 3. 调用 C++ 业务逻辑，得到整数颜色值
-    uint32_t colorValue = CalculateAverageColor(env, args[0], width, height);
+    uint32_t color_value = calculate_average_color(env, args[0], width, height);
 
     // 4. 将整数转换为 napi_value 返回
     napi_value result;
-    // 使用 create_uint32 创建无符号 32 位整数
-    napi_create_uint32(env, colorValue, &result);
+    napi_create_uint32(env, color_value, &result);
 
     return result;
 }
 
-// --- 功能3：提取文件名（不带扩展名）---
-static napi_value ExtractFilename(napi_env env, napi_callback_info info) {
+// ---- 功能3：提取文件名（不带扩展名）----
+static napi_value extract_filename(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 1;
     napi_value args[1];
@@ -99,18 +98,18 @@ static napi_value ExtractFilename(napi_env env, napi_callback_info info) {
     }
 
     // 3. 获取字符串内容
-    size_t strSize = 0;
-    napi_status status = napi_get_value_string_utf8(env, args[0], nullptr, 0, &strSize);
-    if (status != napi_ok || strSize == 0) {
+    size_t str_size = 0;
+    napi_status status = napi_get_value_string_utf8(env, args[0], nullptr, 0, &str_size);
+    if (status != napi_ok || str_size == 0) {
         napi_throw_error(env, nullptr, "字符串解析失败");
         return nullptr;
     }
 
-    std::string pathStr(strSize, '\0');
-    napi_get_value_string_utf8(env, args[0], &pathStr[0], strSize + 1, &strSize);
+    std::string path_str(str_size, '\0');
+    napi_get_value_string_utf8(env, args[0], &path_str[0], str_size + 1, &str_size);
 
     // 4. 调用 C++ 业务逻辑函数
-    std::string filename = ExtractFilenameWithoutExtension(pathStr);
+    std::string filename = extract_filename_without_extension(path_str);
 
     // 5. 将结果转换为 napi_value 返回
     napi_value result;
@@ -119,8 +118,8 @@ static napi_value ExtractFilename(napi_env env, napi_callback_info info) {
     return result;
 }
 
-// --- 功能4：Base64URL 编码/解码 ---
-static napi_value Base64UrlCode(napi_env env, napi_callback_info info) {
+// ---- 功能4：Base64URL 编码/解码 ----
+static napi_value base64url_code(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 2;
     napi_value args[2];
@@ -147,32 +146,32 @@ static napi_value Base64UrlCode(napi_env env, napi_callback_info info) {
     }
 
     // 4. 获取字符串内容
-    size_t strSize = 0;
-    napi_status status = napi_get_value_string_utf8(env, args[0], nullptr, 0, &strSize);
-    if (status != napi_ok || strSize == 0) {
+    size_t str_size = 0;
+    napi_status status = napi_get_value_string_utf8(env, args[0], nullptr, 0, &str_size);
+    if (status != napi_ok || str_size == 0) {
         napi_throw_error(env, nullptr, "字符串解析失败");
         return nullptr;
     }
 
-    std::string inputStr(strSize, '\0');
-    napi_get_value_string_utf8(env, args[0], &inputStr[0], strSize + 1, &strSize);
+    std::string input_str(str_size, '\0');
+    napi_get_value_string_utf8(env, args[0], &input_str[0], str_size + 1, &str_size);
 
     // 5. 获取布尔值
-    bool isEncode = false;
-    napi_get_value_bool(env, args[1], &isEncode);
+    bool is_encode = false;
+    napi_get_value_bool(env, args[1], &is_encode);
 
     // 6. 调用 C++ 业务逻辑函数
-    std::string resultStr = ProcessBase64UrlCode(inputStr, isEncode);
+    std::string result_str = process_base64url_code(input_str, is_encode);
 
     // 7. 将结果转换为 napi_value 返回
     napi_value result;
-    napi_create_string_utf8(env, resultStr.c_str(), resultStr.length(), &result);
+    napi_create_string_utf8(env, result_str.c_str(), result_str.length(), &result);
 
     return result;
 }
 
-// --- 功能6：字符串数组排序 ---
-static napi_value SortStringArray(napi_env env, napi_callback_info info) {
+// ---- 功能5：字符串数组排序 ----
+static napi_value napi_sort_string_array(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 1;
     napi_value args[1];
@@ -228,17 +227,18 @@ static napi_value SortStringArray(napi_env env, napi_callback_info info) {
     return output;
 }
 
-// --- 模块初始化 ---
+// ---- 模块初始化 ----
 EXTERN_C_START
 static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
         // 原有函数
-        {"encodeImageToBase64", nullptr, EncodeImageToBase64, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"getImageAverageColor", nullptr, GetImageAverageColor, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"extractFilename", nullptr, ExtractFilename, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"getAudioMetadata", nullptr, GetAudioMetadata, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"base64urlCode", nullptr, Base64UrlCode, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"sortStringArray", nullptr, SortStringArray, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"encodeImageToBase64", nullptr, encode_image_to_base64, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"getImageAverageColor", nullptr, get_image_average_color, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"extractFilename", nullptr, extract_filename, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"getAudioMetadata", nullptr, get_audio_metadata, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"base64urlCode", nullptr, base64url_code, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"sortStringArray", nullptr, napi_sort_string_array, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"dsdToWav", nullptr, dsd_to_wav, nullptr, nullptr, nullptr, napi_default, nullptr},
         // 播放器控制
         {"set_audio", nullptr, set_audio, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"playing", nullptr, playing, nullptr, nullptr, nullptr, napi_default, nullptr},
@@ -253,6 +253,7 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"get_status", nullptr, get_status, nullptr, nullptr, nullptr, napi_default, nullptr},
         // EQ/PEQ
         {"switch_eq", nullptr, switch_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"get_eq_mode", nullptr, get_eq_mode, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"set_eq", nullptr, set_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"set_peq", nullptr, set_peq, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"get_eq", nullptr, get_eq, nullptr, nullptr, nullptr, napi_default, nullptr},
