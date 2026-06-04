@@ -180,8 +180,8 @@ export class class_audio_player {
       this.set_audio()
       // 等待完成/超时1s强制进入
       let tmp_count = 0
-      while ((!this.player_ready) || (tmp_count <= 1000)) {
-        await new Promise<void>(() => setTimeout(() => {}, 1))
+      while ((!this.player_ready) && (tmp_count <= 1000)) {
+        await new Promise<void>(resolve => setTimeout(resolve, 1))
         tmp_count++
       }
 
@@ -667,6 +667,8 @@ export class class_audio_player {
     // 检测工作目录 //
     try {fs.statSync(audio_player_path)} catch {fs.mkdirSync(audio_player_path)}
 
+    // 启动定时器 //
+    this.timing()
     // 注册回调 //
     this.player_callback()
     // 注册元音频 //

@@ -125,6 +125,8 @@ export default struct web_ui {
     emitter.on({ eventId: 712 }, async (eventData: emitter.EventData) => {
       // 载入
       this.lin_music_ui.runJavaScript(`set_meta(${JSON.stringify([eventData.data?.name, eventData.data?.title, eventData.data?.artist])})`)
+      // 时间载入
+      this.lin_music_ui.runJavaScript(`change_song_range_duration(${eventData.data?.duration})`)
       // 图片编码发送
       const base_img: string = await image_to_base64(eventData.data?.image)
       this.lin_music_ui.runJavaScript(`set_meta_img(${JSON.stringify(base_img)})`)
@@ -138,37 +140,32 @@ export default struct web_ui {
       }
     })
     // 设置播放模式
-    emitter.on({ eventId: 713 }, async (eventData: emitter.EventData) => {
+    emitter.on({ eventId: 711 }, async (eventData: emitter.EventData) => {
       this.lin_music_ui.runJavaScript(`set_play_mode(${eventData.data?.play_mode})`)
     })
     // 播放状态监听 //
-    emitter.on({ eventId: 714 }, (eventData: emitter.EventData) => {
-      console.log(eventData.data?.status)
+    emitter.on({ eventId: 716 }, (eventData: emitter.EventData) => {
       if (eventData.data?.status == 'playing') {
         this.lin_music_ui.runJavaScript(`set_play_status(true)`)
       } else {
         this.lin_music_ui.runJavaScript(`set_play_status(false)`)
       }
     })
-    // 音频总时长监听 //
-    emitter.on({ eventId: 715 }, (eventData: emitter.EventData) => {
-      this.lin_music_ui.runJavaScript(`change_song_range_duration(${eventData.data?.duration_time})`)
-    })
     // 音频播放时长监听 //
-    emitter.on({ eventId: 716 }, (eventData: emitter.EventData) => {
+    emitter.on({ eventId: 713 }, (eventData: emitter.EventData) => {
       this.lin_music_ui.runJavaScript(`change_song_range(${eventData.data?.current_time})`)
     })
     // 喜欢监听 //
     emitter.on({eventId: 717}, (eventData: emitter.EventData) => {
-      this.lin_music_ui.runJavaScript(`set_like(${eventData.data?.like})`)
+      this.lin_music_ui.runJavaScript(`set_like(${eventData.data?.status})`)
     })
     // 播放列表监听 //
-    emitter.on({eventId: 718}, (eventData: emitter.EventData) => {
+    emitter.on({eventId: 714}, (eventData: emitter.EventData) => {
       this.lin_music_ui.runJavaScript(`playing_update(${JSON.stringify(eventData.data?.list)}, ${eventData.data?.index})`)
     })
-    // 定时状态监听 //
-    emitter.on({eventId: 719}, (eventData: emitter.EventData) => {
-      this.lin_music_ui.runJavaScript(`set_sleep_timer_status(${eventData.data?.is_timed}, ${eventData.data?.timed}, ${eventData.data?.wait_end})`)
+    // 指针监听 //
+    emitter.on({eventId: 715}, (eventData: emitter.EventData) => {
+      this.lin_music_ui.runJavaScript(`playing_update([], ${eventData.data?.index})`)
     })
     // 返回手势监听 //
     emitter.on({eventId: 912}, async () => {
@@ -265,7 +262,7 @@ export default struct web_ui {
         log('页面准备完成')
         this.listen_broadcast()  // 监听广播
         // 加载audio
-        try {this.lin_music_player.load_data()} catch {}
+        // try {this.lin_music_player.load_data()} catch {}
         // 加载数据
         this.load_data()
         this.ready = true

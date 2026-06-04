@@ -1496,6 +1496,12 @@ napi_value seek(napi_env env, napi_callback_info info) {
         perform_seek(ctx);
     }
 
+    // 通知 ArkTS 时间回调（复用 time_callback，发送跳转目标时间）
+    if (ctx->time_callback) {
+        int32_t* data = new int32_t((int32_t)target_ms);
+        napi_call_threadsafe_function(ctx->time_callback, data, napi_tsfn_blocking);
+    }
+
     napi_value result;
     napi_get_undefined(env, &result);
     return result;
