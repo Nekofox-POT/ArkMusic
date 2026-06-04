@@ -17,7 +17,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 import nativeModule from 'libentry.so'
 import { log, notice, vib } from '../package/system_function'
 import { save_array, load_array } from '../package/array_save_load'
-import { get_image, get_meta, image_to_base64, check_meta_image } from '../package/meta_manager'
+import { get_image, get_meta, image_to_base64 } from '../package/meta_manager'
 
 // 导入类 //
 import { class_audio_player } from '../package/class_audio_player/class_audio_player'
