@@ -81,6 +81,7 @@ export async function get_meta_batch(paths: string[]): Promise<Map<string, strin
       const bit_rate = ((item['bitrate'] as number) / 1000).toFixed(1)
       const duration = item['duration'] as number                   // 时长（毫秒）
       const duration_format = item['durationFormat'] as string      // 时长（C++ 已格式化为 "分:秒"）
+      const mtime = fs.statSync(file_path).mtime                // 文件最后修改时间（ms 时间戳）
 
       let title = file_name
       let artist = '未知歌手'
@@ -109,7 +110,7 @@ export async function get_meta_batch(paths: string[]): Promise<Map<string, strin
       if (meta_genre) { genre = meta_genre }
 
       result_map.set(file_path, [[
-        file_name, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, `${duration}`, duration_format
+        file_name, `${mtime}`, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, `${duration}`, duration_format
       ], [
         title, artist, album, album_artist, genre
       ]])
@@ -128,7 +129,7 @@ export async function get_meta(path: string): Promise<string[][]> {
   //
   // 获取音频的元数据
   // 分为两个部分
-  // 第一个部分是基础数据，包括 [文件名, 文件类型, 声道, 采样率, 位深, 比特率, 时长, 时长(格式化)]
+  // 第一个部分是基础数据，包括 [文件名, 修改时间, 文件类型, 声道, 采样率, 位深, 比特率, 时长, 时长(格式化)]
   // 第二个部分是制作数据，包括 [标题, 歌手/作曲家, 专辑名, 专辑作家, 流派]
   //
 
@@ -145,6 +146,7 @@ export async function get_meta(path: string): Promise<string[][]> {
     const bit_rate = (meta_data.bitrate / 1000).toFixed(1)// 比特率
     const duration = meta_data.duration                   // 时长（毫秒）
     const duration_format = meta_data.durationFormat      // 时长（C++ 已格式化为 "分:秒"）
+    const mtime = fs.statSync(path).mtime                 // 文件最后修改时间（ms 时间戳）
 
     let title = file_name             // 歌曲名
     let artist = '未知歌手'            // 歌手
@@ -166,7 +168,7 @@ export async function get_meta(path: string): Promise<string[][]> {
     if (meta_data.genre) {genre = meta_data.genre}
 
     const base_data: string[] = [
-      file_name, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, `${duration}`, duration_format
+      file_name, `${mtime}`, file_type, `${channels}`, `${sample_rate}khz`, `${bit_depth}bit`, `${bit_rate}kbps`, `${duration}`, duration_format
     ]
     const meta_data_arr: string[] = [title, artist, album, album_artist, genre]
     return [base_data, meta_data_arr]

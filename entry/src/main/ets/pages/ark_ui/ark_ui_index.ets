@@ -16,8 +16,8 @@ import { log, notice, vib } from '../../package/system_function'
 import { get_image, get_meta, image_to_base64, check_meta_image } from '../../package/meta_manager'
 
 // 导入类 //
-import { class_audio_player } from '../../package/class_audio_player/class_audio_player'
-import { class_files_manager } from '../../package/class_files_manager'
+import { class_audio_player } from '../../package/audio_player/class_audio_player'
+import { class_files_manager } from '../../package/files_manager/download_manager'
 import { class_global_config } from '../../package/class_global_config'
 
 // 变量池 //

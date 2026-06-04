@@ -14,7 +14,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
 import { log, notice } from '../system_function'
-import { save_array, load_array } from '../array_save_load'
+import { save_array, load_array } from '../data_save_load'
 import { get_image, get_meta } from '../meta_manager'
 
 // 导入类 //
@@ -51,25 +51,26 @@ export class class_audio_player {
 
   // 变量池 //
   private player_ready = false
-  player_mode: boolean = false    // 播放器使用 ( F：官方播放器 T：星铃播放器 )
-  play_list: string[] = []    // 播放列表
-  play_list_index: number = 0   // 播放列表指针
-  play_status: string = 'pause'   // 播放状态
-  current_time: number = 0    // 已播放时间
-  play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
   private like_list: string[] = []    // 喜欢列表
-  like_list_path: string[] = [] // 喜欢列表（路径备份）
-  is_like: boolean = false    // 是否喜欢
   private failed_count: number = 0    // 播放失败计数
   private target_timed: number = 0    // 定时时间戳
-  timed_mode: boolean = false // 定时模式（ T：最后一首歌放完模式 F：直接停止 ）
-  private dsd_support = false   // dsd支持（星铃播放器忽略此设置）
 
   // 类 //
   global_config: class_global_config | null = null
   private av_session: avSession.AVSession | null = null; // 元音频
   private av_player = new class_av_player()   // 官方av_player播放器
   private ffmpeg_player = new class_ffmpeg_player()   // 星铃播放器
+
+  // 共享变量池 //
+  player_mode: boolean = false    // 播放器使用 ( F：官方播放器 T：星铃播放器 )
+  timed_mode: boolean = false // 定时模式（ T：最后一首歌放完模式 F：直接停止 ）
+  play_list: string[] = []    // 播放列表
+  play_list_index: number = 0   // 播放列表指针
+  play_status: string = 'pause'   // 播放状态
+  current_time: number = 0    // 已播放时间
+  play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
+  is_like: boolean = false    // 是否喜欢
+  like_list_path: string[] = [] // 喜欢列表（路径备份）
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
@@ -84,11 +85,11 @@ export class class_audio_player {
 
       // 有效性检查 //
       let tmp_ino: string = ''
-      try {tmp_ino = `${fs.statSync(fs.openSync(i).fd).ino}`} catch {continue}
+      try {tmp_ino = `${fs.statSync(i).ino}`} catch {continue}
 
       // 官方播放器dsd检查 //
       if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
-        if (this.dsd_support) {
+        if (this.global_config?.dsd_support) {
           try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
           if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -110,7 +111,7 @@ export class class_audio_player {
 
       // 获取路径 //
       const tmp_path: string = this.play_list[index]
-      const tmp_ino: string = `${fs.statSync(fs.openSync(tmp_path).fd).ino}`
+      const tmp_ino: string = `${fs.statSync(tmp_path).ino}`
 
       // 载入播放 //
       let tmp_result: boolean
@@ -120,7 +121,7 @@ export class class_audio_player {
       else {
         // dsd检查
         if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
-          if (this.dsd_support) {
+          if (this.global_config?.dsd_support) {
             try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
             // 检查是否有缓存
             if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -228,6 +229,8 @@ export class class_audio_player {
   // 保存配置文件 //
   save_data() {
 
+    if (this.global_config?.reset) {return}
+
     // 暂停音乐 //
     this.av_player.reset()
     this.ffmpeg_player.reset()
@@ -242,7 +245,6 @@ export class class_audio_player {
       `${this.current_time}`,     // 已播放时间
       `${this.play_mode}`,        // 播放模式
       `${this.timed_mode}`,       // 计时器模式
-      `${this.dsd_support}`       // dsd支持
     ], audio_player_path + '/audio_player.json')
 
     log('数据保存完成.')
@@ -260,7 +262,7 @@ export class class_audio_player {
     // 载入喜欢列表 //
     for (const i of load_array(audio_player_path + '/like.json')) {
       // 有效性检查 //
-      try {this.like_list.push(`${fs.statSync(fs.openSync(i).fd).ino}`)} catch {continue}
+      try {this.like_list.push(`${fs.statSync(i).ino}`)} catch {continue}
       this.like_list_path.push(i)
     }
     // 列表返载
@@ -275,7 +277,6 @@ export class class_audio_player {
       this.player_mode = (tmp[0] == 'true') ? true : false
       this.send_play_mode(Number.parseInt(tmp[3]))
       this.timed_mode = (tmp[4] == 'true') ? true : false
-      this.dsd_support = (tmp[5] == 'true') ? true : false
 
       // 载入歌曲 //
       this.set_start_audio(tmp_play_list, Number.parseInt(tmp[1]), auto_start, Number.parseInt(tmp[2]))
@@ -305,7 +306,7 @@ export class class_audio_player {
   // 回调函数 //
   ////////////
 
-  // 官方播放器回调 //
+  // 播放器回调 //
   private player_callback() {
 
     // 准备就绪提示 //
@@ -343,16 +344,16 @@ export class class_audio_player {
         file_name: tmp[0][0],
         title: tmp[1][0],
         artist: tmp[1][1],
-        duration: tmp[0][6],
-        duration_format: tmp[0][7],
+        duration: tmp[0][7],
+        duration_format: tmp[0][8],
         image: tmp_image[1]
       }})
       emitter.emit({ eventId: 722 }, {data: {
         file_name: tmp[0][0],
         title: tmp[1][0],
         artist: tmp[1][1],
-        duration: tmp[0][6],
-        duration_format: tmp[0][7],
+        duration: tmp[0][7],
+        duration_format: tmp[0][8],
         image: tmp_image[1]
       }})
 
@@ -362,7 +363,7 @@ export class class_audio_player {
         title: tmp[1][0],
         artist: tmp[1][1],
         mediaImage: tmp_image[1],
-        duration: Number.parseInt(tmp[0][6])
+        duration: Number.parseInt(tmp[0][7])
       })
 
     }
@@ -424,7 +425,7 @@ export class class_audio_player {
       const path = this.play_list[this.play_list_index]
 
       // 读取检查 //
-      const tmp = this.like_list.includes(`${fs.statSync(fs.openSync(path).fd).ino}`)
+      const tmp = this.like_list.includes(`${fs.statSync(path).ino}`)
 
       // 更新 //
       this.is_like = tmp
@@ -494,7 +495,7 @@ export class class_audio_player {
     // 获取路径（防溢出检测） //
     try {
       tmp_path = this.play_list[index]
-      tmp_ino = `${fs.statSync(fs.openSync(tmp_path).fd).ino}`
+      tmp_ino = `${fs.statSync(tmp_path).ino}`
     } catch {return false}
 
     // 载入播放 //
@@ -505,7 +506,7 @@ export class class_audio_player {
     else {
       // dsd检查
       if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
-        if (this.dsd_support) {
+        if (this.global_config?.dsd_support) {
           try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
           if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -568,11 +569,11 @@ export class class_audio_player {
 
       // 有效性检查 //
       let tmp_ino: string = ''
-      try {tmp_ino = `${fs.statSync(fs.openSync(i).fd).ino}`} catch {continue}
+      try {tmp_ino = `${fs.statSync(i).ino}`} catch {continue}
 
       // 官方播放器dsd检查 //
       if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
-        if (this.dsd_support) {
+        if (this.global_config?.dsd_support) {
           try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
           if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -751,7 +752,7 @@ export class class_audio_player {
     try {
 
       // 获取ino //
-      const tmp = `${fs.statSync(fs.openSync(this.play_list[this.play_list_index]).fd).ino}`
+      const tmp = `${fs.statSync(this.play_list[this.play_list_index]).ino}`
 
       // 扫描判断 //
       const index = this.like_list.findIndex(item => item === tmp)
@@ -776,6 +777,8 @@ export class class_audio_player {
   }
   // 设置定时 //
   set_timing(time_ms: number) {this.target_timed = Date.now() + time_ms}
+  // 获取剩余时间 //
+  get_timing() {return this.target_timed = Date.now()}
 
   // 设置播放器模式（重加载） //
   async set_player_mode(mode: boolean) {
@@ -787,12 +790,11 @@ export class class_audio_player {
     this.reset_data()
 
   }
-
-  // 设置dsd支持 //
+  // 设置dsd支持（重加载） //
   async set_dsd(mode: boolean) {
 
     // 设置 //
-    this.dsd_support = mode
+    if (this.global_config) {this.global_config.dsd_support = mode}
 
     // 重加载 //
     this.reset_data()
@@ -840,7 +842,10 @@ export class class_audio_player {
   }
 
   // audio_player初始化 //
-  constructor() {
+  constructor(global_config: class_global_config) {
+
+    // 导入全局配置文件 //
+    this.global_config = global_config
 
     // 检测工作目录 //
     try {fs.statSync(audio_player_path)} catch {fs.mkdirSync(audio_player_path)}

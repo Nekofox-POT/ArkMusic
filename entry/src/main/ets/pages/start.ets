@@ -13,8 +13,8 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 // 导入自创建模块 //
 /////////////////
 import { log, notice } from '../package/system_function'
-import { class_files_manager } from '../package/class_files_manager'
-import { class_audio_player } from '../package/class_audio_player/class_audio_player'
+import { class_files_manager } from '../package/files_manager/download_manager'
+import { class_audio_player } from '../package/audio_player/class_audio_player'
 import { emitter } from '@kit.BasicServicesKit'
 
 ///////////

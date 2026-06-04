@@ -12,7 +12,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 //////////////////
 // 导入自创建模块 //
 /////////////////
-import { save_array, load_array } from './array_save_load'
+import { save_array, load_array } from './data_save_load'
 
 ///////////
 // 变量池 //
@@ -59,7 +59,7 @@ export class class_global_config {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 保存文件 //
   ////////////
-  save() {
+  save_data() {
     if (!this.reset) {
       // 保存文件
       save_array([

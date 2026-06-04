@@ -1,26 +1,31 @@
 //
-// 音频播放器
+// 音频播放器（ffmpeg_player 核心）
 // 广播频段：7
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 导入第三方库 //
+/////////////////
 import emitter from '@ohos.events.emitter'
 import { avSession } from '@kit.AVSessionKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
+//////////////////
 // 导入自创建模块 //
+/////////////////
 import nativeModule from 'libentry.so'
 import { log, notice } from '../system_function'
-import { array_to_json_save, load_json_to_array } from '../array_save_load'
+import { array_to_json_save, load_json_to_array } from '../data_save_load'
 import { get_image, get_meta } from '../meta_manager'
 
-// 导入类
+////////////
+// 导入类 //
+///////////
 import { class_global_config } from '../class_global_config'
-import { av_player } from './by_av_player'
 
+////////////
 // 变量池 //
+//////////
 const audio_player_path = getContext().filesDir + '/audio_player/'    // 音频播放器目录
-const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']   // dsd格式集
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
@@ -32,26 +37,27 @@ export class class_audio_player {
   // 环境准备 //
   ////////////
 
+  ///////////
   // 变量池 //
+  //////////
   private player_ready = false
   private failed_count = 0  // 失败计数
   play_list: string[] = []    // 播放列表
   play_list_index: number = 0   // 播放列表指针
-  private player_choice: number = 0   // 播放器使用 ( 0：avplayer播放器 1：ffmpeg播放器 )
   private play_mode: number = 2   // 播放模式 ( 0：单曲循环 1：列表循环 2：列表停止 3：随机 )
   private current_backup: number = 0  // 播放时长备份
   private like_list: string[] = []    // 喜欢列表
   like_list_path: string[] = [] // 喜欢列表（路径备份）
-  private dsd_list = new Map<string, string>
   timed: number = 0   // 目标时间戳（毫秒）
   is_timed: boolean = false // 是否开启定时
   private wait_end: boolean = false // 是否等待当前歌曲播放完再停止
   private timer_interval: number = -1 // 定时器轮询ID
 
+  ////////
   // 类 //
+  ///////
   global_config: class_global_config | null = null
   private session: avSession.AVSession | null = null; // 元音频
-  private av_player = new av_player()   // 官方av_player播放器
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // av_session专用 //
@@ -97,11 +103,13 @@ export class class_audio_player {
   // 元数据获取发送 //
   private async send_meta(path: string) {
     // 获取基础元数据
+    // tmp[0] = [文件名, 文件类型, 声道, 采样率, 位深, 比特率, 时长(分:秒), 时长(毫秒)]
+    // tmp[1] = [标题, 歌手, 专辑, 专辑作家, 流派]
     const tmp = await get_meta(path)
     // 获取封面
     const tmp_img = await get_image(path)
-    // 广播
-    if (tmp) {emitter.emit({ eventId: 712 }, { data: {
+    // 广播元数据
+    if (tmp && tmp[0].length > 0) {emitter.emit({ eventId: 712 }, { data: {
       name: tmp[0][0],
       title: tmp[1][0],
       artist: tmp[1][1],
@@ -110,7 +118,10 @@ export class class_audio_player {
     // 同步av_session
     this.session?.setAVMetadata({ assetId: '0', title: tmp[1][0], artist: tmp[1][1] })
     this.session?.setAVMetadata({ assetId: '0', mediaImage: tmp_img })
-
+    // 广播时长（毫秒取自 tmp[0][7]）
+    const duration_ms = Number.parseInt(tmp[0][7])
+    emitter.emit({ eventId: 715 }, { data: { duration_time: duration_ms } })
+    this.session?.setAVMetadata({ assetId: '0', duration: duration_ms })
   }
 
   // 喜欢检测 //
@@ -139,13 +150,15 @@ export class class_audio_player {
   // 回调函数 //
   ////////////
 
-  // 播放器回调 //
+  // 播放器回调（注册到 ffmpeg_player 原生层） //
   private player_callback() {
 
-    // 准备就绪提示 //
-    const set_player_ready = () => {this.player_ready = true}
-    // 播放状态更新 //
-    const play_status_update = (status: string) => {
+    // 准备就绪回调
+    nativeModule.register_ready_callback(() => {
+      this.player_ready = true
+    })
+    // 播放状态回调
+    nativeModule.register_status_callback((status: string) => {
       // 广播状态
       emitter.emit({ eventId: 714 }, { data: { status: status } })
       // 更新AVSession
@@ -169,16 +182,9 @@ export class class_audio_player {
           this.next_song()
         }
       }
-    }
-    // 总时长更新 //
-    const duration_time_update = (duration: number) => {
-      // 广播 //
-      emitter.emit({ eventId: 715 }, { data: { duration_time: duration } })
-      // 更新时长 //
-      this.session?.setAVMetadata({ assetId: '0', duration: duration })
-    }
-    // 播放进度更新 //
-    const current_time_update = (current: number) => {
+    })
+    // 播放进度回调
+    nativeModule.register_time_callback((current: number) => {
       // 定时检查（非等待播放完模式）
       if (this.is_timed && !this.wait_end && Date.now() >= this.timed) {
         this.pause()
@@ -186,15 +192,12 @@ export class class_audio_player {
         notice('睡眠定时结束，已暂停播放。')
         return
       }
-      // 广播 //
+      // 广播
       emitter.emit({ eventId: 716 }, { data: { current_time: current } })
-      // 更新时长 //
+      // 更新时长
       this.session?.setAVPlaybackState({ position: { elapsedTime: current, updateTime: new Date().getTime() } })
       this.current_backup = current
-    }
-
-    // av_player注册 //
-    this.av_player.set_callback(set_player_ready, play_status_update, duration_time_update, current_time_update)
+    })
 
   }
 
@@ -209,45 +212,28 @@ export class class_audio_player {
     if (this.play_list.length == 0) { return }
     // 广播序号
     emitter.emit({ eventId: 718 }, { data: { list: [], index: this.play_list_index } })
-    // 使用官方播放器
-    if (this.player_choice == 0) {
-      let result: [boolean, string]
-      // 如果是dsd
-      if (support_dsd_format.includes(this.play_list[this.play_list_index].substring(this.play_list[this.play_list_index].lastIndexOf('.')).toLowerCase())) {
-        // 如果开启了支持
-        if (this.global_config?.dsd_support) {
-          // 拉取转换后的wav
-          log('开启支持，解码。')
-          result = await this.av_player.audio_set(await this.call_dsd(this.play_list[this.play_list_index]))
-        } else {
-          log('未开启支持，下一首')
-          this.next_song()
-          return
-        }
+    // 使用 ffmpeg_player 加载音频
+    const result = await nativeModule.set_audio(this.play_list[this.play_list_index])
+    // 加载失败，报错
+    if (!result) {
+      log(`歌曲加载失败: ${this.play_list[this.play_list_index]}`, 'error')
+      notice(`歌曲加载失败了 (੭ ᐕ)੭？，切换下一首.`)
+      this.failed_count += 1
+      if (this.failed_count >= 3) {
+        this.failed_count = 0
+        notice(`失败太多次了，罢工了！ (੭ ᐕ)੭？`)
+        this.pause()
+        return
       } else {
-        // 普通歌曲
-        result = await this.av_player.audio_set(this.play_list[this.play_list_index])
+        this.next_song()
       }
-
-      // 加载失败，报错
-      if (!result[0]) {
-        log(`歌曲加载失败：${result[1]}`, 'error')
-        notice(`歌曲加载失败了 (੭ ᐕ)੭？ ：${result[1]}，切换下一首.`)
-        this.failed_count += 1
-        if (this.failed_count >= 3) {
-          this.failed_count = 0
-          notice(`失败太多次了，罢工了！ (੭ ᐕ)੭？`)
-          this.pause()
-          return
-        } else {
-          this.next_song()
-        }
-      } else {
-        // 发送元数据
-        this.send_meta(this.play_list[song_index])
-        // 更改歌曲喜欢
-        this.check_like(this.play_list[song_index])
-      }
+    } else {
+      // 重置失败计数
+      this.failed_count = 0
+      // 发送元数据
+      this.send_meta(this.play_list[song_index])
+      // 更改歌曲喜欢
+      this.check_like(this.play_list[song_index])
     }
   }
 
@@ -265,12 +251,12 @@ export class class_audio_player {
   // 播放 //
   playing() {
     if (this.play_list.length == 0) { return }
-    this.av_player.set_play_status(true)
+    nativeModule.playing()
   }
   // 暂停 //
   pause() {
     if (this.play_list.length == 0) { return }
-    this.av_player.set_play_status(false)
+    nativeModule.pause()
   }
   // 跳转指定歌曲 //
   seek_song(index: number) {
@@ -344,7 +330,7 @@ export class class_audio_player {
   }
   // 更改播放进度 //
   seek(time: number) {
-    this.av_player.audio_seek(time)
+    nativeModule.seek(time)
   }
   // 更改播放模式 //
   set_play_mode(index: number) {
@@ -370,6 +356,11 @@ export class class_audio_player {
       this.session?.setAVPlaybackState({loopMode: avSession.LoopMode.LOOP_MODE_SHUFFLE})
       if (this.player_ready) {notice('随机')}
     }
+  }
+
+  // dsd缓存加载（ffmpeg_player 原生支持 DSD，此方法保留兼容） //
+  load_dsd() {
+    // ffmpeg_player 可直接解码 DSD，无需预转换缓存
   }
 
   // 更新播放列表排序 //
@@ -413,44 +404,6 @@ export class class_audio_player {
     array_to_json_save([], audio_player_path + '/my_like.json')
   }
 
-  // dsd加载 //
-  async call_dsd(dsd_path: string): Promise<string> {
-
-    // 检测可读性
-    try {
-
-      // 获取ino号
-      let tmp_ino = `${fs.statSync(fs.openSync(dsd_path).fd).ino}`
-      // 如果有
-      let tmp_path = this.dsd_list.get(tmp_ino)
-      if (tmp_path) {
-        // 返回样品
-        return tmp_path
-      }
-    } catch {}
-    // 没有，解码
-    notice('这首歌需要加载一下，请耐心等待^v^.')
-    try {
-      // dsdToWav 已移除，ffmpeg_player 原生支持 DSD 播放
-      // 直接返回原始 DSD 路径供 ffmpeg_player 播放
-      let tmp_ino = `${fs.statSync(fs.openSync(dsd_path).fd).ino}`
-      this.dsd_list.set(`${tmp_ino}`, dsd_path)
-      return dsd_path
-    } catch (e) {
-      log(`dsd转换失败: ${e}`, 'error')
-      return ''
-    }
-  }
-  // dsd重加载 //
-  load_dsd() {
-    // 加载dsd表
-    try {fs.statSync(audio_player_path + '/dsd_cache')} catch {fs.mkdirSync(audio_player_path + '/dsd_cache')}
-    for (const i of fs.listFileSync(audio_player_path + '/dsd_cache', { recursion: true })) {
-      // 传入
-      this.dsd_list.set(nativeModule.extractFilename(audio_player_path + '/dsd_cache/' + i), audio_player_path + '/dsd_cache/' + i)
-    }
-  }
-
   // 播放数据注入 //
   async play_data_load() {
 
@@ -476,25 +429,14 @@ export class class_audio_player {
         await this.set_play_list(tmp_list, 0)
       } else {
         await this.set_play_list(tmp_list, Number.parseInt(tmp[0] ?? '0'))
-        // 加载时间
-        let tmp_count = 0
-        while (!this.player_ready) {
-          await new Promise<void>(r => setTimeout(r, 1))
-          if (tmp_count++ >= 1000) {
-            log('audio加载超时。')
-            this.av_player.auto_play = true
-            break
-          }
-        }
-        if (tmp_count < 1000) {
-          this.seek(Number.parseInt(tmp[1] ?? '0'))
-        }
+        // set_audio 完成后 seek 到上次位置
+        this.seek(Number.parseInt(tmp[1] ?? '0'))
       }
     } else {
       // 加载默认值
-      this.av_player.auto_play = true
       await this.set_play_list([], 0)
     }
+    // 之后的 set_audio 默认自动播放（auto_start 默认为 true）
     // 设置每分钟保存数据定时
     setInterval(() => {this.play_data_save()}, 60000)
 
@@ -504,13 +446,11 @@ export class class_audio_player {
     if (!this.global_config?.reset) {
       // 保存播放列表
       array_to_json_save(this.play_list, audio_player_path + '/playing_data_list.json')
-      // 保存dsd列表
       // 保存其他元数据
       let tmp: string[] = [
         `${this.play_list_index}`,
         `${this.current_backup}`,
-        `${this.play_mode}`,
-        `${this.player_choice}`
+        `${this.play_mode}`
       ]
       array_to_json_save(tmp, audio_player_path + '/playing_data_other.json')
       log('数据保存完成.')
@@ -523,12 +463,12 @@ export class class_audio_player {
     this.play_data_save()
     // 清除定时器
     this.clear_timer_interval()
-    // 销毁av_player
-    this.av_player.drop_it()
+    // ffmpeg_player 原生层会在 set_audio 新文件时自动清理旧资源，
+    // 或在进程退出时由系统回收
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // 新加的定时 //
+  // 定时功能 //
   /////////////
 
   // 设置定时 //
@@ -617,6 +557,41 @@ export class class_audio_player {
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // EQ/PEQ 接口 //
+  ////////////////
+
+  // 设置 EQ 模式（0=OFF, 1=GEQ, 2=PEQ）
+  switch_eq(mode: number): void {
+    nativeModule.switch_eq(mode)
+  }
+
+  // 获取当前 EQ 模式
+  // 返回 0/1/2
+  get_eq_mode(): number {
+    return nativeModule.get_eq_mode()
+  }
+
+  // 设置 10 段 GEQ 增益（-12 ~ 12 dB）
+  set_eq(gains: number[]): void {
+    nativeModule.set_eq(gains)
+  }
+
+  // 设置 10 段 PEQ 参数 [[enabled, freq, gain, q, type], ...]
+  set_peq(params: [boolean, number, number, number, number][]): void {
+    nativeModule.set_peq(params)
+  }
+
+  // 获取当前 GEQ 增益值
+  get_eq(): number[] {
+    return nativeModule.get_eq()
+  }
+
+  // 获取当前 PEQ 参数
+  get_peq(): [boolean, number, number, number, number][] {
+    return nativeModule.get_peq()
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
   constructor(import_global_config: class_global_config) {
@@ -627,7 +602,7 @@ export class class_audio_player {
     // 检测工作目录
     try {fs.statSync(audio_player_path)} catch {fs.mkdirSync(audio_player_path)}
 
-    // 注册回调
+    // 注册回调（ffmpeg_player 原生层）
     this.player_callback()
     // 注册元音频
     this.avs_start_up()
@@ -642,10 +617,8 @@ export class class_audio_player {
         } catch {}
       }
     } else {this.reset_like_list()}
-    // 加载dsd表
-    this.load_dsd()
     // 就绪
-    log('音频管理器就绪.')
+    log('音频管理器就绪（ffmpeg_player）.')
   }
 
 }

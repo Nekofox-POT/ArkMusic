@@ -11,9 +11,9 @@ import emitter from '@ohos.events.emitter'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
 // 导入自创建模块 //
-import { class_files_manager } from '../package/class_files_manager'
+import { class_files_manager } from '../package/files_manager/download_manager'
 import { log, notice, reg_bg_run } from '../package/system_function'
-import { class_audio_player } from '../package/class_audio_player/class_audio_player'
+import { class_audio_player } from '../package/audio_player/class_audio_player'
 import { version_update } from '../package/version_update'
 
 // 导入类 //
