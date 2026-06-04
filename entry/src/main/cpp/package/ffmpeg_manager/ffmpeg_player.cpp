@@ -230,7 +230,7 @@ struct PlayerContext {
     AVFrame* frame = nullptr;
 
     // 状态
-    std::atomic<bool> start_ready{false};
+    std::atomic<bool> auto_start{false};
     std::atomic<int> play_state{STATE_IDLE};
     std::mutex state_mutex;
 
@@ -1091,6 +1091,8 @@ struct SetAudioContext {
     std::string file_path;
     bool success;
     std::string error_message;
+    bool auto_start = true;       // 载入后是否自动播放
+    int64_t start_time = 0;       // 载入后跳转目标时间(ms)
 
     // set_audio 时将提取的播放器参数存于此，Complete 阶段使用
     // 实际直接在 execute 里操作 g_player
@@ -1329,20 +1331,26 @@ static void complete_set_audio(napi_env env, napi_status status, void* data) {
     auto* ctx = static_cast<SetAudioContext*>(data);
 
     if (status == napi_ok && ctx->success) {
-        // 如果 start_ready 为 true，自动开始播放
-        if (g_player.start_ready.load()) {
-            OH_AudioRenderer_Start(g_player.renderer);
-            g_player.play_state = STATE_PLAYING;
-            g_player.ended_naturally = false;
-            notify_status_callback(&g_player, "playing");
+        // 1. 执行跳转（如果指定了开始时间）
+        if (ctx->start_time > 0) {
+            g_player.seek_target_ms = ctx->start_time;
+            perform_seek(&g_player);
         }
 
-        // 通知准备就绪回调
+        // 2. 通知准备就绪回调
         if (g_player.ready_callback_ref) {
             napi_value callback;
             napi_get_reference_value(env, g_player.ready_callback_ref, &callback);
             napi_value unused;
             napi_call_function(env, nullptr, callback, 0, nullptr, &unused);
+        }
+
+        // 3. 如果 auto_start 为 true，自动开始播放
+        if (ctx->auto_start) {
+            OH_AudioRenderer_Start(g_player.renderer);
+            g_player.play_state = STATE_PLAYING;
+            g_player.ended_naturally = false;
+            notify_status_callback(&g_player, "playing");
         }
 
         napi_value result;
@@ -1360,11 +1368,11 @@ static void complete_set_audio(napi_env env, napi_status status, void* data) {
 }
 
 // ============================================================================
-// NAPI: set_audio(path: string) → Promise<boolean>
+// NAPI: set_audio(path: string, auto_start?: boolean, time?: number) → Promise<boolean>
 // ============================================================================
 napi_value set_audio(napi_env env, napi_callback_info info) {
-    size_t argc = 1;
-    napi_value args[1];
+    size_t argc = 3;
+    napi_value args[3];
     napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
     if (argc < 1) {
@@ -1389,6 +1397,26 @@ napi_value set_audio(napi_env env, napi_callback_info info) {
     std::string file_path(str_size, '\0');
     napi_get_value_string_utf8(env, args[0], &file_path[0], str_size + 1, &str_size);
 
+    // 解析可选参数 auto_start（默认 true）
+    bool auto_start = true;
+    if (argc >= 2) {
+        napi_valuetype vt;
+        napi_typeof(env, args[1], &vt);
+        if (vt == napi_boolean) {
+            napi_get_value_bool(env, args[1], &auto_start);
+        }
+    }
+
+    // 解析可选参数 time（默认 0，即不跳转）
+    int64_t start_time = 0;
+    if (argc >= 3) {
+        napi_valuetype vt;
+        napi_typeof(env, args[2], &vt);
+        if (vt == napi_number) {
+            napi_get_value_int64(env, args[2], &start_time);
+        }
+    }
+
     // 检查文件是否存在，不存在直接返回 false
     {
         FILE* test_file = fopen(file_path.c_str(), "r");
@@ -1410,6 +1438,8 @@ napi_value set_audio(napi_env env, napi_callback_info info) {
     ctx->env = env;
     ctx->file_path = file_path;
     ctx->success = false;
+    ctx->auto_start = auto_start;
+    ctx->start_time = start_time;
 
     napi_value promise;
     napi_create_promise(env, &ctx->deferred, &promise);
@@ -1575,24 +1605,6 @@ napi_value register_time_callback(napi_env env, napi_callback_info info) {
     return result;
 }
 
-// ============================================================================
-// NAPI: set_start_ready(ready: boolean)
-// ============================================================================
-napi_value set_start_ready(napi_env env, napi_callback_info info) {
-    size_t argc = 1;
-    napi_value args[1];
-    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
-
-    if (argc < 1) { return nullptr; }
-
-    bool ready = false;
-    napi_get_value_bool(env, args[0], &ready);
-    g_player.start_ready.store(ready);
-
-    napi_value result;
-    napi_get_undefined(env, &result);
-    return result;
-}
 
 // ============================================================================
 // NAPI: switch_eq(mode: int) — 设置 EQ 模式（0=OFF, 1=GEQ, 2=PEQ）
@@ -1820,14 +1832,6 @@ napi_value get_peq(napi_env env, napi_callback_info info) {
     return result;
 }
 
-// ============================================================================
-// NAPI: get_start_ready() → boolean
-// ============================================================================
-napi_value get_start_ready(napi_env env, napi_callback_info info) {
-    napi_value result;
-    napi_get_boolean(env, g_player.start_ready.load(), &result);
-    return result;
-}
 
 // ============================================================================
 // NAPI: register_ready_callback(callback: function)

@@ -2,20 +2,12 @@
 // 音频播放器（官方核心）
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////
 // 导入第三方库 //
-///////////////
 import media from '@ohos.multimedia.media'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
-//////////////////
 // 导入自创建模块 //
-/////////////////
 import { log } from '../system_function'
-
-///////////
-// 变量池 //
-//////////
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
@@ -26,14 +18,11 @@ export class class_av_player {
   // 环境准备 //
   ////////////
 
-  ///////////
   // 变量池 //
-  //////////
-  auto_play: boolean = false  // 载入后自动播放 (防止第一次打开自动播放)
+  auto_start: boolean = false  // 载入后自动播放 (防止第一次打开自动播放)
+  start_time: number = 0  // 歌曲起始时间
 
-  ////////
   // 类 //
-  ///////
   private avPlayer: media.AVPlayer | null = null  // audio播放
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,59 +39,49 @@ export class class_av_player {
       if (!this.avPlayer) { return }
       // 状态分类
       switch (state) {
-        case 'idle': // audio闲置
-          console.log('audio闲置了')
-          break
         case 'initialized': // audio初始化
-          console.log('audio正在初始化')
+          log('av_player: 正在初始化.')
           this.avPlayer.prepare()
-          break;
+          break
         case 'prepared': // audio准备就绪
-          console.log('audio准备就绪。')
           callback(this.avPlayer)
-          this.avPlayer.seek(0)
-          console.log('callback设置成功，等待audio播放。')
+          this.avPlayer.seek(this.start_time)
+          log('av_player: audio准备就绪。')
           this.set_player_ready?.()
-          if (this.auto_play) {
-            this.avPlayer.play()
-          } else {
-            this.auto_play = true
-          }
-          break;
+          if (this.auto_start) {this.avPlayer.play()}
+          break
         case 'playing': // audio播放
-          console.log('audio正在播放~')
+          log('av_player: audio正在播放~')
           this.play_status_update?.('playing')
           break
         case 'paused':  // audio暂停
-          console.log('audio暂停了！')
+          log('av_player: audio暂停了！')
           this.play_status_update?.('pause')
           break;
         case 'completed': // 播放结束后触发该状态机上报
-          console.log('audio播放完了。')
+          log('av_player: audio播放完了。')
           this.play_status_update?.('complete')
-        case 'stopped':
-          console.log('audio已结束工作，等待销毁...')
-          break
         case 'released':
-          console.log('audio被销毁了！')
+          log('av_player: 已被销毁.')
           break
         case 'error':
-          console.error(`audio call出现了错误。`);
+          log('av_player出现错误.', 'error')
           break
       }
     })
     // 跳转处理
-    this.avPlayer.on('seekDone', (seekDoneTime) => {
-      console.log(`audio跳转了，跳转至"${seekDoneTime}"`)
-    });
+    this.avPlayer.on('seekDone', (time) => {
+      log(`av_player: 跳转至"${time}"`)
+      this.current_time_update?.(time)
+    })
     // 音频焦点切换处理
     this.avPlayer.on('audioInterrupt', () => {
-      console.log('audio被中断了！')
+      log('av_player: 被中断了！')
       this.play_status_update?.('pause')
-    });
+    })
     // 错误处理
     this.avPlayer.on('error', (e) => {
-      console.error(`audio发生错误：${e}`)
+      log(`av_player出现错误：${e}`, 'error')
       // 重置
       this.avPlayer?.reset()
     })
@@ -117,8 +96,9 @@ export class class_av_player {
   ////////////
 
   // 音频设置 //
-  async audio_set(path: string, auto_start: boolean = this.auto_play): Promise<boolean> {
-    this.auto_play = auto_start
+  async audio_set(path: string, auto_start: boolean = true, time: number = 0): Promise<boolean> {
+    this.auto_start = auto_start
+    this.start_time = time
     try {
       // 销毁av_player
       if (this.avPlayer) {
@@ -157,8 +137,8 @@ export class class_av_player {
     this.avPlayer?.seek(time)
   }
 
-  // 销毁 //
-  drop_it() {
+  // 初始化 //
+  reset() {
     this.avPlayer?.release()
   }
 

@@ -1,7 +1,7 @@
 #include <napi/native_api.h>
 
 #include "package/buffer_to_base64/buffer_to_base64.h" // 引用我们的头文件
-#include "package/image_color_calculate/image_color_calculate.h"
+#include "package/pixel_light_count/pixel_light_count.h"
 #include "package/extract_filename/extract_filename.h"
 #include "package/ffmpeg_manager/ffmpeg_manager.h"
 #include "package/base64url_code/base64url_code.h"
@@ -43,8 +43,8 @@ static napi_value encode_image_to_base64(napi_env env, napi_callback_info info) 
     return result;
 }
 
-// ---- 功能2：计算平均色值 ----
-static napi_value get_image_average_color(napi_env env, napi_callback_info info) {
+// ---- 功能2：像素亮度计算 ----
+static napi_value napi_pixel_light_count(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 3;
     napi_value args[3];
@@ -67,8 +67,8 @@ static napi_value get_image_average_color(napi_env env, napi_callback_info info)
     napi_get_value_int32(env, args[1], &width);
     napi_get_value_int32(env, args[2], &height);
 
-    // 3. 调用 C++ 业务逻辑，得到整数颜色值
-    uint32_t color_value = calculate_average_color(env, args[0], width, height);
+    // 3. 调用 C++ 业务逻辑，得到亮度值 (0-255)
+    uint32_t color_value = pixel_light_count(env, args[0], width, height);
 
     // 4. 将整数转换为 napi_value 返回
     napi_value result;
@@ -233,7 +233,7 @@ static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
         // 原有函数
         {"encodeImageToBase64", nullptr, encode_image_to_base64, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"getImageAverageColor", nullptr, get_image_average_color, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"pixel_light_count", nullptr, napi_pixel_light_count, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"extractFilename", nullptr, extract_filename, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getAudioMetadata", nullptr, get_audio_metadata, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"base64urlCode", nullptr, base64url_code, nullptr, nullptr, nullptr, napi_default, nullptr},
@@ -246,8 +246,6 @@ static napi_value Init(napi_env env, napi_value exports) {
         {"seek", nullptr, seek, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"get_current_time", nullptr, get_current_time, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"register_time_callback", nullptr, register_time_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"set_start_ready", nullptr, set_start_ready, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"get_start_ready", nullptr, get_start_ready, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"register_ready_callback", nullptr, register_ready_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"register_status_callback", nullptr, register_status_callback, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"get_status", nullptr, get_status, nullptr, nullptr, nullptr, napi_default, nullptr},

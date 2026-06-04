@@ -420,9 +420,6 @@ export class class_audio_player {
       } catch {}
     }
 
-    // 启动时设为不自动播放（等待手动播放或恢复位置）
-    nativeModule.set_start_ready(false)
-
     // 加载基础数据
     this.set_play_mode(Number.parseInt(tmp[2] ?? '2'))
     // 加载播放列表
@@ -439,8 +436,7 @@ export class class_audio_player {
       // 加载默认值
       await this.set_play_list([], 0)
     }
-    // 之后的 set_audio 自动播放
-    nativeModule.set_start_ready(true)
+    // 之后的 set_audio 默认自动播放（auto_start 默认为 true）
     // 设置每分钟保存数据定时
     setInterval(() => {this.play_data_save()}, 60000)
 

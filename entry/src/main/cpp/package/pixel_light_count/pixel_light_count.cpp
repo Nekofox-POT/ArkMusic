@@ -1,8 +1,14 @@
-#include "image_color_calculate.h"
+//
+// 像素亮度计算
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#include "pixel_light_count.h"
 #include <vector>
 
-// 修改返回逻辑：返回一个 uint32_t 整数
-uint32_t calculate_average_color(napi_env env, napi_value array_buffer, int width, int height) {
+// ============================================================================
+// 计算图片像素平均亮度值
+// ============================================================================
+uint32_t pixel_light_count(napi_env env, napi_value array_buffer, int width, int height) {
     // 默认返回黑色 0xFF000000 (ARGB)
     uint32_t default_color = 0xFF000000;
 
@@ -15,7 +21,7 @@ uint32_t calculate_average_color(napi_env env, napi_value array_buffer, int widt
         return default_color;
     }
 
-    // 2. 校验数据长度 (假设 RGBA 格式)
+    // 2. 校验数据长度 (RGBA 格式)
     size_t expected_length = static_cast<size_t>(width) * height * 4;
     if (buffer_length < expected_length) {
         return default_color;

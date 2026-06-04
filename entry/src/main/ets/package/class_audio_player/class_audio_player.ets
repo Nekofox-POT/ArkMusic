@@ -24,6 +24,7 @@ import { class_ffmpeg_player } from './by_ffmpeg_player'
 
 // 变量池 //
 const audio_player_path = getContext().filesDir + '/audio_player/'    // 音频播放器目录
+const dsd_cache_path = getContext().filesDir + '/audio_player/dsd_cache/'    // 音频播放器目录
 const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']   // dsd格式集
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,7 +63,7 @@ export class class_audio_player {
   private failed_count: number = 0    // 播放失败计数
   private target_timed: number = 0    // 定时时间戳
   timed_mode: boolean = false // 定时模式（ T：最后一首歌放完模式 F：直接停止 ）
-  private dsd_list = new Map<string, string>
+  private dsd_support = false   // dsd支持（星铃播放器忽略此设置）
 
   // 类 //
   global_config: class_global_config | null = null
@@ -74,7 +75,106 @@ export class class_audio_player {
   // 内部函数 //
   ////////////
 
-  // 播放完成 //
+  // 歌曲初始化装载 //
+  private async set_start_audio(list: string[], index: number, auto_start: boolean, time: number): Promise<boolean> {
+
+    // 载入播放列表 //
+    this.play_list = []
+    for (const i of list) {
+
+      // 有效性检查 //
+      let tmp_ino: string = ''
+      try {tmp_ino = `${fs.statSync(fs.openSync(i).fd).ino}`} catch {continue}
+
+      // 官方播放器dsd检查 //
+      if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
+        if (this.dsd_support) {
+          try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
+          // 检查是否有缓存
+          if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+            // 没有，加入转码列表
+            nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+          }
+        } else {continue}
+      }
+
+      this.play_list.push(i)
+
+    }
+
+    // 载入歌曲 //
+    if (this.play_list.length != 0) {
+
+      // 载入指针 //
+      if (list.length != 0) {this.play_list_index = (index >= this.play_list.length - 1) ? this.play_list.length - 1 : index}
+
+      // 获取路径 //
+      const tmp_path: string = this.play_list[index]
+      const tmp_ino: string = `${fs.statSync(fs.openSync(tmp_path).fd).ino}`
+
+      // 载入播放 //
+      let tmp_result: boolean
+      // 星铃播放器
+      if (this.player_mode) {tmp_result = await this.ffmpeg_player.set_audio(tmp_path, auto_start, time)}
+      // 官方播放器
+      else {
+        // dsd检查
+        if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
+          if (this.dsd_support) {
+            try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
+            // 检查是否有缓存
+            if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+              // 没有，先转码
+              notice('这首歌需要加载一下，请耐心等待^v^.')
+              await nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+              // 切歌了就退出
+              if (index != this.play_list_index) {return false}
+            }
+            tmp_result = await this.av_player.audio_set(`${dsd_cache_path}/${tmp_ino}.wav`, auto_start, time)
+          } else {tmp_result = false}
+        }
+        // 普通歌曲
+        else {tmp_result = await this.av_player.audio_set(tmp_path, auto_start, time)}
+      }
+
+      // 成功处理 //
+      if (tmp_result) {
+
+        this.send_metadata()
+        this.send_check_like()
+
+      }
+      // 未成功处理 //
+      else {
+
+        log(`${tmp_path} 播放失败.`, 'error')
+        this.failed_count++
+        // 超过3首停止
+        if (this.failed_count >= 3) {
+          this.failed_count = 0
+          notice(`怎么失败这么多次 ΩДΩ 罢工了！`)
+          if (index == this.play_list_index) {
+            this.complete(false)
+          }
+        } else {
+          notice(`歌曲加载失败了 (੭ ᐕ)੭？ 1s后切换下一首.`)
+          setTimeout(() => {
+            if (index == this.play_list_index) {
+              this.complete()
+            }
+          }, 1000)
+        }
+
+      }
+
+      // 返回结果 //
+      return tmp_result
+
+    } else {return false}
+
+  }
+
+  // 播放完成处理 //
   private complete(next: boolean = true) {
 
     // 如果完成了说不放了那就不管 //
@@ -128,16 +228,21 @@ export class class_audio_player {
   // 保存配置文件 //
   save_data() {
 
+    // 暂停音乐 //
+    this.av_player.reset()
+    this.ffmpeg_player.reset()
+
     // 保存播放列表 //
     save_array(this.play_list, audio_player_path + '/play_list.json')
 
     // 保存其他数据 //
     save_array([
-      `${this.player_mode}`,        // 播放器模式
-      `${this.play_list_index}`,    // 播放指针
-      `${this.current_time}`,  // 已播放时间
-      `${this.play_mode}`,          // 播放模式
-      `${this.timed_mode}`,         // 计时器模式
+      `${this.player_mode}`,      // 播放器模式
+      `${this.play_list_index}`,  // 播放指针
+      `${this.current_time}`,     // 已播放时间
+      `${this.play_mode}`,        // 播放模式
+      `${this.timed_mode}`,       // 计时器模式
+      `${this.dsd_support}`       // dsd支持
     ], audio_player_path + '/audio_player.json')
 
     log('数据保存完成.')
@@ -145,16 +250,12 @@ export class class_audio_player {
   }
 
   // 打开配置文件 //
-  async load_data() {
+  async load_data(auto_start: boolean = false) {
 
     log('加载播放数据')
 
-    // 载入播放列表 //
-    for (const i of load_array(audio_player_path + '/play_list.json')) {
-      // 有效性检查 //
-      try {fs.openSync(i)} catch {continue}
-      this.play_list.push(i)
-    }
+    // 打开播放列表 //
+    const tmp_play_list = load_array(audio_player_path + '/play_list.json')
 
     // 载入喜欢列表 //
     for (const i of load_array(audio_player_path + '/like.json')) {
@@ -172,23 +273,31 @@ export class class_audio_player {
 
       // 配置环境 //
       this.player_mode = (tmp[0] == 'true') ? true : false
-      this.play_list_index = Number.parseInt(tmp[1])
       this.send_play_mode(Number.parseInt(tmp[3]))
       this.timed_mode = (tmp[4] == 'true') ? true : false
+      this.dsd_support = (tmp[5] == 'true') ? true : false
 
       // 载入歌曲 //
-      this.set_audio()
-      // 等待完成/超时1s强制进入
+      this.set_start_audio(tmp_play_list, Number.parseInt(tmp[1]), auto_start, Number.parseInt(tmp[2]))
+      // 等待完成/超时1s强制结束
       let tmp_count = 0
       while ((!this.player_ready) && (tmp_count <= 1000)) {
         await new Promise<void>(resolve => setTimeout(resolve, 1))
         tmp_count++
       }
 
-      // 跳转 //
-      this.seek(Number.parseInt(tmp[2]))
-
     }
+
+  }
+
+  // 重载配置文件 //
+  async reset_data() {
+
+    // 保存数据 //
+    this.save_data()
+
+    // 重新加载数据 //
+    await this.load_data(true)
 
   }
 
@@ -218,7 +327,9 @@ export class class_audio_player {
   ////////////
 
   // 7x2 元数据广播 //
-  private async send_metadata(path: string) {
+  private async send_metadata() {
+
+    const path = this.play_list[this.play_list_index]
 
     // 获取元数据 //
     const tmp = await get_meta(path)
@@ -234,7 +345,7 @@ export class class_audio_player {
         artist: tmp[1][1],
         duration: tmp[0][6],
         duration_format: tmp[0][7],
-        image: tmp_image
+        image: tmp_image[1]
       }})
       emitter.emit({ eventId: 722 }, {data: {
         file_name: tmp[0][0],
@@ -242,7 +353,7 @@ export class class_audio_player {
         artist: tmp[1][1],
         duration: tmp[0][6],
         duration_format: tmp[0][7],
-        image: tmp_image
+        image: tmp_image[1]
       }})
 
       // 更新元音频 //
@@ -250,7 +361,7 @@ export class class_audio_player {
         assetId: '0',
         title: tmp[1][0],
         artist: tmp[1][1],
-        mediaImage: tmp_image,
+        mediaImage: tmp_image[1],
         duration: Number.parseInt(tmp[0][6])
       })
 
@@ -275,14 +386,14 @@ export class class_audio_player {
 
   // 7x4 列表广播 //
   private send_play_list() {
-    emitter.emit({ eventId: 714 }, { data: { play_list: this.play_list, index: this.play_list_index } })
-    emitter.emit({ eventId: 724 }, { data: { play_list: this.play_list, index: this.play_list_index } })
+    emitter.emit({ eventId: 714 }, { data: { play_list: this.play_list } })
+    emitter.emit({ eventId: 724 }, { data: { play_list: this.play_list } })
   }
 
-  // 7x5 列表广播（单指针） //
+  // 7x5 列表指针广播（单指针） //
   private send_play_list_index() {
-    emitter.emit({ eventId: 714 }, { data: { index: this.play_list_index } })
-    emitter.emit({ eventId: 724 }, { data: { index: this.play_list_index } })
+    emitter.emit({ eventId: 715 }, { data: { index: (this.play_list.length == 0) ? 0 : this.play_list_index } })
+    emitter.emit({ eventId: 725 }, { data: { index: (this.play_list.length == 0) ? 0 : this.play_list_index } })
   }
 
   // 7x6 播放状态广播 //
@@ -307,8 +418,10 @@ export class class_audio_player {
   }
 
   // 7x7 喜欢状态广播 //
-  private send_check_like(path: string) {
+  private send_check_like() {
     try {
+
+      const path = this.play_list[this.play_list_index]
 
       // 读取检查 //
       const tmp = this.like_list.includes(`${fs.statSync(fs.openSync(path).fd).ino}`)
@@ -370,28 +483,50 @@ export class class_audio_player {
   ////////////
 
   // 点歌 //
-  async set_audio(index: number = this.play_list_index, auto_start: boolean = this.player_ready): Promise<boolean> {
+  async set_audio(index: number = this.play_list_index): Promise<boolean> {
 
     // 修正指针 //
     this.play_list_index = index
     this.send_play_list_index()
 
-    let tmp_path = ''
+    let tmp_path: string = ''
+    let tmp_ino: string = ''
     // 获取路径（防溢出检测） //
-    try {tmp_path = this.play_list[index]} catch {return false}
+    try {
+      tmp_path = this.play_list[index]
+      tmp_ino = `${fs.statSync(fs.openSync(tmp_path).fd).ino}`
+    } catch {return false}
 
     // 载入播放 //
     let tmp_result: boolean
     // 星铃播放器
-    if (this.player_mode) {tmp_result = await this.ffmpeg_player.set_audio(tmp_path, auto_start)}
+    if (this.player_mode) {tmp_result = await this.ffmpeg_player.set_audio(tmp_path)}
     // 官方播放器
-    else {tmp_result = await this.av_player.audio_set(tmp_path, auto_start)}
+    else {
+      // dsd检查
+      if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
+        if (this.dsd_support) {
+          try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
+          // 检查是否有缓存
+          if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+            // 没有，先转码
+            notice('这首歌需要加载一下，请耐心等待^v^.')
+            await nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+            // 切歌了就退出
+            if (index != this.play_list_index) {return false}
+          }
+          tmp_result = await this.av_player.audio_set(`${dsd_cache_path}/${tmp_ino}.wav`)
+        } else {tmp_result = false}
+      }
+      // 普通歌曲
+      else {tmp_result = await this.av_player.audio_set(tmp_path)}
+    }
 
     // 成功处理 //
     if (tmp_result) {
 
-      this.send_metadata(tmp_path)
-      this.send_check_like(tmp_path)
+      this.send_metadata()
+      this.send_check_like()
 
     }
     // 未成功处理 //
@@ -422,17 +557,43 @@ export class class_audio_player {
 
   }
   // 载入播放列表 //
-  set_play_list(list: string[], index: number, auto_start: boolean = true) {
+  set_play_list(list: string[], index: number) {
 
-    // 载入 //
-    this.play_list = list
-    this.play_list_index = index
+    // 0溢事件 //
+    if (list.length <= 0) {return}
+
+    // 载入播放列表 //
+    this.play_list = []
+    for (const i of list) {
+
+      // 有效性检查 //
+      let tmp_ino: string = ''
+      try {tmp_ino = `${fs.statSync(fs.openSync(i).fd).ino}`} catch {continue}
+
+      // 官方播放器dsd检查 //
+      if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
+        if (this.dsd_support) {
+          try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
+          // 检查是否有缓存
+          if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+            // 没有，加入转码列表
+            nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+          }
+        } else {continue}
+      }
+
+      this.play_list.push(i)
+
+    }
+
+    // 载入指针 //
+    this.play_list_index = (index >= this.play_list.length - 1) ? this.play_list.length - 1 : index
 
     // 广播 //
     this.send_play_list()
 
     // 载入歌曲 //
-    this.set_audio(index, auto_start)
+    this.set_audio(index)
 
   }
 
@@ -606,7 +767,7 @@ export class class_audio_player {
       }
 
       // 广播 //
-      this.send_check_like(this.play_list[this.play_list_index])
+      this.send_check_like()
 
       // 保存 //
       save_array(this.like_list_path, audio_player_path + '/like.json')
@@ -615,12 +776,28 @@ export class class_audio_player {
   }
   // 设置定时 //
   set_timing(time_ms: number) {this.target_timed = Date.now() + time_ms}
-  // 设置播放器模式 //
-  set_player_mode(mode: boolean) {
+
+  // 设置播放器模式（重加载） //
+  async set_player_mode(mode: boolean) {
+
+    // 更改模式 //
+    this.player_mode = mode
+
+    // 重加载 //
+    this.reset_data()
 
   }
 
+  // 设置dsd支持 //
+  async set_dsd(mode: boolean) {
 
+    // 设置 //
+    this.dsd_support = mode
+
+    // 重加载 //
+    this.reset_data()
+
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
@@ -662,6 +839,7 @@ export class class_audio_player {
     log('av_session激活完成')
   }
 
+  // audio_player初始化 //
   constructor() {
 
     // 检测工作目录 //

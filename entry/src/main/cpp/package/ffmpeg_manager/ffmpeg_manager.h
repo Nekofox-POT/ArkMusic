@@ -18,7 +18,9 @@ napi_value dsd_to_wav(napi_env env, napi_callback_info info);
 // --- FFmpeg 播放器 ---
 
 // 设置音频文件（异步验证 + 初始化解码器 + 创建 OHAudio renderer）
-// 参数: 文件路径 (string)
+// 参数1: 文件路径 (string)
+// 参数2: 是否自动播放 (boolean, 可选, 默认 true)
+// 参数3: 起始跳转时间(ms) (number, 可选, 默认 0)
 // 返回: Promise<boolean>
 napi_value set_audio(napi_env env, napi_callback_info info);
 
@@ -39,14 +41,6 @@ napi_value get_current_time(napi_env env, napi_callback_info info);
 // 注册播放时间回调
 // 参数: 回调函数 (function)，回调参数为毫秒时间戳 (int)
 napi_value register_time_callback(napi_env env, napi_callback_info info);
-
-// 设置 start_ready
-// 参数: boolean
-napi_value set_start_ready(napi_env env, napi_callback_info info);
-
-// 获取 start_ready
-// 返回: boolean
-napi_value get_start_ready(napi_env env, napi_callback_info info);
 
 // 注册准备就绪回调
 // 参数: 回调函数 (function)，无参数

@@ -1,77 +1,55 @@
 //
 // 元数据获取管理器
 //
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 环境准备 //
+////////////
+// 导入第三方库 //
 import media from '@ohos.multimedia.media'
 import { image } from '@kit.ImageKit'
-import { picker, fileUri } from  '@kit.CoreFileKit'
-import { fileIo as fs, ListFileOptions } from '@kit.CoreFileKit'
+import { fileIo as fs } from '@kit.CoreFileKit'
+
+// 导入自创建模块 //
 import nativeModule, { AudioMetadata, BatchAudioMetadata } from 'libentry.so'
-
 import { log } from './system_function'
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 内部函数 //
-////////////
-
-// warning removed: fix_bit_depth 已集成到 C++ 层 get_meta.cpp（有损格式自动上报 16bit）
-// warning removed: translate_second 不再需要，直接用 C++ 返回的 durationFormat
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 外部函数 //
 ////////////
 
 // 封面获取 //
-export async function get_image(path: string = ''): Promise<image.PixelMap> {
+export async function get_image(path: string = ''): Promise<[boolean, image.PixelMap]> {
 
-  let meta_img: image.PixelMap | null = null
-
-  // 创建对象
+  // 创建对象 //
   let avMetadataExtractor = await media.createAVMetadataExtractor()
 
-  // 获取专辑封面
+  // 获取专辑封面 //
   try {
     let tmp = fs.openSync(path)
     avMetadataExtractor.fdSrc = tmp
-    meta_img = await avMetadataExtractor.fetchAlbumCover()
+    const tmp_img = await avMetadataExtractor.fetchAlbumCover()
+    avMetadataExtractor.release()
+    return [true, tmp_img]
   } catch {
     // 使用默认封面
+    avMetadataExtractor.release()
     const resourceManager = getContext().resourceManager
     const mediaData = await resourceManager.getMediaContent($r('app.media.CD'))
     const imageSource = image.createImageSource(mediaData.buffer)
-    meta_img = await imageSource.createPixelMap()
+    const tmp_img = await imageSource.createPixelMap()
+    return [false, tmp_img]
   }
-  // 释放
-  avMetadataExtractor.release()
-  return meta_img
+
 }
 
 // 封面获取（返回base64）//
 export async function image_to_base64(img: PixelMap): Promise<string> {
-  // 获取封面
-  let packOpts: image.PackingOption = { format: "image/jpeg", quality: 90 }
-  let arrayBuffer = await image.createImagePacker().packing(img, packOpts)
-  let dataURL = nativeModule.encodeImageToBase64(arrayBuffer)
-  return dataURL
-}
-
-// 检测是否有封面
-export async function check_meta_image(path: string): Promise<boolean> {
-
-  // 创建对象
-  let avMetadataExtractor = await media.createAVMetadataExtractor()
-
-  // 尝试获取专辑封面
-  try {
-    avMetadataExtractor.fdSrc = fs.openSync(path)
-    await avMetadataExtractor.fetchAlbumCover()
-    avMetadataExtractor.release()
-    return true
-  } catch {
-    avMetadataExtractor.release()
-    return false
-  }
-
+  return nativeModule.encodeImageToBase64(
+    await image.createImagePacker().packing(
+      img,
+      { format: "image/jpeg", quality: 90 }
+    )
+  )
 }
 
 // 批量元数据获取（多线程并行）//
