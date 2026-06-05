@@ -11,21 +11,21 @@ import emitter from '@ohos.events.emitter'
 import { fileIo as fs } from '@kit.CoreFileKit'
 
 // 导入自创建模块 //
-import { class_files_manager } from "../package/files_manager/class_files_manager";
+import { class_files_manager } from '../package/files_manager/download_manager'
 import { log, notice, reg_bg_run } from '../package/system_function'
+import { class_audio_player } from '../package/audio_player/class_audio_player'
+import { version_update } from './version_update'
 
 // 导入类 //
-import { class_audio_player } from '../package/audio_player/class_audio_player'
 import { class_global_config } from '../package/class_global_config'
 
 // 导入页 //
-import web_ui from './ui/web_ui'
-import ark_ui_index from './ark_ui/ark_ui_index'
-import lin_music_start from './start'
-import first_start from './first_start/first_start'
+import web_ui from '../pages/ui/web_ui'
+import ark_ui_index from '../pages/ark_ui/ark_ui_index'
+import lin_music_start from '../pages/start'
+import first_start from '../pages/first_start/first_start'
 
 // 变量池 //
-const version_path = getContext().filesDir + '/version.cfg'   // 配置文件
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -43,17 +43,20 @@ struct Index {
   ////////////
 
   // 变量池 //
+  private context = getContext(this) as common.UIAbilityContext   // 身份证
+  status: Boolean = false   // 状态
 
   // 更新池 //
-  @State @Watch('env_load') start_done: boolean = false   // 首运检查完成
-  @State @Watch('env_load') version_done: boolean = false // 版本更新完成
-  @State env_ready: boolean = false                       // 环境准备完成
-
+  @State first_start: boolean = false // 首次启动
+  @State version_ready: boolean = false // 版本检测
+  @State ready: boolean = false   // 环境准备指示器
+  @State ui_mode: boolean = true    // ui模式 ( false：arkui模式 true：webui模式 )
+  @State volume_level: number = 0   // 音量大小
 
   // 类 //
   @State global_config: class_global_config = new class_global_config()   // 全局变量管理
-  @State lin_music_player: class_audio_player = new class_audio_player(this.global_config)   // 播放器核心
-  @State files_manager: class_files_manager = new class_files_manager(this.global_config)   // 文件管理器核心
+  @State lin_music_player: class_audio_player = new class_audio_player()   // 播放器核心
+  @State ark_file_manager: class_files_manager = new class_files_manager(this.global_config)   // 文件管理器核心
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 基础函数 //
@@ -62,43 +65,60 @@ struct Index {
   // 进入app操作 //
   aboutToAppear(): void {
 
-    // 注册后台任务 //
+    log('程序开始运行...')
+    // 注册后台
     reg_bg_run()
-
-    // 版本号检查 //
+    // 版本号校验
+    log('校验版本号..')
     try {
-      fs.openSync(version_path)
-      this.start_done = true
-    } catch {
-      // 版本号不存在，进入开始界面
+      // 获取版本号
+      let tmp = fs.readTextSync(getContext().filesDir + '/version.json')
+      let tmp_update = version_update(tmp)
+      if (tmp != tmp_update) {
+        const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+        fs.writeSync(file.fd, tmp_update)
+        fs.closeSync(file)
+      }
     }
+    // 获取失败，视为第一次启动
+    catch {
+      this.first_start = true
+      // 写入版本号
+      try {
+        const file = fs.openSync(getContext().filesDir + '/version.json', fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+        fs.writeSync(file.fd, version_update())
+        fs.closeSync(file)
+      } catch (e) {
+        log(`版本号保存失败: ${e}`, 'error')
+        notice(`版本号保存失败: ${e}`)
+        return
+      }
+    }
+    // 就绪
+    this.version_ready = true
 
   }
 
   // 退出app操作 //
-  aboutToDisappear(): void {}
-
-  // 返回信号播控 //
-  onBackPress(): boolean {
-    emitter.emit({ eventId: 912 })
-    return true
+  aboutToDisappear(): void {
+    log('程序结束运行...')
+    // 全局变量保存
+    this.global_config.save()
+    // 销毁播放器
+    this.lin_music_player.save_data()
+    log('再见.')
   }
 
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // 扩展函数 //
-  ////////////
+  // 返回操作 //
+  onBackPress(): boolean {
 
-  // 环境构建 //
-  async env_load() {
+    // ---- 在这里执行你指定的任务 ----
+    emitter.emit({ eventId: 912 })
+    // --------------------------------
 
-    // 如果还没准备好就退出 //
-    if (!(this.start_done && this.version_done)) {return}
-
-    // 加载文件管理器 //
-    await this.files_manager.load_data()
-    // 就绪 //
-    this.env_ready = true
-
+    // 返回 true：表示消费掉该返回事件，原生页面不退出，Web也不后退
+    // 返回 false：表示放行，原生执行默认的退出页面动作
+    return true
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

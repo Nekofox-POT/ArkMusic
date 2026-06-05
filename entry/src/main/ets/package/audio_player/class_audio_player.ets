@@ -225,31 +225,8 @@ export class class_audio_player {
 
     }, 1)
   }
-
-  // 保存配置文件 //
-  save_data() {
-
-    if (this.global_config?.reset) {return}
-
-    // 暂停音乐 //
-    this.av_player.reset()
-    this.ffmpeg_player.reset()
-
-    // 保存播放列表 //
-    save_array(this.play_list, audio_player_path + '/play_list.json')
-
-    // 保存其他数据 //
-    save_array([
-      `${this.player_mode}`,      // 播放器模式
-      `${this.play_list_index}`,  // 播放指针
-      `${this.current_time}`,     // 已播放时间
-      `${this.play_mode}`,        // 播放模式
-      `${this.timed_mode}`,       // 计时器模式
-    ], audio_player_path + '/audio_player.json')
-
-    log('数据保存完成.')
-
-  }
+  // 自动保存数据 //
+  private async auto_save() {setInterval(() => {this.save_data()}, 30000)}
 
   // 打开配置文件 //
   async load_data(auto_start: boolean = false) {
@@ -482,6 +459,31 @@ export class class_audio_player {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 外部函数 //
   ////////////
+
+  // 保存配置文件 //
+  save_data() {
+
+    if (this.global_config?.reset) {return}
+
+    // 暂停音乐 //
+    this.av_player.reset()
+    this.ffmpeg_player.reset()
+
+    // 保存播放列表 //
+    save_array(this.play_list, audio_player_path + '/play_list.json')
+
+    // 保存其他数据 //
+    save_array([
+      `${this.player_mode}`,      // 播放器模式
+      `${this.play_list_index}`,  // 播放指针
+      `${this.current_time}`,     // 已播放时间
+      `${this.play_mode}`,        // 播放模式
+      `${this.timed_mode}`,       // 计时器模式
+    ], audio_player_path + '/audio_player.json')
+
+    log('数据保存完成.')
+
+  }
 
   // 点歌 //
   async set_audio(index: number = this.play_list_index): Promise<boolean> {
@@ -850,14 +852,15 @@ export class class_audio_player {
     // 检测工作目录 //
     try {fs.statSync(audio_player_path)} catch {fs.mkdirSync(audio_player_path)}
 
-    // 启动定时器 //
-    this.timing()
     // 注册回调 //
     this.player_callback()
     // 注册元音频 //
     this.avs_start_up()
     // 加载数据 //
     this.load_data()
+    // 启动定时器 //
+    this.timing()
+    this.auto_save()
     // 就绪 //
     log('音频管理器就绪.')
 

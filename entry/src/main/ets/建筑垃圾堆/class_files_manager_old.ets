@@ -12,12 +12,12 @@ import picker from '@ohos.file.picker'
 
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
-import { log, notice as notice_down } from './system_function'
-import { get_meta_batch } from './meta_manager'
-import { save_array, load_array } from './data_save_load'
+import { log, notice as notice_down } from '../package/system_function'
+import { get_meta_batch } from '../package/meta_manager'
+import { save_array, load_array } from '../package/data_save_load'
 
 // 导入类
-import { class_global_config } from './class_global_config'
+import { class_global_config } from '../package/class_global_config'
 
 // 变量池 //
 const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
