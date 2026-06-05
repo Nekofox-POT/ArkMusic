@@ -7,11 +7,10 @@
 // 导入第三方库 //
 import { fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
-import emitter from '@ohos.events.emitter'
 
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
-import { log, notice as notice_down } from '../system_function'
+import { log } from '../system_function'
 import { get_meta_batch } from '../meta_manager'
 import { save_array, load_array, save_map_cust_a, load_map_cust_a, save_map_cust_b, load_map_cust_b } from '../data_save_load'
 
@@ -76,7 +75,7 @@ export class class_download_manager {
       let tmp_play_list: string[] = []
       const tmp_env = tmp_path.substring(0, tmp_path.lastIndexOf('/') + 1)
       let tmp_name = nativeModule.extractFilename(tmp_path)
-      const tmp_list = fs.readTextSync(song_path + '/' + i).replace(/\r\n/g, '\n').split('\n').filter(Boolean)
+      const tmp_list = fs.readTextSync(tmp_path).replace(/\r\n/g, '\n').split('\n').filter(Boolean)
 
       // 检查 //
       for (const e of tmp_list) {
@@ -289,53 +288,86 @@ export class class_download_manager {
   //////////////
   get_dir(path: string = ''): string[][] {
 
-    let dir_list: string[] = []
-    let file_list: string[] = []
+    // 环境准备 //
+    let dir: string[] = []
+    let files: string[] = []
+    let play_list: string[] = []
+    let raw_path: string = song_path + '/' + path
+    try {
 
-    // 文件夹扫描扫描
-    for (const i of fs.listFileSync(song_path + '/' + path, { recursion: false })) {
-
-      let tmp_path = song_path + '/' + path + '/' + i
-
+      // 判断类型 //
       // 文件夹
-      if(fs.statSync(tmp_path).isDirectory()) {
-        // 如果里面没有文件
-        if (!(
-          fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } }).length === 0
-            &&
-            fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } }).length === 0
-            &&
-            fs.listFileSync(song_path, { recursion: true, filter: { suffix: ['.m3u'] } }).length === 0
-        )) {
-          // 添加
-          dir_list.push(i)
-        }
-      }
+      if (fs.statSync(raw_path).isDirectory()) {
 
-      // 文件
-      else if (fs.statSync(tmp_path).isFile()) {
-        // 判断类型
-        let file_suffix = tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase()
-        // （普通音乐）
-        if (support_audio_format.includes(file_suffix)) {
-          // 添加
-          file_list.push(tmp_path)
-        }
-        // （dsd音乐）
-        else if (support_dsd_format.includes(file_suffix)) {
-          if (this.global_config?.dsd_support) {
-            file_list.push(tmp_path)
+        // 扫描文件夹 //
+        for (const i of fs.listFileSync(raw_path, { recursion: false })) {
+
+          // 拼接路径 //
+          let tmp_path = raw_path + '/' + i
+
+          // 文件夹处理 //
+          if (fs.statSync(tmp_path).isDirectory()) {
+            // 文件存在检测
+            if (!(
+              fs.listFileSync(tmp_path, { recursion: true, filter: { suffix: support_audio_format } }).length == 0
+                &&
+                fs.listFileSync(tmp_path, { recursion: true, filter: { suffix: support_dsd_format } }).length == 0
+                &&
+                fs.listFileSync(tmp_path, { recursion: true, filter: { suffix: ['.m3u'] } }).length == 0
+            )) {
+              // 添加
+              dir.push(i)
+            }
           }
+
+          // 文件处理 //
+          else if (fs.statSync(tmp_path).isFile()) {
+
+            // 判断类型 //
+            let file_suffix = tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase()
+            // 普通音乐
+            if (support_audio_format.includes(file_suffix)) {files.push(tmp_path)}
+            // dsd音乐
+            else if (support_dsd_format.includes(file_suffix)) {if (this.global_config?.dsd_support) {files.push(tmp_path)}}
+            // 播放列表
+            else if (file_suffix == '.m3u') {play_list.push(tmp_path)}
+
+          }
+
         }
-        // 播放列表
-        else if (file_suffix == '.m3u') {}
+
+      }
+      // 播放列表
+      else if ((fs.statSync(raw_path).isFile()) && (raw_path.substring(raw_path.lastIndexOf('.')).toLowerCase() == '.m3u')) {
+
+        // 扫描 //
+        for (const i of fs.readTextSync(raw_path).replace(/\r\n/g, '\n').split('\n').filter(Boolean)) {
+
+          // 格式化 //
+          const tmp = raw_path.substring(0, raw_path.lastIndexOf('/') + 1) + '/' + i.replaceAll('\\', '/')
+
+          // 文件有效性 //
+          try {fs.openSync(tmp)} catch {continue}
+
+          // 后缀解析 //
+          let file_suffix = tmp.substring(tmp.lastIndexOf('.')).toLowerCase()
+          // 普通音乐
+          if (support_audio_format.includes(file_suffix)) {files.push(tmp)}
+          // dsd音乐
+          else if (support_dsd_format.includes(file_suffix)) {
+            if (this.global_config?.dsd_support) {
+              files.push(tmp)
+            }
+          }
+
+        }
 
       }
 
-    }
+    } catch {}
 
     // 返回
-    return [nativeModule.sortStringArray(dir_list), nativeModule.sortStringArray(file_list)]
+    return [nativeModule.sortStringArray(dir), nativeModule.sortStringArray(files), nativeModule.sortStringArray(play_list)]
 
   }
 
