@@ -31,13 +31,6 @@ const files_manager_path = getContext().filesDir + '/files_manager/'    // 文�
 const download_manager_path = getContext().filesDir + '/files_manager/download/'
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 函数库 //
-//////////
-
-// 扫描进度上报 //
-function notice_broadcast(msg: string) {emitter.emit({ eventId: 812 }, { data: { msg: msg } })}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 类框架 //
 //////////
 @Observed
@@ -47,13 +40,11 @@ export class class_download_manager {
   // 环境准备 //
   ////////////
 
-  // 变量池 //
-  private meta_cache = new Map<string, string[][]>()
-
   // 类 //
   global_config: class_global_config | null = null
 
   // 共享变量池 //
+  meta_cache = new Map<string, string[][]>()
   all_songs_list: string[] = []
   dsd_songs_list: string[] = []
   hr_songs_list: string[] = []
@@ -66,99 +57,6 @@ export class class_download_manager {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 内部函数 //
   ////////////
-
-  // 载入数据 //
-  private load_data() {
-
-    // 载入数据 //
-    // 载入元数据缓存
-    this.meta_cache = load_map_cust_a(download_manager_path + 'meta_cache.json')
-    // 载入 所有歌曲
-    for (const i of load_array(download_manager_path + 'all_songs.json')) {
-      // 检查有效性
-      try {
-        fs.openSync(i)
-        this.all_songs_list.push(i)
-      } catch {}
-    }
-    // 载入 dsd歌曲
-    for (const i of load_array(download_manager_path + 'dsd.json')) {
-      // 检查有效性
-      try {
-        fs.openSync(i)
-        this.dsd_songs_list.push(i)
-      } catch {}
-    }
-    // 载入 hires
-    for (const i of load_array(download_manager_path + 'hr.json')) {
-      // 检查有效性
-      try {
-        fs.openSync(i)
-        this.hr_songs_list.push(i)
-      } catch {}
-    }
-    // 载入 播放列表
-    load_map_cust_b(download_manager_path + 'play_list.json').forEach((value, key) => {
-      // 检查有效性
-      let tmp: string[] = []
-      for (const i of value) {
-        try {
-          fs.openSync(i)
-          tmp.push(i)
-        } catch {continue}
-      }
-      this.play_list.set(key, tmp)
-    })
-    // 载入 歌手类
-    load_map_cust_b(download_manager_path + 'artist.json').forEach((value, key) => {
-      // 检查有效性
-      let tmp: string[] = []
-      for (const i of value) {
-        try {
-          fs.openSync(i)
-          tmp.push(i)
-        } catch {continue}
-      }
-      this.artist_list.set(key, tmp)
-    })
-    // 载入 专辑类
-    load_map_cust_b(download_manager_path + 'album.json').forEach((value, key) => {
-      // 检查有效性
-      let tmp: string[] = []
-      for (const i of value) {
-        try {
-          fs.openSync(i)
-          tmp.push(i)
-        } catch {continue}
-      }
-      this.album_list.set(key, tmp)
-    })
-    // 载入 专辑作家类
-    load_map_cust_b(download_manager_path + 'album_artist.json').forEach((value, key) => {
-      // 检查有效性
-      let tmp: string[] = []
-      for (const i of value) {
-        try {
-          fs.openSync(i)
-          tmp.push(i)
-        } catch {continue}
-      }
-      this.album_artist_list.set(key, tmp)
-    })
-    // 载入 流派类
-    load_map_cust_b(download_manager_path + 'genre.json').forEach((value, key) => {
-      // 检查有效性
-      let tmp: string[] = []
-      for (const i of value) {
-        try {
-          fs.openSync(i)
-          tmp.push(i)
-        } catch {continue}
-      }
-      this.genre_list.set(key, tmp)
-    })
-
-  }
 
   // 列表扫描保存 //
   private scan_play_list() {
@@ -444,6 +342,101 @@ export class class_download_manager {
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 初始化 //
   //////////
+
+  // 载入数据 //
+  load_data() {
+
+    // 载入数据 //
+    // 载入元数据缓存
+    this.meta_cache = load_map_cust_a(download_manager_path + 'meta_cache.json')
+    // 载入 所有歌曲
+    for (const i of load_array(download_manager_path + 'all_songs.json')) {
+      // 检查有效性
+      try {
+        fs.openSync(i)
+        this.all_songs_list.push(i)
+      } catch {}
+    }
+    // 载入 dsd歌曲
+    for (const i of load_array(download_manager_path + 'dsd.json')) {
+      // 检查有效性
+      try {
+        fs.openSync(i)
+        this.dsd_songs_list.push(i)
+      } catch {}
+    }
+    // 载入 hires
+    for (const i of load_array(download_manager_path + 'hr.json')) {
+      // 检查有效性
+      try {
+        fs.openSync(i)
+        this.hr_songs_list.push(i)
+      } catch {}
+    }
+    // 载入 播放列表
+    load_map_cust_b(download_manager_path + 'play_list.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.play_list.set(key, tmp)
+    })
+    // 载入 歌手类
+    load_map_cust_b(download_manager_path + 'artist.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.artist_list.set(key, tmp)
+    })
+    // 载入 专辑类
+    load_map_cust_b(download_manager_path + 'album.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.album_list.set(key, tmp)
+    })
+    // 载入 专辑作家类
+    load_map_cust_b(download_manager_path + 'album_artist.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.album_artist_list.set(key, tmp)
+    })
+    // 载入 流派类
+    load_map_cust_b(download_manager_path + 'genre.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.genre_list.set(key, tmp)
+    })
+
+  }
+
+  // 构造 //
   constructor(import_global_config: class_global_config) {
 
     // 导入类 //
@@ -452,10 +445,6 @@ export class class_download_manager {
     // 检查工作目录 //
     try {fs.statSync(files_manager_path)} catch {fs.mkdirSync(files_manager_path)}
     try {fs.statSync(download_manager_path)} catch {fs.mkdirSync(download_manager_path)}
-    // 等待工作目录创建 //
-
-    // 载入数据 //
-    this.load_data()
 
   }
 
