@@ -41,7 +41,6 @@ export class class_external_manager {
   // 共享变量池 //
   all_songs_list: string[] = []
   hr_songs_list: string[] = []
-  play_list = new Map<string, string[]>()
   artist_list = new Map<string, string[]>()
   album_list = new Map<string, string[]>()
   album_artist_list = new Map<string, string[]>()
