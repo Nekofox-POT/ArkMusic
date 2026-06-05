@@ -8,13 +8,12 @@
 import { fileUri } from  '@kit.CoreFileKit'
 import { fileIo as fs } from '@kit.CoreFileKit'
 import emitter from '@ohos.events.emitter'
-import picker from '@ohos.file.picker'
 
 // 导入自创建模块 //
 import nativeModule from 'libentry.so'
 import { log, notice as notice_down } from '../system_function'
 import { get_meta_batch } from '../meta_manager'
-import { save_array, load_array, save_array_cust_a, load_array_cust_a } from '../data_save_load'
+import { save_array, load_array, save_map_cust_a, load_map_cust_a, save_map_cust_b, load_map_cust_b } from '../data_save_load'
 
 // 导入类
 import { class_global_config } from '../class_global_config'
@@ -55,7 +54,6 @@ export class class_download_manager {
   global_config: class_global_config | null = null
 
   // 共享变量池 //
-  working: boolean = false
   all_songs_list: string[] = []
   dsd_songs_list: string[] = []
   hr_songs_list: string[] = []
@@ -74,7 +72,7 @@ export class class_download_manager {
 
     // 载入数据 //
     // 载入元数据缓存
-    this.meta_cache = load_array_cust_a(download_manager_path + 'meta_cache.json')
+    this.meta_cache = load_map_cust_a(download_manager_path + 'meta_cache.json')
     // 载入 所有歌曲
     for (const i of load_array(download_manager_path + 'all_songs.json')) {
       // 检查有效性
@@ -99,82 +97,66 @@ export class class_download_manager {
         this.hr_songs_list.push(i)
       } catch {}
     }
-    // 载入 歌手类
-    for (const i of fs.listFileSync(download_manager_path + 'artist')) {
-      // 读取
-      let raw_list = load_array(download_manager_path + '/artist/' + i)
-      // 获取文件名
-      const tmp_name = raw_list.pop() ?? ''
-      // 检查完整性
-      let tmp_list: string[] = []
-      for (const i of raw_list) {
-        try {
-          fs.openSync(i)
-          tmp_list.push(i)
-        } catch {continue}
-      }
-      // 载入
-      if (tmp_list.length != 0) {this.artist_list.set(tmp_name, tmp_list)}
-    }
-    // 载入 专辑类
-    for (const i of fs.listFileSync(download_manager_path + 'album')) {
-      // 读取
-      let raw_list = load_array(download_manager_path + '/album/' + i)
-      // 获取文件名
-      const tmp_name = raw_list.pop() ?? ''
-      // 检查完整性
-      let tmp_list: string[] = []
-      for (const i of raw_list) {
-        try {
-          fs.openSync(i)
-          tmp_list.push(i)
-        } catch {continue}
-      }
-      // 载入
-      if (tmp_list.length != 0) {this.album_list.set(tmp_name, tmp_list)}
-    }
-    // 载入 专辑作家类
-    for (const i of fs.listFileSync(download_manager_path + 'album_artist')) {
-      // 读取
-      let raw_list = load_array(download_manager_path + '/album_artist/' + i)
-      // 获取文件名
-      const tmp_name = raw_list.pop() ?? ''
-      // 检查完整性
-      let tmp_list: string[] = []
-      for (const i of raw_list) {
-        try {
-          fs.openSync(i)
-          tmp_list.push(i)
-        } catch {continue}
-      }
-      // 载入
-      if (tmp_list.length != 0) {this.album_artist_list.set(tmp_name, tmp_list)}
-    }
-    // 载入 流派类
-    for (const i of fs.listFileSync(download_manager_path + 'genre')) {
-      // 读取
-      let raw_list = load_array(download_manager_path + '/genre/' + i)
-      // 获取文件名
-      const tmp_name = raw_list.pop() ?? ''
-      // 检查完整性
-      let tmp_list: string[] = []
-      for (const i of raw_list) {
-        try {
-          fs.openSync(i)
-          tmp_list.push(i)
-        } catch {continue}
-      }
-      // 载入
-      if (tmp_list.length != 0) {this.genre_list.set(tmp_name, tmp_list)}
-    }
     // 载入 播放列表
-    for (const i of fs.listFileSync(download_manager_path + 'play_list')) {
-      const tmp_path = download_manager_path + '/play_list/' + i
-      const tmp_name = nativeModule.extractFilename(tmp_path)
-      this.play_list.set(nativeModule.base64urlCode(tmp_name, false), load_array(tmp_path))
-    }
-
-    // 完成 //
+    load_map_cust_b(download_manager_path + 'play_list.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.play_list.set(key, tmp)
+    })
+    // 载入 歌手类
+    load_map_cust_b(download_manager_path + 'artist.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.artist_list.set(key, tmp)
+    })
+    // 载入 专辑类
+    load_map_cust_b(download_manager_path + 'album.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.album_list.set(key, tmp)
+    })
+    // 载入 专辑作家类
+    load_map_cust_b(download_manager_path + 'album_artist.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.album_artist_list.set(key, tmp)
+    })
+    // 载入 流派类
+    load_map_cust_b(download_manager_path + 'genre.json').forEach((value, key) => {
+      // 检查有效性
+      let tmp: string[] = []
+      for (const i of value) {
+        try {
+          fs.openSync(i)
+          tmp.push(i)
+        } catch {continue}
+      }
+      this.genre_list.set(key, tmp)
+    })
 
   }
 
@@ -229,9 +211,7 @@ export class class_download_manager {
     }
 
     // 保存 //
-    for (const i of nativeModule.sortStringArray(Array.from(this.play_list.keys()))) {
-      save_array(this.play_list.get(i) ?? [], `${download_manager_path}play_list/${nativeModule.base64urlCode(i, true)}.json`)
-    }
+    save_map_cust_b(this.play_list, download_manager_path + 'play_list.json')
 
   }
 
@@ -284,70 +264,48 @@ export class class_download_manager {
 
     })
 
-    // 保存 //
+    // 序列化 //
     // 所有歌曲
     this.all_songs_list = nativeModule.sortStringArray(this.all_songs_list)
-    save_array(this.all_songs_list, download_manager_path + 'all_songs.json')
     // dsd
     this.dsd_songs_list = nativeModule.sortStringArray(this.dsd_songs_list)
-    save_array(this.dsd_songs_list, download_manager_path + 'dsd.json')
     // hires
     this.hr_songs_list = nativeModule.sortStringArray(this.hr_songs_list)
-    save_array(this.hr_songs_list, download_manager_path + 'hr.json')
     // --------- //
-    let tmp_keys: string[] = []
-    let tmp_values: string[] = []
-    let tick: number
-    // 歌手 / 作曲家
-    tick = 0
-    tmp_keys = nativeModule.sortStringArray(Array.from(this.artist_list.keys()))
-    for (const i of tmp_keys) {
-      tmp_values = nativeModule.sortStringArray(this.artist_list.get(i) ?? [])
-      tmp_values.push(i)
-      save_array(tmp_values, `${download_manager_path}artist/${tick++}.json`)
+    let tmp_map = new Map<string, string[]>()
+    //  歌手 / 作曲家
+    for (const i of nativeModule.sortStringArray(Array.from(this.artist_list.keys()))) {
+      tmp_map.set(i, nativeModule.sortStringArray(this.artist_list.get(i) ?? []))
     }
+    this.artist_list = new Map(tmp_map)
     // 专辑
-    tick = 0
-    tmp_keys = nativeModule.sortStringArray(Array.from(this.album_list.keys()))
-    for (const i of tmp_keys) {
-      tmp_values = nativeModule.sortStringArray(this.album_list.get(i) ?? [])
-      tmp_values.push(i)
-      save_array(tmp_values, `${download_manager_path}album/${tick++}.json`)
+    tmp_map = new Map<string, string[]>()
+    for (const i of nativeModule.sortStringArray(Array.from(this.album_list.keys()))) {
+      tmp_map.set(i, nativeModule.sortStringArray(this.album_list.get(i) ?? []))
     }
+    this.album_list = new Map(tmp_map)
     // 专辑作家
-    tick = 0
-    tmp_keys = nativeModule.sortStringArray(Array.from(this.album_artist_list.keys()))
-    for (const i of tmp_keys) {
-      tmp_values = nativeModule.sortStringArray(this.album_artist_list.get(i) ?? [])
-      tmp_values.push(i)
-      save_array(tmp_values, `${download_manager_path}album_artist/${tick++}.json`)
+    tmp_map = new Map<string, string[]>()
+    for (const i of nativeModule.sortStringArray(Array.from(this.album_artist_list.keys()))) {
+      tmp_map.set(i, nativeModule.sortStringArray(this.album_artist_list.get(i) ?? []))
     }
+    this.album_artist_list = new Map(tmp_map)
     // 流派
-    tick = 0
-    tmp_keys = nativeModule.sortStringArray(Array.from(this.genre_list.keys()))
-    for (const i of tmp_keys) {
-      tmp_values = nativeModule.sortStringArray(this.genre_list.get(i) ?? [])
-      tmp_values.push(i)
-      save_array(tmp_values, `${download_manager_path}genre/${tick++}.json`)
+    tmp_map = new Map<string, string[]>()
+    for (const i of nativeModule.sortStringArray(Array.from(this.genre_list.keys()))) {
+      tmp_map.set(i, nativeModule.sortStringArray(this.genre_list.get(i) ?? []))
     }
+    this.genre_list = new Map(tmp_map)
 
-  }
+    // 保存 //
+    save_array(this.all_songs_list, download_manager_path + 'all_songs.json')
+    save_array(this.dsd_songs_list, download_manager_path + 'dsd.json')
+    save_array(this.hr_songs_list, download_manager_path + 'hr.json')
+    save_map_cust_b(this.artist_list, download_manager_path + 'artist.json')
+    save_map_cust_b(this.album_list, download_manager_path + 'album.json')
+    save_map_cust_b(this.album_artist_list, download_manager_path + 'album_artist.json')
+    save_map_cust_b(this.genre_list, download_manager_path + 'genre.json')
 
-  // 重置工作目录 //
-  private reset_path() {
-    // 删除 //
-    try {fs.rmdirSync(download_manager_path)} catch {}
-    // 重建立 //
-    fs.mkdirSync(download_manager_path)
-    fs.mkdirSync(download_manager_path + 'artist')
-    fs.mkdirSync(download_manager_path + 'album')
-    fs.mkdirSync(download_manager_path + 'album_artist')
-    fs.mkdirSync(download_manager_path + 'genre')
-    fs.mkdirSync(download_manager_path + 'play_list')
-    save_array_cust_a(new Map<string, string[][]>(), download_manager_path + 'meta_cache.json')
-    save_array([], download_manager_path + 'all_songs.json')
-    save_array([], download_manager_path + 'dsd.json')
-    save_array([], download_manager_path + 'hr.json')
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,16 +315,13 @@ export class class_download_manager {
   // 快速扫描数据库 //
   async scan_data_fast() {
 
-    // 防重检查标记 //
-    if (this.working) {return} else {this.working = true}
-
     // 扫描歌曲（格式化完整路径） //
     let tmp_audio: string[] = []
-    for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
+    for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
       tmp_audio.push(song_path + '/' + i)
     }
     if (this.global_config?.dsd_support) {
-      for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
+      for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
         tmp_audio.push(song_path + '/' + i)
       }
     }
@@ -399,26 +354,20 @@ export class class_download_manager {
 
     // 处理meta缓存表 //
     this.meta_cache = tmp_meta
-    save_array_cust_a(this.meta_cache, download_manager_path + 'meta_cache.json')
-
-    // 解锁 //
-    this.working = false
+    save_map_cust_a(this.meta_cache, download_manager_path + 'meta_cache.json')
 
   }
 
   // 完整扫描数据库 //
   async scan_data() {
 
-    // 防重检查标记 //
-    if (this.working) {return} else {this.working = true}
-
     // 扫描歌曲（格式化完整路径） //
     let tmp_audio: string[] = []
-    for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
+    for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
       tmp_audio.push(song_path + '/' + i)
     }
     if (this.global_config?.dsd_support) {
-      for (const i of fs.listFileSync(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
+      for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
         tmp_audio.push(song_path + '/' + i)
       }
     }
@@ -433,10 +382,7 @@ export class class_download_manager {
 
     // 处理meta缓存表 //
     this.meta_cache = tmp_meta
-    save_array_cust_a(this.meta_cache, download_manager_path + 'meta_cache.json')
-
-    // 解锁 //
-    this.working = false
+    save_map_cust_a(this.meta_cache, download_manager_path + 'meta_cache.json')
 
   }
 
@@ -505,7 +451,8 @@ export class class_download_manager {
 
     // 检查工作目录 //
     try {fs.statSync(files_manager_path)} catch {fs.mkdirSync(files_manager_path)}
-    try {fs.statSync(download_manager_path)} catch {this.reset_path()}
+    try {fs.statSync(download_manager_path)} catch {fs.mkdirSync(download_manager_path)}
+    // 等待工作目录创建 //
 
     // 载入数据 //
     this.load_data()
