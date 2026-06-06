@@ -36,7 +36,7 @@ function merge_map(map_a: Map<string, string[]>, map_b: Map<string, string[]>): 
     if (!tmp_map.has(key)) {
       tmp_map.set(key, [])
     }
-    for (const i of value) {tmp_map.get(key)?.push(i)}
+    for (const i of value) {tmp_map.get(key)!.push(i)}
   })
 
   // 遍历B //
@@ -44,7 +44,7 @@ function merge_map(map_a: Map<string, string[]>, map_b: Map<string, string[]>): 
     if (!tmp_map.has(key)) {
       tmp_map.set(key, [])
     }
-    for (const i of value) {tmp_map.get(key)?.push(i)}
+    for (const i of value) {tmp_map.get(key)!.push(i)}
   })
 
   // 序列化 //
@@ -82,6 +82,7 @@ export default class class_files_manager {
   // 共享变量池 //
   working: boolean = false
   all_songs_list: string[] = []
+  external_songs_list: string[] = []
   dsd_songs_list: string[] = []
   hr_songs_list: string[] = []
   play_list = new Map<string, string[]>()
@@ -98,21 +99,23 @@ export default class class_files_manager {
   private update_data() {
 
     // 整合 所有歌曲 //
-    this.all_songs_list = nativeModule.sortStringArray([...(this.download_manager?.all_songs_list ?? []), ...(this.external_manager?.all_songs_list ?? [])])
+    this.all_songs_list = nativeModule.sortStringArray([...(this.download_manager!.all_songs_list), ...(this.external_manager!.all_songs_list)])
+    // 导入 外部歌曲 //
+    this.external_songs_list = this.external_manager!.all_songs_list
     // 整合 dsd //
-    this.dsd_songs_list = this.download_manager?.dsd_songs_list ?? []
+    this.dsd_songs_list = this.download_manager!.dsd_songs_list
     // 整合 hi-res //
-    this.hr_songs_list = nativeModule.sortStringArray([...(this.download_manager?.hr_songs_list ?? []), ...(this.external_manager?.hr_songs_list ?? [])])
+    this.hr_songs_list = nativeModule.sortStringArray([...(this.download_manager!.hr_songs_list), ...(this.external_manager!.hr_songs_list)])
     // 整合 播放列表 //
-    this.play_list = this.download_manager?.play_list ?? new Map<string, string[]>()
+    this.play_list = this.download_manager!.play_list
     // 整合 歌手 //
-    this.artist_list = merge_map(this.download_manager?.artist_list ?? new Map<string, string[]>(), this.external_manager?.artist_list ?? new Map<string, string[]>())
+    this.artist_list = merge_map(this.download_manager!.artist_list, this.external_manager!.artist_list)
     // 整合 专辑 //
-    this.album_list = merge_map(this.download_manager?.album_list ?? new Map<string, string[]>(), this.external_manager?.album_list ?? new Map<string, string[]>())
+    this.album_list = merge_map(this.download_manager!.album_list, this.external_manager!.album_list)
     // 整合 专辑作家 //
-    this.album_artist_list = merge_map(this.download_manager?.album_artist_list ?? new Map<string, string[]>(), this.external_manager?.album_artist_list ?? new Map<string, string[]>())
+    this.album_artist_list = merge_map(this.download_manager!.album_artist_list, this.external_manager!.album_artist_list)
     // 整合 流派 //
-    this.genre_list = merge_map(this.download_manager?.genre_list ?? new Map<string, string[]>(), this.external_manager?.genre_list ?? new Map<string, string[]>())
+    this.genre_list = merge_map(this.download_manager!.genre_list, this.external_manager!.genre_list)
 
     // 上报 //
     update_post()
@@ -136,10 +139,10 @@ export default class class_files_manager {
       log(`files_manager: 快速扫描`)
       if (fast) {
         // 快速扫描
-        await this.download_manager?.scan_data_fast()
+        await this.download_manager!.scan_data_fast()
       } else {
         // 完整扫描
-        await this.download_manager?.scan_data()
+        await this.download_manager!.scan_data()
       }
 
       // 更新 //
@@ -155,7 +158,7 @@ export default class class_files_manager {
   }
 
   // 文件夹查询访问 //
-  get_dir(path: string = ''): string[][] {return this.download_manager?.get_dir(path) ?? [[], [], []]}
+  get_dir(path: string = ''): string[][] {return this.download_manager!.get_dir(path)}
 
   // 添加外部歌曲 //
   async add_external_songs() {
@@ -165,7 +168,7 @@ export default class class_files_manager {
       if (this.working) {return} else {this.working = true}
 
       // 获取 //
-      await this.external_manager?.add_external_song()
+      await this.external_manager!.add_external_song()
 
       // 更新 //
       this.update_data()
@@ -187,7 +190,7 @@ export default class class_files_manager {
       if (this.working) {return} else {this.working = true}
 
       // 获取 //
-      await this.external_manager?.del_external_song(del_list)
+      await this.external_manager!.del_external_song(del_list)
 
       // 更新 //
       this.update_data()
@@ -207,8 +210,8 @@ export default class class_files_manager {
 
   // 初始化数据库 //
   async load_data() {
-    this.download_manager?.load_data()
-    await this.external_manager?.scan_data()
+    this.download_manager!.load_data()
+    await this.external_manager!.scan_data()
     this.update_data()
   }
 

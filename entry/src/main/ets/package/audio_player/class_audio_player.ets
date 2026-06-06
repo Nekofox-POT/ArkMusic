@@ -542,7 +542,7 @@ export default class class_audio_player {
 
   }
   // 载入播放列表 //
-  set_play_list(list: string[], index: number) {
+  async set_play_list(list: string[], index: number) {
 
     // 0溢事件 //
     if (list.length <= 0) {return}
@@ -578,7 +578,7 @@ export default class class_audio_player {
     this.send_play_list()
 
     // 载入歌曲 //
-    this.set_audio(index)
+    await this.set_audio(index)
 
   }
 
@@ -698,7 +698,7 @@ export default class class_audio_player {
 
   }
   // 歌曲删除 //
-  delete_songs(index: number) {
+  delete_song(index: number) {
 
     // 防溢出检测 //
     try {this.play_list[index]} catch {return}
@@ -728,9 +728,7 @@ export default class class_audio_player {
 
   }
   // 设置播放模式 //
-  set_play_mode(index: number) {
-    this.send_play_mode(index)
-  }
+  set_play_mode(index: number) {this.send_play_mode(index)}
   // 更改歌曲喜欢 //
   toggle_like() {
     try {

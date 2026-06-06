@@ -25,7 +25,9 @@ import class_files_manager from '../../package/files_manager/class_files_manager
 import class_global_config from '../../package/class_global_config'
 
 // 变量池 //
-const web_ui_path = getContext().filesDir + '/web_ui/'    // web_ui目录
+const web_ui_path = getContext().filesDir + '/ui/web/'    // web_ui目录
+const web_ui_rom_path = web_ui_path + 'rom/'    // 皮肤固件目录
+const web_ui_data_path = web_ui_path + 'data/'  // 皮肤工作目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -74,13 +76,12 @@ export default struct web_ui {
 
   // 更新池 //
   @State @Watch('listen_system_volume') show_volume: boolean = false    // 显示音量条
-  @State vol_level: number = 0    // 音量等级
+  @State volume_level: number = 0    // 音量等级
   @State ready: boolean = false    // 页面准备指示器
 
   // 类池 //
-  private lin_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面控制器
+  private web_ui_core: webview.WebviewController = new webview.WebviewController()   // web界面控制器
   private audio_volume_manager = audio.getAudioManager().getVolumeManager()   // 音量条监听控制
-  private volume_callback: ((streamVolumeEvent: audio.StreamVolumeEvent) => void) | null = null    // 音量条监听函数
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 基础函数 //
@@ -88,8 +89,12 @@ export default struct web_ui {
 
   // 进入操作 //
   aboutToAppear() {
+
     // 检查目录 //
     try {fs.statSync(web_ui_path)} catch {fs.mkdirSync(web_ui_path)}
+    try {fs.statSync(web_ui_rom_path)} catch {fs.mkdirSync(web_ui_rom_path)}
+    try {fs.statSync(web_ui_data_path)} catch {fs.mkdirSync(web_ui_data_path)}
+
   }
 
   // 退出操作 //
@@ -99,31 +104,60 @@ export default struct web_ui {
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 监听函数 //
+  ////////////
+
+  // 开启 / 关闭 广播监听 //
+  switch_emitter(status: boolean) {
+
+    if (status) {}
+    else {}
+
+  }
+
+  // 音量监听 //
+  listen_system_volume() {
+
+    // 打开音量条 //
+    if (this.show_volume) {
+
+      log('音量条打开')
+
+      // 传入初始音量 //
+      this.volume_level = this.audio_volume_manager.getVolumeByStream(audio.StreamUsage.STREAM_USAGE_MUSIC)
+      this.web_ui_core.runJavaScript(`set_vol(${this.volume_level})`)
+
+      // 音量监听 //
+      this.audio_volume_manager.on('streamVolumeChange', audio.StreamUsage.STREAM_USAGE_MUSIC, (tmp: audio.StreamVolumeEvent) => {
+
+        // 更新 //
+        this.volume_level = tmp.volume
+        this.web_ui_core.runJavaScript(`set_vol(${tmp.volume})`)
+
+      })
+
+    }
+
+    // 关闭音量条 //
+    else {
+
+      log('音量条关闭')
+
+      this.audio_volume_manager.off('streamVolumeChange')
+
+    }
+
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 扩展函数 //
   ////////////
 
-  // 广播监听 //
-  listen_broadcast() {}
-  // 音量监听 //
-  listen_system_volume() {}
-
   // 设置沉浸颜色 //
-  set_window_color(value: boolean) {
-    if (value) {
-      window.getLastWindow(getContext(this)).then((win) => {
-        let props: window.SystemBarProperties = {
-          statusBarContentColor: '#ffffff' // 根据当前页面背景设置
-        }
-        win.setWindowSystemBarProperties(props)
-      })
-    } else {
-      window.getLastWindow(getContext(this)).then((win) => {
-        let props: window.SystemBarProperties = {
-          statusBarContentColor: '#000000' // 根据当前页面背景设置
-        }
-        win.setWindowSystemBarProperties(props)
-      })
-    }
+  set_window_color(value: string) {
+    window.getLastWindow(getContext(this)).then((win) => {
+      win.setWindowSystemBarProperties({ statusBarContentColor: value })
+    })
   }
 
   // 保存数据 //
@@ -135,7 +169,7 @@ export default struct web_ui {
   // Webview功能注册 //
   ///////////////////
   reg_webview_js() {
-    try {this.lin_music_ui.registerJavaScriptProxy({
+    try {this.web_ui_core.registerJavaScriptProxy({
 
       //////////////
       // 基础功能类 //
@@ -143,11 +177,137 @@ export default struct web_ui {
       // ready //
       ready: () => {
         log('页面准备完成.')
-        // 注入数据 //
+        this.ready = true
+      },
+      // 震动 //
+      vib: () => {vib()},
+      // 音量设置 //
+      set_vol: (level: number) => {
+        if (level == -1) {
+          this.show_volume = true
+        } else if (level == -2) {
+          this.show_volume = false
+        } else {this.volume_level = level}
+      },
+      // 保存数据 //
+      save_data: (data: string[]) => {save_array(data, web_ui_path + 'glass_ui.json')},
+      // 打开数据 //
+      load_data: () => {load_array(web_ui_path + 'glass_ui.json')},
 
+      //////////////
+      // 播控功能类 //
+      //////////////
+      // 设置播放器(载入播放列表) //
+      set_play_list: async (play_list: string[], index: number) => {this.audio_player.set_play_list(play_list, index)},
+      // 切歌 //
+      switch_song: async (index: number) => {this.audio_player.set_audio(index)},
+      // 播放 //
+      playing: () => {this.audio_player.playing()},
+      // 暂停 //
+      pause: () => {this.audio_player.pause()},
+      // 上一首 //
+      previous: () => {this.audio_player.previous()},
+      // 下一首 //
+      next: () => {this.audio_player.next()},
+      // 跳转时间 //
+      seek: (time: number) => {this.audio_player.seek(time)},
+      // 设置播放模式 //
+      set_play_mode: (mode: number) => {this.audio_player.set_play_mode(mode)},
+      // 喜欢切换 //
+      toggle_like: () => {this.audio_player.toggle_like()},
+      // 歌曲交换 //
+      switch_songs: (index_a: number, index_b: number) => {this.audio_player.switch_songs(index_a, index_b)},
+      // 歌曲删除 //
+      delete_song: (index: number) => {this.audio_player.delete_song(index)},
+
+      //////////////
+      // 状态获取类 //
+      //////////////
+      // 获取当前播放歌曲元数据 //
+      get_playing_meta: async (): Promise<string[][]> => {return await get_meta(this.audio_player.play_list[this.audio_player.play_list_index])},
+      // 获取当前播放时间 //
+      get_playing_time: (): number => {return this.audio_player.current_time},
+      // 获取当前播放列表 //
+      get_playing_play_list: (): string[] => {return this.audio_player.play_list},
+      // 获取当前播放指针 //
+      get_playing_index: (): number => {return this.audio_player.play_list_index},
+      // 获取当前播放状态 //
+      get_playing_status: (): string => {return this.audio_player.play_status},
+      // 获取当前喜欢状态 //
+      get_like: (): boolean => {return this.audio_player.is_like},
+      // 获取当前播放模式 //
+      get_play_mode: (): number => {return this.audio_player.play_mode},
+
+      //////////////
+      // 媒体管理类 //
+      //////////////
+      // 获取元数据 //
+      get_meta: async (path: string): Promise<string[][]> => {return await get_meta(path)},
+      // 获取专辑封面 //
+      get_image: async (path: string): Promise<[boolean, string]> => {
+        let tmp = await get_image(path)
+        return [tmp[0], await image_to_base64(tmp[1])]
+      },
+      // 获取所有歌曲 //
+      get_all_songs: (): string[] => {return this.files_manager.all_songs_list},
+      // 获取导入歌曲 //
+      get_external_songs: (): string[] => {return this.files_manager.external_songs_list},
+      // 获取喜欢列表 //
+      get_like_songs: (): string[] => {return this.audio_player.like_list_path},
+      // 获取hi_res列表 //
+      get_hr_songs: (): string[] => {return this.files_manager.hr_songs_list},
+      // 获取dsd列表 //
+      get_dsd_songs: (): string[] => {return this.files_manager.dsd_songs_list},
+
+      // 获取download目录歌曲(文件夹模式) //
+      get_dir_songs: (path: string = ''): string[][] => {return this.files_manager.get_dir(path)},
+      // 获取 播放列表 //
+      get_play_list_songs: (name: string = ''): string[] => {
+        if (name == '') {
+          return Array.from(this.files_manager.play_list.keys())
+        } else {
+          return this.files_manager.play_list.get(name) ?? []
+        }
+      },
+      // 获取 歌手分类 //
+      get_artist_songs: (name: string = ''): string[] => {
+        if (name == '') {
+          return Array.from(this.files_manager.artist_list.keys())
+        } else {
+          return this.files_manager.artist_list.get(name) ?? []
+        }
+      },
+      // 获取 专辑分类 //
+      get_album_songs: (name: string = ''): string[] => {
+        if (name == '') {
+          return Array.from(this.files_manager.album_list.keys())
+        } else {
+          return this.files_manager.album_list.get(name) ?? []
+        }
+      },
+      // 获取 传记作者分类 //
+      get_album_artist_songs: (name: string = ''): string[] => {
+        if (name == '') {
+          return Array.from(this.files_manager.album_artist_list.keys())
+        } else {
+          return this.files_manager.album_artist_list.get(name) ?? []
+        }
+      },
+      // 获取 流派分类 //
+      get_genre_songs: (name: string = ''): string[] => {
+        if (name == '') {
+          return Array.from(this.files_manager.genre_list.keys())
+        } else {
+          return this.files_manager.genre_list.get(name) ?? []
+        }
       },
 
-    },"lin",[
+      ///////////
+      // 设置类 //
+      //////////
+
+
+    },"ark",[
 
       /////////////
       // 接口声明 //
@@ -168,7 +328,6 @@ export default struct web_ui {
         Column() {
           Image($r('app.media.icon_white'))
             .width('256px').height('256px')
-            .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
         }
         .width('100%').height('100%')
         .position({ x: 0, y: 0 }).zIndex(900)
@@ -179,7 +338,7 @@ export default struct web_ui {
       /////////////
       // web界面 //
       ////////////
-      Web({ src: $rawfile("webview_gui/play_taskbar_index.html"), controller: this.lin_music_ui })
+      Web({ src: $rawfile("ui/web_ui/glass_ui/play_taskbar_index.html"), controller: this.web_ui_core })
         .width('100%').height('100%')
         .position({ x: 0, y: 0 }).zIndex(500)
         .zoomAccess(false)
@@ -194,7 +353,7 @@ export default struct web_ui {
         })
 
         .onPageEnd(() => {
-          log('页面加载完成.')
+          log('web_ui资源加载.')
         })
 
       /////////////

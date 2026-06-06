@@ -138,7 +138,9 @@ struct Index {
       // ui页面 //
       if (this.env_ready) {
         ui_index({
-
+          global_config: this.global_config,
+          files_manager: this.files_manager,
+          audio_player: this.audio_player
         })
           .width('100%').height('100%').zIndex(500)
       }

@@ -42,7 +42,7 @@ export async function get_image(path: string = ''): Promise<[boolean, image.Pixe
 
 }
 
-// 封面获取（返回base64）//
+// image转base64）//
 export async function image_to_base64(img: PixelMap): Promise<string> {
   return nativeModule.encodeImageToBase64(
     await image.createImagePacker().packing(

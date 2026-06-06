@@ -5,6 +5,7 @@
 
 // 导入第三方库 //
 import emitter from '@ohos.events.emitter'
+import { fileIo as fs } from '@kit.CoreFileKit'
 
 // 导入自创建模块 //
 
@@ -15,8 +16,10 @@ import class_audio_player from '../../package/audio_player/class_audio_player'
 
 // 导入页 //
 import webui from './web_ui'
+import web_ui from './web_ui'
 
 // 变量池 //
+const ui_path = getContext().filesDir + '/ui/'    // ui目录
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -51,8 +54,14 @@ export default struct ui_index {
   // 进入app操作 //
   aboutToAppear(): void {
 
+    // 检查配置文件 //
+    try {fs.statSync(ui_path)} catch {fs.mkdir(ui_path)}
+
     // 开启广播 //
     this.emitter_status(true)
+
+    // 配置放行 //
+    this.ui_mode = this.global_config.ui_mode
 
   }
 
@@ -93,7 +102,12 @@ export default struct ui_index {
     Stack() {
 
       // 0: 个性 (web) //
-      if (this.ui_mode == 0) {}
+      if (this.ui_mode == 0) {
+        web_ui({
+
+        })
+          .width('100%').height('100%')
+      }
 
       // 1: 简约 //
       if (this.ui_mode == 1) {}

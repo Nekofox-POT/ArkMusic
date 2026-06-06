@@ -577,7 +577,7 @@ export default struct web_ui {
       /////////////
       // web界面 //
       ////////////
-      Web({ src: $rawfile("webview_gui/play_taskbar_index.html"), controller: this.lin_music_ui })
+      Web({ src: $rawfile("ui/web_ui/glass_ui/play_taskbar_index.html"), controller: this.lin_music_ui })
         .width('100%').height('100%')
         .position({ x: 0, y: 0 }).zIndex(500)
         .zoomAccess(false)
