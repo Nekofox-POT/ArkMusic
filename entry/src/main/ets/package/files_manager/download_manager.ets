@@ -15,7 +15,7 @@ import { get_meta_batch } from '../meta_manager'
 import { save_array, load_array, save_map_cust_a, load_map_cust_a, save_map_cust_b, load_map_cust_b } from '../data_save_load'
 
 // 导入类
-import { class_global_config } from '../class_global_config'
+import class_global_config from '../class_global_config'
 
 // 变量池 //
 const support_audio_format: string[] = ['.m4a', '.aac', '.mp3', '.ogg', '.wav', '.flac', '.amr', '.ape']  // 支持的文件类型
@@ -61,6 +61,7 @@ export class class_download_manager {
   private scan_play_list() {
 
     // 初始化列表 //
+    log(`files_manager: 扫描列表`)
     this.play_list = new Map<string, string[]>()
 
     // 扫描 //
@@ -92,7 +93,7 @@ export class class_download_manager {
         if (support_audio_format.includes(file_suffix)) {tmp_play_list.push(tmp)}
         // dsd音乐
         else if (support_dsd_format.includes(file_suffix)) {
-          if (this.global_config?.dsd_support) {
+          if (this.global_config!.dsd_support) {
             tmp_play_list.push(tmp)
           }
         }
@@ -103,6 +104,7 @@ export class class_download_manager {
       while (true) {
         if (this.play_list.has(tmp_name)) {tmp_name = tmp_name + ' '} else {break}
       }
+      log(`files_manager: 处理列表${tmp_name}`)
       this.play_list.set(tmp_name, tmp_play_list)
 
     }
@@ -128,6 +130,7 @@ export class class_download_manager {
     this.genre_list = new Map<string, string[]>()
 
     // 分拣 //
+    log(`files_manager: 歌曲分类中。`)
     data.forEach((value, key) => {
 
       // 添加 所有歌曲 //
@@ -217,7 +220,7 @@ export class class_download_manager {
     for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
       tmp_audio.push(song_path + '/' + i)
     }
-    if (this.global_config?.dsd_support) {
+    if (this.global_config!.dsd_support) {
       for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
         tmp_audio.push(song_path + '/' + i)
       }
@@ -263,13 +266,14 @@ export class class_download_manager {
     for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_audio_format } })) {
       tmp_audio.push(song_path + '/' + i)
     }
-    if (this.global_config?.dsd_support) {
+    if (this.global_config!.dsd_support) {
       for (const i of await fs.listFile(song_path, { recursion: true, filter: { suffix: support_dsd_format } })) {
         tmp_audio.push(song_path + '/' + i)
       }
     }
 
     // 多线程获取元数据（无效数据分拣） //
+    log(`files_manager: 获取元数据`)
     let tmp_meta = new Map<string, string[][]>()
     const raw_meta = await get_meta_batch(tmp_audio)
     raw_meta.forEach((value, key) => {if (value[0].length != 0) {tmp_meta.set(key, value)}})
@@ -328,7 +332,7 @@ export class class_download_manager {
             // 普通音乐
             if (support_audio_format.includes(file_suffix)) {files.push(tmp_path)}
             // dsd音乐
-            else if (support_dsd_format.includes(file_suffix)) {if (this.global_config?.dsd_support) {files.push(tmp_path)}}
+            else if (support_dsd_format.includes(file_suffix)) {if (this.global_config!.dsd_support) {files.push(tmp_path)}}
             // 播放列表
             else if (file_suffix == '.m3u') {play_list.push(tmp_path)}
 
@@ -355,7 +359,7 @@ export class class_download_manager {
           if (support_audio_format.includes(file_suffix)) {files.push(tmp)}
           // dsd音乐
           else if (support_dsd_format.includes(file_suffix)) {
-            if (this.global_config?.dsd_support) {
+            if (this.global_config!.dsd_support) {
               files.push(tmp)
             }
           }

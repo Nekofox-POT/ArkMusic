@@ -22,8 +22,8 @@ import { class_global_config } from '../package/class_global_config'
 // 导入页 //
 import web_ui from '../pages/ui/web_ui'
 import ark_ui_index from '../pages/ark_ui/ark_ui_index'
-import lin_music_start from '../pages/start'
-import first_start from '../pages/first_start/first_start'
+import lin_music_start from './start'
+import first_start from './first_start/first_start'
 
 // 变量池 //
 

@@ -13,7 +13,7 @@ import nativeModule from 'libentry.so'
 import { log, notice } from '../system_function'
 
 // 导入类
-import { class_global_config } from '../class_global_config'
+import class_global_config from '../class_global_config'
 import { class_download_manager } from './download_manager'
 import { class_external_manager } from './external_manager'
 
@@ -117,6 +117,8 @@ export default class class_files_manager {
     // 上报 //
     update_post()
 
+    log('files_manager: 曲库列表完成。')
+
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +133,7 @@ export default class class_files_manager {
       if (this.working) {return} else {this.working = true}
 
       // 扫描 //
+      log(`files_manager: 快速扫描`)
       if (fast) {
         // 快速扫描
         await this.download_manager?.scan_data_fast()
@@ -171,7 +174,7 @@ export default class class_files_manager {
       this.working = false
 
     } catch (e) {
-    log(`外部歌曲添加出错：${e}`, 'error')
+    log(`files_manager: 外部歌曲添加出错：${e}`, 'error')
     this.working = false
     }
   }

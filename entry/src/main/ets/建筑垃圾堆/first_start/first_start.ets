@@ -40,9 +40,9 @@ export default struct first_start {
           .width('100%').height('100%')
       }
 
-      ///////////////////
+      /////////////////
       // 第二页：教程 //
-      ///////////////////
+      ///////////////
       if (this.page === 2) {
         step_b({
           page: this.page

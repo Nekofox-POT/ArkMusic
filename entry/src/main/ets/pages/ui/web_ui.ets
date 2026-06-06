@@ -20,9 +20,9 @@ import { save_array, load_array } from '../../package/data_save_load'
 import { get_image, get_meta, image_to_base64 } from '../../package/meta_manager'
 
 // 导入类 //
-import { class_audio_player } from '../../package/audio_player/class_audio_player'
-import { class_files_manager } from '../../package/files_manager/download_manager'
-import { class_global_config } from '../../package/class_global_config'
+import class_audio_player from '../../package/audio_player/class_audio_player'
+import class_files_manager from '../../package/files_manager/class_files_manager'
+import class_global_config from '../../package/class_global_config'
 
 // 变量池 //
 const web_ui_path = getContext().filesDir + '/web_ui/'    // web_ui目录

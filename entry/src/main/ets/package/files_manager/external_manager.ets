@@ -14,7 +14,7 @@ import nativeModule from 'libentry.so'
 import { log, notice } from '../system_function'
 import { get_meta, get_meta_batch } from '../meta_manager'
 // 导入类
-import { class_global_config } from '../class_global_config'
+import class_global_config from '../class_global_config'
 
 // 变量池 //
 const support_hires_format: string[][] = [

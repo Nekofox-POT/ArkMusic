@@ -18,7 +18,7 @@ import { save_array, load_array } from '../data_save_load'
 import { get_image, get_meta } from '../meta_manager'
 
 // 导入类 //
-import { class_global_config } from '../class_global_config'
+import class_global_config from '../class_global_config'
 import { class_av_player } from './by_av_player'
 import { class_ffmpeg_player } from './by_ffmpeg_player'
 
@@ -62,7 +62,6 @@ export default class class_audio_player {
   private ffmpeg_player = new class_ffmpeg_player()   // 星铃播放器
 
   // 共享变量池 //
-  player_mode: boolean = false    // 播放器使用 ( F：官方播放器 T：星铃播放器 )
   timed_mode: boolean = false // 定时模式（ T：最后一首歌放完模式 F：直接停止 ）
   play_list: string[] = []    // 播放列表
   play_list_index: number = 0   // 播放列表指针
@@ -89,7 +88,7 @@ export default class class_audio_player {
 
       // 官方播放器dsd检查 //
       if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
-        if (this.global_config?.dsd_support) {
+        if (this.global_config!.dsd_support) {
           try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
           if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -116,12 +115,12 @@ export default class class_audio_player {
       // 载入播放 //
       let tmp_result: boolean
       // 星铃播放器
-      if (this.player_mode) {tmp_result = await this.ffmpeg_player.set_audio(tmp_path, auto_start, time)}
+      if (this.global_config!.player_mode) {tmp_result = await this.ffmpeg_player.set_audio(tmp_path, auto_start, time)}
       // 官方播放器
       else {
         // dsd检查
         if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
-          if (this.global_config?.dsd_support) {
+          if (this.global_config!.dsd_support) {
             try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
             // 检查是否有缓存
             if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -229,7 +228,7 @@ export default class class_audio_player {
   private async auto_save() {setInterval(() => {this.save_data()}, 30000)}
 
   // 打开配置文件 //
-  async load_data(auto_start: boolean = false) {
+  private async load_data(auto_start: boolean = false) {
 
     log('加载播放数据')
 
@@ -251,12 +250,11 @@ export default class class_audio_player {
     if (tmp.length != 0) {
 
       // 配置环境 //
-      this.player_mode = (tmp[0] == 'true') ? true : false
-      this.send_play_mode(Number.parseInt(tmp[3]))
-      this.timed_mode = (tmp[4] == 'true') ? true : false
+      this.send_play_mode(Number.parseInt(tmp[2]))
+      this.timed_mode = (tmp[3] == 'true') ? true : false
 
       // 载入歌曲 //
-      this.set_start_audio(tmp_play_list, Number.parseInt(tmp[1]), auto_start, Number.parseInt(tmp[2]))
+      this.set_start_audio(tmp_play_list, Number.parseInt(tmp[0]), auto_start, Number.parseInt(tmp[1]))
       // 等待完成/超时1s强制结束
       let tmp_count = 0
       while ((!this.player_ready) && (tmp_count <= 1000)) {
@@ -265,17 +263,6 @@ export default class class_audio_player {
       }
 
     }
-
-  }
-
-  // 重载配置文件 //
-  async reset_data() {
-
-    // 保存数据 //
-    this.save_data()
-
-    // 重新加载数据 //
-    await this.load_data(true)
 
   }
 
@@ -317,22 +304,8 @@ export default class class_audio_player {
     if (tmp[0].length != 0) {
 
       // 广播 //
-      emitter.emit({ eventId: 712 }, {data: {
-        file_name: tmp[0][0],
-        title: tmp[1][0],
-        artist: tmp[1][1],
-        duration: tmp[0][7],
-        duration_format: tmp[0][8],
-        image: tmp_image[1]
-      }})
-      emitter.emit({ eventId: 722 }, {data: {
-        file_name: tmp[0][0],
-        title: tmp[1][0],
-        artist: tmp[1][1],
-        duration: tmp[0][7],
-        duration_format: tmp[0][8],
-        image: tmp_image[1]
-      }})
+      emitter.emit({ eventId: 712 }, { data: { meta: tmp, image: tmp_image } })
+      emitter.emit({ eventId: 722 }, { data: { meta: tmp, image: tmp_image } })
 
       // 更新元音频 //
       this.av_session?.setAVMetadata({
@@ -463,7 +436,7 @@ export default class class_audio_player {
   // 保存配置文件 //
   save_data() {
 
-    if (this.global_config?.reset) {return}
+    if (this.global_config!.reset) {return}
 
     // 暂停音乐 //
     this.av_player.reset()
@@ -474,7 +447,6 @@ export default class class_audio_player {
 
     // 保存其他数据 //
     save_array([
-      `${this.player_mode}`,      // 播放器模式
       `${this.play_list_index}`,  // 播放指针
       `${this.current_time}`,     // 已播放时间
       `${this.play_mode}`,        // 播放模式
@@ -482,6 +454,16 @@ export default class class_audio_player {
     ], audio_player_path + '/audio_player.json')
 
     log('数据保存完成.')
+
+  }
+  // 重载配置文件 //
+  async reset_data() {
+
+    // 保存数据 //
+    this.save_data()
+
+    // 重新加载数据 //
+    await this.load_data(true)
 
   }
 
@@ -503,12 +485,12 @@ export default class class_audio_player {
     // 载入播放 //
     let tmp_result: boolean
     // 星铃播放器
-    if (this.player_mode) {tmp_result = await this.ffmpeg_player.set_audio(tmp_path)}
+    if (this.global_config!.player_mode) {tmp_result = await this.ffmpeg_player.set_audio(tmp_path)}
     // 官方播放器
     else {
       // dsd检查
       if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
-        if (this.global_config?.dsd_support) {
+        if (this.global_config!.dsd_support) {
           try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
           if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -575,7 +557,7 @@ export default class class_audio_player {
 
       // 官方播放器dsd检查 //
       if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
-        if (this.global_config?.dsd_support) {
+        if (this.global_config!.dsd_support) {
           try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
           if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
@@ -603,12 +585,12 @@ export default class class_audio_player {
   // 播放 //
   playing() {
     if (this.play_list.length == 0) {return}
-    if (this.player_mode) {this.ffmpeg_player.playing()} else {this.av_player.set_play_status(true)}
+    if (this.global_config!.player_mode) {this.ffmpeg_player.playing()} else {this.av_player.set_play_status(true)}
   }
   // 暂停 //
   pause() {
     if (this.play_list.length == 0) {return}
-    if (this.player_mode) {this.ffmpeg_player.pause()} else {this.av_player.set_play_status(false)}
+    if (this.global_config!.player_mode) {this.ffmpeg_player.pause()} else {this.av_player.set_play_status(false)}
   }
   // 上一首 //
   previous() {
@@ -687,7 +669,7 @@ export default class class_audio_player {
   // 更改进度 //
   seek(time: number) {
     if (this.play_list.length == 0) {return}
-    if (this.player_mode) {this.ffmpeg_player.seek(time)} else {this.av_player.audio_seek(time)}
+    if (this.global_config!.player_mode) {this.ffmpeg_player.seek(time)} else {this.av_player.audio_seek(time)}
   }
 
   // 歌曲排序交换 //
@@ -786,7 +768,7 @@ export default class class_audio_player {
   async set_player_mode(mode: boolean) {
 
     // 更改模式 //
-    this.player_mode = mode
+    this.global_config!.player_mode = mode
 
     // 重加载 //
     this.reset_data()
@@ -796,7 +778,7 @@ export default class class_audio_player {
   async set_dsd(mode: boolean) {
 
     // 设置 //
-    if (this.global_config) {this.global_config.dsd_support = mode}
+    this.global_config!.dsd_support = mode
 
     // 重加载 //
     this.reset_data()

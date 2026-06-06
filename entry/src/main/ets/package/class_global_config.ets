@@ -31,8 +31,10 @@ export default class class_global_config {
   ////////////
 
   // 公共变量池 //
-  reset: boolean = false    // 清理卡
+  reset: boolean = false        // 清理卡
+  player_mode: boolean = false  // 播放器使用 ( F：官方播放器 T：星铃播放器 )
   dsd_support: boolean = true   // dsd播放支持
+  ui_mode: number = 0           // ui界面设置 （ 0：个性 1：极简 2：灵动 3：液态 ）
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 外部函数 //
@@ -64,7 +66,9 @@ export default class class_global_config {
       // 保存文件
       save_array([
 
-        (this.dsd_support) ? '1' : '0',   // dsd播放支持
+        `${this.player_mode}`,  // 播放器模式选择
+        `${this.dsd_support}`,  // dsd支持
+        `${this.ui_mode}`,      // ui界面选择
 
       ], global_config_json)
     }
@@ -80,7 +84,9 @@ export default class class_global_config {
     if (tmp.length != 0) {
 
       // 加载文件
-      this.dsd_support = (tmp[0] === '1') ? true : false
+      this.player_mode = (tmp[0] == 'true') ? true : false
+      this.dsd_support = (tmp[1] == 'true') ? true : false
+      this.ui_mode = Number.parseInt(tmp[2])
 
     } else {
 

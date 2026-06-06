@@ -26,6 +26,7 @@ const old_version_path = getContext().filesDir + '/version.json'   // 配置文�
 // 主页面入口 //
 //////////////
 @Component
+@Preview
 export default struct version_update {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,14 +73,12 @@ export default struct version_update {
       try {
         fs.readTextSync(old_version_path)
         this.update_0p8 = true
-        // 删除此配置文件
-        fs.unlinkSync(old_version_path)
       } catch {} // 真没有版本号，那就不管
 
       // 创建配置文件 //
-      const file = fs.openSync(version_path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-      fs.writeSync(file.fd, '0.8')
-      fs.closeSync(file)
+      // const file = fs.openSync(version_path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+      // fs.writeSync(file.fd, '0.8')
+      // fs.closeSync(file)
 
       // 完成 //
       this.version_ready = true
@@ -93,13 +92,85 @@ export default struct version_update {
   // UI构建 //
   ///////////
   build() {
-    Row() {
+    Stack() {
 
-      // 70 → 0.8 更新简介 //
+      // 0.7 → 0.8 更新简介 //
       if (this.update_0p8) {
+
+        // 遮罩层 //
+        Column() {
+
+          // 更新说明卡 //
+          Column() {
+
+            // 标题（顶层） //
+            Text('Version 0.8 更新内容：')
+              .fontSize('18vp').fontColor('#000000')
+              .fontWeight(FontWeight.Bold)
+              .width('100%').textAlign(TextAlign.Start)
+
+            // 间隔 //
+            Text('').height('12vp')
+
+            // 内容区（凹陷灰底，中间层） //
+            Column() {
+
+              // 更新内容 //
+              Text('内核进行系统性重构。')
+                .fontSize('14vp').fontColor('#333333')
+                .width('100%').textAlign(TextAlign.Start)
+
+              Text('添加全新"铃音"播放内核')
+                .fontSize('14vp').fontColor('#333333')
+                .width('100%').textAlign(TextAlign.Start)
+
+              // 分割间隔 //
+              Text('').height('12vp')
+
+              // 警告文字（红） //
+              Text('因内核进行系统性重构，现需要重置数据库，点击"确定"来进行重置。')
+                .fontSize('14vp').fontColor('#e60012')
+                .width('100%').textAlign(TextAlign.Start)
+
+              Text('').height('4vp')
+
+              // 小字提示（红） //
+              Text('重置后程序会退出，请您再手动重新打开程序。')
+                .fontSize('11vp').fontColor('#c00010')
+                .width('100%').textAlign(TextAlign.Start)
+
+            }
+            .width('100%')
+            .backgroundColor('#f2f2f2')
+            .borderRadius('8vp')
+            .padding('12vp')
+
+            // 间隔 //
+            Text('').height('16vp')
+
+            // 重置按钮（胶囊形，底层） //
+            Button('重置')
+              .fontSize('15vp').fontColor('#e60012')
+              .backgroundColor('rgba(244, 198, 206, 1.0)')
+              .borderRadius('22vp')
+              .height('44vp')
+              .onClick(() => {this.global_config.reset_app()})
+
+          }
+          .width('80%')
+          .backgroundColor('#ffffff')
+          .borderRadius('12vp')
+          .padding('16vp')
+
+        }
+        .zIndex(990)
+        .width('100%').height('100%')
+        .backgroundColor('rgba(0, 0, 0, 0.4)').backdropBlur(8)
+        .justifyContent(FlexAlign.Center).alignItems(HorizontalAlign.Center)
 
       }
 
     }
+    .width('100%').height('100%')
   }
 }
