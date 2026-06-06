@@ -43,7 +43,7 @@ function ms_to_times(duration: number): string {
 // 类框架 //
 //////////
 @Observed
-export class class_audio_player {
+export default class class_audio_player {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
@@ -808,7 +808,7 @@ export class class_audio_player {
   //////////
 
   // av_session初始化 //
-  async avs_start_up() {
+  private async avs_start_up() {
 
     // 创建AVSession //
     log('创建av_session')
@@ -844,10 +844,7 @@ export class class_audio_player {
   }
 
   // audio_player初始化 //
-  constructor(global_config: class_global_config) {
-
-    // 导入全局配置文件 //
-    this.global_config = global_config
+  async audio_player_start_up() {
 
     // 检测工作目录 //
     try {fs.statSync(audio_player_path)} catch {fs.mkdirSync(audio_player_path)}
@@ -855,7 +852,7 @@ export class class_audio_player {
     // 注册回调 //
     this.player_callback()
     // 注册元音频 //
-    this.avs_start_up()
+    await this.avs_start_up()
     // 加载数据 //
     this.load_data()
     // 启动定时器 //
@@ -863,6 +860,14 @@ export class class_audio_player {
     this.auto_save()
     // 就绪 //
     log('音频管理器就绪.')
+
+  }
+
+  // 构建 //
+  constructor(global_config: class_global_config) {
+
+    // 导入全局配置文件 //
+    this.global_config = global_config
 
   }
 

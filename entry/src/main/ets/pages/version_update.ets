@@ -1,0 +1,105 @@
+//
+// 版本更新页
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 导入第三方库 //
+import { fileIo as fs } from '@kit.CoreFileKit'
+
+// 导入自创建模块 //
+
+// 导入类 //
+import class_global_config from '../package/class_global_config'
+
+// 导入页 //
+
+// 变量池 //
+const version_path = getContext().filesDir + '/version.cfg'   // 配置文件
+const old_version_path = getContext().filesDir + '/version.json'   // 配置文件
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 函数库 //
+//////////
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 主页面入口 //
+//////////////
+@Component
+export default struct version_update {
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 环境准备 //
+  ////////////
+
+  // 变量池 //
+  @State update_0p8: boolean = false
+
+  // 继承池 //
+  @Link version_ready: boolean
+  @ObjectLink global_config: class_global_config
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 基础函数 //
+  ////////////
+
+  // 进入app操作（） //
+  aboutToAppear(): void {this.version_check()}
+
+  // 退出app操作 //
+  aboutToDisappear(): void {}
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 扩展函数 //
+  ////////////
+
+  // 版本号检查 //
+  version_check() {
+
+    // 检查文件是否存在 //
+    try {let tmp = fs.readTextSync(version_path)
+      // 文件存在
+
+      // 检查版本号 //（下一次施工）
+
+      // 完成 //
+      this.version_ready = true
+
+    } catch {
+      // 文件不存在
+
+      // 0.7版本修复(正式版该移除了) //
+      try {
+        fs.readTextSync(old_version_path)
+        this.update_0p8 = true
+        // 删除此配置文件
+        fs.unlinkSync(old_version_path)
+      } catch {} // 真没有版本号，那就不管
+
+      // 创建配置文件 //
+      const file = fs.openSync(version_path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+      fs.writeSync(file.fd, '0.8')
+      fs.closeSync(file)
+
+      // 完成 //
+      this.version_ready = true
+
+    }
+
+  }
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // UI构建 //
+  ///////////
+  build() {
+    Row() {
+
+      // 70 → 0.8 更新简介 //
+      if (this.update_0p8) {
+
+      }
+
+    }
+  }
+}

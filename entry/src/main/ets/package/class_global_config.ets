@@ -24,7 +24,7 @@ const global_config_json = getContext().filesDir + '/config.json'    // 配置�
 // 类框架 //
 //////////
 @Observed
-export class class_global_config {
+export default class class_global_config {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
