@@ -10,6 +10,8 @@ import emitter from '@ohos.events.emitter'
 
 // 导入类 //
 import class_global_config from '../../package/class_global_config'
+import class_files_manager from "../../package/files_manager/class_files_manager"
+import class_audio_player from '../../package/audio_player/class_audio_player'
 
 // 导入页 //
 import webui from './web_ui'
@@ -24,7 +26,7 @@ import webui from './web_ui'
 // 页面入口 //
 ////////////
 @Component
-struct ui_index {
+export default struct ui_index {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 环境准备 //
@@ -39,6 +41,8 @@ struct ui_index {
 
   // 继承池 //
   @ObjectLink global_config: class_global_config
+  @ObjectLink files_manager: class_files_manager
+  @ObjectLink audio_player: class_audio_player
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 基础函数 //

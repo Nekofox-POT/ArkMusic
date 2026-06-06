@@ -35,6 +35,7 @@ export default struct version_update {
 
   // 变量池 //
   @State update_0p8: boolean = false
+  @State ok_code: number = 0
 
   // 继承池 //
   @Link version_ready: boolean
@@ -55,16 +56,13 @@ export default struct version_update {
   ////////////
 
   // 版本号检查 //
-  version_check() {
+  async version_check() {
 
     // 检查文件是否存在 //
     try {let tmp = fs.readTextSync(version_path)
       // 文件存在
 
       // 检查版本号 //（下一次施工）
-
-      // 完成 //
-      this.version_ready = true
 
     } catch {
       // 文件不存在
@@ -73,6 +71,7 @@ export default struct version_update {
       try {
         fs.readTextSync(old_version_path)
         this.update_0p8 = true
+        this.ok_code++
       } catch {} // 真没有版本号，那就不管
 
       // 创建配置文件 //
@@ -80,10 +79,13 @@ export default struct version_update {
       // fs.writeSync(file.fd, '0.8')
       // fs.closeSync(file)
 
-      // 完成 //
-      this.version_ready = true
-
     }
+
+    // 等待弹窗确认完成 //
+    while (this.ok_code != 0) {
+      await new Promise<void>(resolve => setTimeout(resolve, 1))
+    }
+    this.version_ready = true
 
   }
 
@@ -154,7 +156,10 @@ export default struct version_update {
               .backgroundColor('rgba(244, 198, 206, 1.0)')
               .borderRadius('22vp')
               .height('44vp')
-              .onClick(() => {this.global_config.reset_app()})
+              .onClick(() => {
+                this.ok_code--
+                this.global_config.reset_app()
+              })
 
           }
           .width('80%')

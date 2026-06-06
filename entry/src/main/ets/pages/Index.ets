@@ -22,6 +22,7 @@ import class_audio_player from '../package/audio_player/class_audio_player'
 // 导入页 //
 import version_update from './version_update'
 import start_index from './start/start'
+import ui_index from './ui/ui'
 
 // 变量池 //
 const version_path = getContext().filesDir + '/version.cfg'   // 配置文件
@@ -54,7 +55,6 @@ struct Index {
 
 
   // 类 //
-  private download_maker: webview.WebviewController = new webview.WebviewController()   // download创建器
   @State global_config: class_global_config = new class_global_config()   // 全局变量管理
   @State audio_player: class_audio_player = new class_audio_player(this.global_config)   // 播放器核心
   @State files_manager: class_files_manager = new class_files_manager(this.global_config)   // 文件管理器核心
@@ -117,11 +117,13 @@ struct Index {
     Stack() {
 
       // 更新弹窗页面 //
-      version_update({
-        version_ready: this.version_ready,
-        global_config: this.global_config
-      })
-        .width('100%').height('100%').zIndex(900)
+      if (!this.version_ready) {
+        version_update({
+          version_ready: this.version_ready,
+          global_config: this.global_config
+        })
+          .width('100%').height('100%').zIndex(900)
+      }
 
       // 开始页面 //
       if (this.start_ui) {
@@ -134,6 +136,12 @@ struct Index {
       }
 
       // ui页面 //
+      if (this.env_ready) {
+        ui_index({
+
+        })
+          .width('100%').height('100%').zIndex(500)
+      }
 
       // download创建器 //
       if (!this.download_ready) {

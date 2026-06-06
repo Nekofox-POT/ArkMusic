@@ -67,21 +67,19 @@ export default struct web_ui {
 
   // 继承池 //
   @ObjectLink global_config: class_global_config    // 类 全局管理器
-  @ObjectLink lin_music_player: class_audio_player  // 类 播放器
   @ObjectLink files_manager: class_files_manager    // 类 文件管理器
-  @Link volume_level: number    // 音量大小
-  @Link start_ui: boolean    // 环境准备指示器(为false就是重新扫描数据库)
+  @ObjectLink audio_player: class_audio_player  // 类 播放器
 
   // 变量池 //
-  private play_list: string[] = []  // 列表记录器
 
   // 更新池 //
   @State @Watch('listen_system_volume') show_volume: boolean = false    // 显示音量条
+  @State vol_level: number = 0    // 音量等级
   @State ready: boolean = false    // 页面准备指示器
 
   // 类池 //
-  private lin_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面
-  private audio_volume_manager = audio.getAudioManager().getVolumeManager()   // 音量条监听
+  private lin_music_ui: webview.WebviewController = new webview.WebviewController()   // web界面控制器
+  private audio_volume_manager = audio.getAudioManager().getVolumeManager()   // 音量条监听控制
   private volume_callback: ((streamVolumeEvent: audio.StreamVolumeEvent) => void) | null = null    // 音量条监听函数
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
