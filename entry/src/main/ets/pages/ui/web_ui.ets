@@ -254,7 +254,7 @@ export default struct web_ui {
       // 保存数据 //
       save_data: (data: string[], name: string) => {save_array(data, `${web_ui_data_path}glass_ui/${name}.json`)},
       // 打开数据 //
-      load_data: (name: string) => {load_array(`${web_ui_data_path}glass_ui/${name}.json`)},
+      load_data: (name: string): string[] => {return load_array(`${web_ui_data_path}glass_ui/${name}.json`)},
       // 返回桌面 //
       back_desktop: () => {router.back()},
 

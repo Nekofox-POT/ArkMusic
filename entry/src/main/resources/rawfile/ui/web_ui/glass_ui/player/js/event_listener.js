@@ -150,11 +150,12 @@ sleep_timer_icon.addEventListener("click", () => {
     sleep_timer_overlay.classList.add('active')
     // 同步定时状态
     if (sleep_timer_is_active) {
-        // 如果正在定时，从后端取剩余时间（秒）
-        const seconds = ark.get_timing()
-        if (seconds > 0) {
-            timer_hours = Math.floor(seconds / 3600)
-            timer_minutes = Math.floor((seconds % 3600) / 60)
+        // 后端 get_timing 返回毫秒，转换为时分
+        const ms = ark.get_timing()
+        if (ms > 0) {
+            const totalSec = Math.floor(ms / 1000)
+            timer_hours = Math.floor(totalSec / 3600)
+            timer_minutes = Math.floor((totalSec % 3600) / 60)
             update_hours_text()
             update_minutes_text()
         }
@@ -186,9 +187,10 @@ sleep_timer_start.addEventListener("touchstart", () => {
 sleep_timer_start.addEventListener("touchend", () => {
     sleep_timer_start.style.transform = 'scale(1)'
     const waitEnd = sleep_timer_toggle.classList.contains('on')
-    const totalSeconds = timer_hours * 3600 + timer_minutes * 60
+    // set_timing 接收毫秒
+    const totalMs = (timer_hours * 3600 + timer_minutes * 60) * 1000
     ark.set_timed_mode(waitEnd)
-    ark.set_timing(totalSeconds)
+    ark.set_timing(totalMs)
     sleep_timer_overlay.classList.remove('active')
 })
 

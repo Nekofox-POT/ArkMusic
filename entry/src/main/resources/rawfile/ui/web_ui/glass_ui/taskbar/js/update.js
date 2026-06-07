@@ -10,17 +10,30 @@
 
 // 元数据更新
 function set_meta(meta) {
-    console.log('set_meta:', JSON.stringify(meta))
     // meta[0] = 基础数据 [文件名, mtime, 类型, 声道, 采样率, 位深, 比特率, 时长ms, 时长格式化]
     // meta[1] = 音乐信息 [title, artist, album, album_artist, genre]
-    taskbar_music_name.innerText = meta[1][0] || meta[0][0]
-    player_title.innerText = meta[1][0] || '未知歌曲'
+    taskbar_music_name.innerText = meta[0][0]                        // taskbar 显示文件名
+    player_title.innerText = meta[1][0] || meta[0][0]                // 播放页显示标题
     player_sub_title.innerText = meta[1][1] || '未知歌手'
     // 从元数据中提取总时长
     if (meta[0][7]) {
         set_duration(parseInt(meta[0][7]))
     }
     check_title_overflow()
+
+    // 根据封面亮度更新背景色和系统沉浸色
+    if (playing_list.length > 0) {
+        const path = playing_list[playing_list_index]
+        ark.get_pixel_light(path).then(function(light) {
+            if (light > 128) {
+                set_background_color('rgba(0, 0, 0, 0.4)')
+                ark.set_window_color('#000000')
+            } else {
+                set_background_color('rgba(255, 255, 255, 0.6)')
+                ark.set_window_color('#ffffff')
+            }
+        }).catch(function(){})
+    }
 }
 
 // 封面图片更新 (传入base64)
@@ -52,7 +65,6 @@ function set_image(base64) {
 
 // 当前播放时间（毫秒）
 function set_current_time(time) {
-    console.log('set_current_time:', time, 'type:', typeof time)
     const t = Number(time) || 0
     if (!is_adjusting) {
         song_range.value = t
@@ -98,20 +110,20 @@ function update_range_visual() {
 // 播放列表 (event 714) //
 /////////////////////////
 
-function set_playing_list(play_list) {
-    playing_list = play_list
-    // 转发到播放列表 iframe
-    play_list.contentWindow.postMessage({action: 'update_playing_songs', arg1: play_list, arg2: playing_list_index}, '*')
+function set_playing_list(songs) {
+    playing_list = songs
+    // 转发到播放列表 iframe（play_list 是全局 DOM 引用）
+    play_list.contentWindow.postMessage({action: 'update_playing_songs', arg1: songs, arg2: playing_list_index}, '*')
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 播放指针 (event 715) //
 /////////////////////////
 
-function set_playing_index(index) {
-    playing_list_index = index
+function set_playing_index(idx) {
+    playing_list_index = idx
     // 转发到播放列表 iframe（仅更新高亮）
-    play_list.contentWindow.postMessage({action: 'update_playing_songs', arg1: [], arg2: index}, '*')
+    play_list.contentWindow.postMessage({action: 'update_playing_songs', arg1: [], arg2: idx}, '*')
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,7 +131,6 @@ function set_playing_index(index) {
 /////////////////////////
 
 function set_play_status(status) {
-    console.log('set_play_status:', status, 'type:', typeof status)
     // status 为字符串 'playing'/'paused' 或 boolean true/false
     play_status = (status === 'playing' || status === true)
     if (play_status) {
@@ -139,7 +150,6 @@ function set_play_status(status) {
 /////////////////////////
 
 function set_play_mode(value) {
-    console.log('set_play_mode:', value, 'type:', typeof value)
     // 0=列表循环  1=单曲  2=顺序  3=随机
     play_only_button.classList.add('hidden')
     play_forlist_button.classList.add('hidden')
@@ -161,7 +171,6 @@ function set_play_mode(value) {
 /////////////////////////
 
 function set_like(is_like) {
-    console.log('set_like:', is_like, 'type:', typeof is_like)
     if (is_like) {
         player_like_button.querySelectorAll('.svg_color').forEach(tmp => {
             tmp.classList.add('svg_active_color')
@@ -201,26 +210,18 @@ function set_timing_time(time) {
 function load_theme_config() {
     try {
         const data = ark.load_data('web_ui')
-        console.log('load_theme_config data:', JSON.stringify(data))
         if (data && data.length >= 2) {
-            console.log('load_theme_config active_color:', data[0], 'enable:', data[1])
             set_active_color(data[0])
             set_button_enable_active_color(data[1] === '1')
-        } else {
-            console.log('load_theme_config: 使用默认值')
         }
-    } catch(e) {
-        console.log('load_theme_config error:', e)
-    }
+    } catch(e) {}
 }
 
 // 保存主题配置到后端
 function save_theme_config() {
-    const data = [
-        active_color,
-        button_enable_active_color ? '1' : '0'
-    ]
-    ark.save_data(data, 'web_ui')
+    try {
+        ark.save_data([active_color, button_enable_active_color ? '1' : '0'], 'web_ui')
+    } catch(e) {}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

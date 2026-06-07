@@ -21,14 +21,16 @@ window.addEventListener('message', function(event) {
         taskbar_double(event.data.arg1)
     }
 
-    // 设置页修改主题色（转发到全局并保存）
+    // 设置页修改主题色（用户触发 → 更新UI + 持久化）
     if (event.data.action === 'set_active_color') {
         set_active_color(event.data.arg1)
+        save_theme_config()
     }
 
-    // 设置页修改图标高亮开关（转发到全局并保存）
+    // 设置页修改图标高亮开关（用户触发 → 更新UI + 持久化）
     if (event.data.action === 'set_button_enable_active_color') {
         set_button_enable_active_color(event.data.arg1)
+        save_theme_config()
     }
 
 })

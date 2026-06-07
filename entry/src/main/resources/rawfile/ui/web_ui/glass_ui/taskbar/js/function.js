@@ -133,14 +133,13 @@ function check_title_overflow() {
 // 色彩更改 //
 /////////////
 
-// 主题色修改 //
+// 主题色修改（仅更新UI和广播到iframes，不自动保存。保存由调用方决定）
 function set_active_color(color = null) {
     play_list.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
     files.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
     setting.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
     if (color !== null) {
         active_color = color
-        save_theme_config()
     }
     document.querySelectorAll('.box_active_color').forEach(element => {
         element.style.backgroundColor = active_color;
@@ -167,11 +166,10 @@ function set_background_color(color = null) {
     set_active_color()
 }
 
-// 图标高亮设置修改 //
+// 图标高亮设置修改（仅更新UI和广播，不自动保存）
 function set_button_enable_active_color(value) {
     play_list.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     files.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     setting.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     button_enable_active_color = value
-    save_theme_config()
 }

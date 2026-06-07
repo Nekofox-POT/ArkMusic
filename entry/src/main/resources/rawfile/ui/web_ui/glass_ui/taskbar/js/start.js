@@ -42,13 +42,10 @@ function init() {
 
 // 从后端拉取初始播放状态
 async function fetch_initial_state() {
-    console.log('===== fetch_initial_state 开始 =====')
 
     // 播放列表 & 指针（局部变量 songs，避免遮盖全局 DOM 引用 play_list）
     const songs = ark.get_playing_play_list()
     const index = ark.get_playing_index()
-    console.log('get_playing_play_list:', JSON.stringify(songs), 'length:', songs.length)
-    console.log('get_playing_index:', index)
 
     playing_list = songs
     playing_list_index = index
@@ -62,54 +59,41 @@ async function fetch_initial_state() {
 
         try {
             const meta = await ark.get_playing_meta()
-            console.log('get_playing_meta:', JSON.stringify(meta))
             if (meta && meta[0] && meta[0].length > 0) {
                 set_meta(meta)
             }
-        } catch(e) {
-            console.log('get_playing_meta error:', e)
-        }
+        } catch(e) {}
 
         try {
             const img = await ark.get_image(path)
-            console.log('get_image hasImg:', img[0], 'len:', img[1] ? img[1].length : 0)
             if (img[0]) {
                 set_image(img[1])
             }
-        } catch(e) {
-            console.log('get_image error:', e)
-        }
+        } catch(e) {}
     }
 
     // 播放状态
-    const status = ark.get_playing_status()
-    console.log('get_playing_status:', status, 'type:', typeof status)
-    set_play_status(status)
+    set_play_status(ark.get_playing_status())
 
     // 播放模式
-    const mode = ark.get_play_mode()
-    console.log('get_play_mode:', mode, 'type:', typeof mode)
-    set_play_mode(mode)
+    set_play_mode(ark.get_play_mode())
 
     // 喜欢状态
-    const like = ark.get_like()
-    console.log('get_like:', like, 'type:', typeof like)
-    set_like(like)
+    set_like(ark.get_like())
 
     // 定时状态
     const timing = ark.get_timing()
-    console.log('get_timing:', timing)
     if (timing > 0) {
         set_timing_time(timing)
     }
 
     // 当前播放时间
     const current_time = ark.get_playing_time()
-    console.log('get_playing_time:', current_time, 'type:', typeof current_time)
     set_current_time(current_time)
     set_current_time_format(second_to_time(current_time))
 
-    console.log('===== fetch_initial_state 结束 =====')
+    // 通知 files 页加载初始数据
+    files.contentWindow.postMessage({action: 'songs_update'}, '*')
 }
 
 init()

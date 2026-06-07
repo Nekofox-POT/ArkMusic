@@ -296,15 +296,11 @@ function scroll_to_song(index) {
 // 更新所有歌曲（优化版）
 function update_playing_songs(data, num) {
 
-    console.log('update_playing_songs 被调用, data:', data, 'num:', num)
-
     // 载入缓存
     playing_index = num
 
     // 判断是否需要重新渲染列表
     if (data && data.length !== 0) {
-
-        console.log('开始渲染列表, 长度:', data.length)
 
         // 载入缓存
         all_songs = data.length
@@ -356,7 +352,6 @@ function update_playing_songs(data, num) {
         })
 
     } else {
-        console.log('数据为空或长度为0, 只更新高亮')
         // 只更新高亮色（不重新渲染列表）
         update_highlight(num)
         // 更新头显
@@ -376,7 +371,6 @@ window.addEventListener('message', function(event) {
 
     // 更新所有歌曲栏目
     if (func === 'update_playing_songs') {
-        console.log('收到播放列表更新:', event.data.arg1, event.data.arg2)
         update_playing_songs(event.data.arg1, event.data.arg2)
     }
 

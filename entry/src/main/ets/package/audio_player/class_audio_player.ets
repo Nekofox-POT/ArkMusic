@@ -90,11 +90,10 @@ export default class class_audio_player {
       // 官方播放器dsd检查 //
       if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
         if (this.global_config!.dsd_support) {
-          try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
-          if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+          try {fs.openSync(`${dsd_cache_path}/${tmp_ino}.wav`)} catch {
             // 没有，加入转码列表
-            nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+            nativeModule.dsdToWav(i, `${dsd_cache_path}/${tmp_ino}.wav`)
           }
         } else {continue}
       }
@@ -122,12 +121,13 @@ export default class class_audio_player {
         // dsd检查
         if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
           if (this.global_config!.dsd_support) {
-            try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
             // 检查是否有缓存
-            if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+            try {fs.openSync(`${dsd_cache_path}/${tmp_ino}.wav`)} catch {
               // 没有，先转码
               notice('这首歌需要加载一下，请耐心等待^v^.')
-              await nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+              log('dsd 转码.')
+              await nativeModule.dsdToWav(tmp_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+              log('转码完成')
               // 切歌了就退出
               if (index != this.play_list_index) {return false}
             }
@@ -179,8 +179,7 @@ export default class class_audio_player {
   // 播放完成处理 //
   private complete(next: boolean = true) {
 
-    // 如果完成了说不放了那就不管 //
-    console.log('播完了！')
+    // 如果完成了说不放了那就不管 //log('播完了！')
     if (!next) {return}
 
     // 计时器处理 //
@@ -190,6 +189,8 @@ export default class class_audio_player {
       if (this.target_timed <= Date.now()) {
         this.target_timed = 0
         notice('计时器暂停了音乐 ╮(′～‵〞)╭')
+        // 计时器定时发送 //
+        this.send_timing()
         return
       }
 
@@ -198,6 +199,14 @@ export default class class_audio_player {
     // 重复模式（单曲循环）
     if (this.play_mode == 0) {
       this.set_audio()
+    }
+    // 列表停止模式
+    else if (this.play_mode == 2) {
+      if (this.play_list_index >= this.play_list.length - 1) {
+        notice('最后一首播放完了哦！ξ( ✿＞◡❛)')
+      } else {
+        this.next()
+      }
     }
     // 其他模式
     else {
@@ -211,19 +220,21 @@ export default class class_audio_player {
     setInterval(() => {
 
       // 若有定时任务 //
-      if ((!this.timed_mode) && (this.target_timed != 0)) {
+      if (this.target_timed != 0) {
 
-        // 计时到了 //
-        if (this.target_timed <= Date.now()) {
-          this.target_timed = 0
-          this.pause()
-          notice('计时器暂停了音乐 ╮(′～‵〞)╭')
+        if (!this.timed_mode) {
+          // 计时到了 //
+          if (this.target_timed <= Date.now()) {
+            this.target_timed = 0
+            this.pause()
+            notice('计时器暂停了音乐 ╮(′～‵〞)╭')
+          }
         }
 
-      }
+        // 计时器定时发送 //
+        this.send_timing()
 
-      // 计时器定时发送 //
-      this.send_timing()
+      }
 
     }, 1)
   }
@@ -423,8 +434,11 @@ export default class class_audio_player {
 
   // 7x9 定时广播 //
   private send_timing() {
-    if (this.target_timed == 0) {return}
-    emitter.emit({ eventId: 719 }, { data: { time: this.target_timed - Date.now() } })
+    if (this.target_timed == 0) {
+      emitter.emit({ eventId: 719 }, { data: { time: 0 } })
+    } else {
+      emitter.emit({ eventId: 719 }, { data: { time: this.target_timed - Date.now() } })
+    }
   }
 
   // 7x0 完整歌词广播 //
@@ -493,12 +507,13 @@ export default class class_audio_player {
       // dsd检查
       if (support_dsd_format.includes(tmp_path.substring(tmp_path.lastIndexOf('.')).toLowerCase())) {
         if (this.global_config!.dsd_support) {
-          try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
-          if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+          try {fs.openSync(`${dsd_cache_path}/${tmp_ino}.wav`)} catch {
             // 没有，先转码
             notice('这首歌需要加载一下，请耐心等待^v^.')
-            await nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+            log('dsd 转码.')
+            await nativeModule.dsdToWav(tmp_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+            log('转码完成')
             // 切歌了就退出
             if (index != this.play_list_index) {return false}
           }
@@ -560,11 +575,10 @@ export default class class_audio_player {
       // 官方播放器dsd检查 //
       if (support_dsd_format.includes(i.substring(i.lastIndexOf('.')).toLowerCase())) {
         if (this.global_config!.dsd_support) {
-          try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
           // 检查是否有缓存
-          if (!fs.listFileSync(dsd_cache_path, { recursion: true }).includes(`${tmp_ino}.wav`)) {
+          try {fs.openSync(`${dsd_cache_path}/${tmp_ino}.wav`)} catch {
             // 没有，加入转码列表
-            nativeModule.dsdToWav(dsd_cache_path, `${dsd_cache_path}/${tmp_ino}.wav`)
+            nativeModule.dsdToWav(i, `${dsd_cache_path}/${tmp_ino}.wav`)
           }
         } else {continue}
       }
@@ -760,7 +774,15 @@ export default class class_audio_player {
     } catch {}
   }
   // 设置定时 //
-  set_timing(time_ms: number) {this.target_timed = Date.now() + time_ms}
+  set_timing(time_ms: number) {
+    // 0 或负数 = 取消定时
+    if (time_ms <= 0) {
+      this.target_timed = 0
+      this.send_timing()  // 通知前端定时已取消
+      return
+    }
+    this.target_timed = Date.now() + time_ms
+  }
   // 获取剩余时间 //
   get_timing() {return this.target_timed - Date.now()}
 
@@ -850,6 +872,9 @@ export default class class_audio_player {
 
     // 导入全局配置文件 //
     this.global_config = global_config
+
+    // 目录检查 //
+    try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
 
   }
 

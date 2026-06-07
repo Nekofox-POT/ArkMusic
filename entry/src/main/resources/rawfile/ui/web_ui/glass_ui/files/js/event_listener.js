@@ -518,14 +518,16 @@ list_editor_items.addEventListener('touchend', () => {
 ////////////////////
 
 function save_list_options() {
-    const items = choice_bar_scroll.querySelectorAll('.choice_bar_item')
-    const data = []
-    items.forEach(item => {
-        const type = item.dataset.type
-        const visible = item.style.display !== 'none' ? '1' : '0'
-        data.push(type + ':' + visible)
-    })
-    ark.save_data(data, 'list_options')
+    try {
+        const items = choice_bar_scroll.querySelectorAll('.choice_bar_item')
+        const data = []
+        items.forEach(item => {
+            const type = item.dataset.type
+            const visible = item.style.display !== 'none' ? '1' : '0'
+            data.push(type + ':' + visible)
+        })
+        ark.save_data(data, 'list_options')
+    } catch(e) {}
 }
 
 function load_list_options() {

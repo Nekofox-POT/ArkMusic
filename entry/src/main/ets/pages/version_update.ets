@@ -75,9 +75,9 @@ export default struct version_update {
       } catch {} // 真没有版本号，那就不管
 
       // 创建配置文件 //
-      const file = fs.openSync(version_path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-      fs.writeSync(file.fd, '0.8')
-      fs.closeSync(file)
+      // const file = fs.openSync(version_path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+      // fs.writeSync(file.fd, '0.8')
+      // fs.closeSync(file)
 
     }
 
