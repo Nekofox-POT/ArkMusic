@@ -2,8 +2,9 @@
 // 所有歌曲设置 //
 /////////////////
 
-// 后端启动时主动推送歌曲列表，触发渲染
-function set_all_songs(list) {
+// 通过 ark 主动获取所有歌曲列表
+function get_all_songs() {
+    const list = ark.get_all_songs()
 
     // 初始化环境
     const slide = document.querySelector('#all_song_frame .slide')
@@ -70,20 +71,17 @@ function all_songs_init_image_observer() {
                 const rateP = element.querySelector('.song_meta_rate')
 
                 if (path) {
-                    ark.get_song_meta(path).then(meta => {
-                        if (meta[1]) {
-                            imgDiv.style.backgroundImage = `url(${meta[1]})`
+                    ark.get_meta(path).then(meta => {
+                        if (meta[1] && meta[1][0]) {
+                            titleP.textContent = meta[1][0]
                         }
-                        if (meta[0][1] && meta[0][1][0]) {
-                            titleP.textContent = meta[0][1][0]
+                        if (meta[1] && meta[1][1]) {
+                            artistP.textContent = meta[1][1]
                         }
-                        if (meta[0][1] && meta[0][1][1]) {
-                            artistP.textContent = meta[0][1][1]
-                        }
-                        if (meta[0][0]) {
-                            sampleP.textContent = meta[0][0][3]
-                            depthP.textContent = meta[0][0][4]
-                            rateP.textContent = meta[0][0][5]
+                        if (meta[0]) {
+                            sampleP.textContent = meta[0][4]
+                            depthP.textContent = meta[0][5]
+                            rateP.textContent = meta[0][6]
                         }
                         // 检查标题/歌手是否需要滚动字幕
                         void titleWrap.offsetWidth
@@ -95,6 +93,11 @@ function all_songs_init_image_observer() {
                             artistWrap.classList.add('marquee')
                         }
                         element.dataset.path = ''
+                    })
+                    ark.get_image(path).then(img => {
+                        if (img[0]) {
+                            imgDiv.style.backgroundImage = `url(${img[1]})`
+                        }
                     })
                 }
 
@@ -131,7 +134,7 @@ function all_songs_create_song_element(path, index) {
     const mainArea = document.createElement('div')
     mainArea.className = 'song_main'
     mainArea.style.cssText = 'flex:1;display:flex;align-items:center;overflow:hidden;border-radius:12.5px;min-width:0;height:auto;background-image:none;box-shadow:none;margin-left:0;'
-    mainArea.addEventListener('click', () => { ark.play_song(index) })
+    mainArea.addEventListener('click', () => { ark.set_play_list(all_songs_batchState.list, index) })
 
     const imgDiv = document.createElement('div')
     imgDiv.className = 'song_cover'
@@ -279,11 +282,3 @@ function all_songs_handle_scroll() {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 上级监听 //
-/////////////
-window.addEventListener('message', function(event) {
-    if (event.data.action === 'set_all_songs') {
-        set_all_songs(event.data.arg1)
-    }
-})

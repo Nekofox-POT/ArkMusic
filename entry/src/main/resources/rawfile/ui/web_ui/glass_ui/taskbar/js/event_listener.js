@@ -122,7 +122,7 @@ music_bar_touch.addEventListener("touchstart", (e) => {
         bg_song_range.style.top = '0'
         bg_song_range.style.opacity = '1'
         // 更新时间显示
-        change_song_range()
+        update_range_visual()
         // 记录调节基准点
         music_bar_rangeStartX = e.touches[0].clientX
         music_bar_rangeStartValue = Number(song_range.value)
@@ -150,7 +150,7 @@ music_bar_touch.addEventListener("touchmove", (e) => {
         newValue = Math.max(min, Math.min(max, Math.round(newValue)))
         song_range.value = newValue
         // 更新进度条显示
-        change_song_range()
+        update_range_visual()
         return
     }
     
@@ -185,7 +185,7 @@ music_bar_touch.addEventListener("touchend", (e) => {
     // 如果处于长按状态，隐藏bg_song_range
     if (music_bar_isLongPressed) {
         is_adjusting = false
-        ark.seek(song_range.value)
+        ark.seek(Number(song_range.value))
         music_bar_song_range.classList.remove("active")
         bg_song_range.classList.remove("active")
         bg_song_range.style.opacity = '0'
@@ -216,7 +216,7 @@ music_bar_touch.addEventListener("touchend", (e) => {
                         music_bar_song_name.style.transform = "translateX(calc(100% + 50px))"
                         
                         console.log("下一首")
-                        ark.next_song()
+                        ark.next()
                         // 强制重绘
                         music_bar_song_name.offsetHeight
                         
@@ -240,9 +240,8 @@ music_bar_touch.addEventListener("touchend", (e) => {
                         music_bar_song_name.classList.add("dragging")
                         music_bar_song_name.style.transform = "translateX(calc(-100% - 50px))"
                         
-                        
                         console.log("上一首")
-                        ark.last_song()
+                        ark.previous()
                         // 强制重绘
                         music_bar_song_name.offsetHeight
                         
@@ -281,8 +280,8 @@ song_range.addEventListener('touchstart', () => {
 song_range.addEventListener('touchend', () => {
     player_controller_range_frame.classList.remove('active')
     is_adjusting = false
-    ark.seek(song_range.value)
+    ark.seek(Number(song_range.value))
 })
 song_range.addEventListener("input", () => {
-    change_song_range()
+    update_range_visual()
 })

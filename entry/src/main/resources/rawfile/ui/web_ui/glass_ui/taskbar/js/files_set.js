@@ -1,16 +1,5 @@
 //
-// files子页面 专用函数池
+// files子页面 桥接函数池
+// 歌曲数据由files子页面自行通过 ark 接口获取，父页面不再中转数据
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 后端可调用 //
-///////////////
-
-// 后端可调用：导入所有歌曲
-function set_all_songs(list) {
-    files.contentWindow.postMessage({action: 'set_all_songs', arg1: list}, '*')
-}
-
-// 后端可调用：导入外部歌曲
-function set_external_songs(list) {
-    files.contentWindow.postMessage({action: 'set_external_songs', arg1: list}, '*')
-}

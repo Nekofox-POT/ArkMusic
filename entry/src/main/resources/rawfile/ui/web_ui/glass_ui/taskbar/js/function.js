@@ -1,5 +1,6 @@
 //
-// 函数池
+// 函数池（UI交互型，非后端广播更新）
+// 后端调用的更新函数已统一移至 update.js
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 页面切换型 //
@@ -57,11 +58,11 @@ function taskbar_page_update(p = page_backup) {
 function touch_switch_page(touch_x) {
     const taskbar_page_rect = taskbar_page.getBoundingClientRect()
     const icon_position = get_icon_position()
-    
+
     // 计算touch_x最靠近哪个icon的坐标
     let minDistance = Infinity
     let closestIndex = -1
-    
+
     icon_position.forEach((position, index) => {
         const distance = Math.abs(touch_x - (position + taskbar_page_rect.left))
         if (distance < minDistance) {
@@ -99,28 +100,12 @@ function taskbar_double(status) {
         setTimeout(() => {taskbar_page_screen.classList.add("hidden")}, 50)
     }
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 播放状态            //
-// true播放 false暂停 //
-//////////////////////
-function set_play_status(status) {
-    play_status = status
-    if (status) {
-        music_bar_button_play.classList.add('hidden')
-        music_bar_button_pause.classList.remove('hidden')
-        player_play_pause_icon.classList.add('active')
-    } else {
-        music_bar_button_play.classList.remove('hidden')
-        music_bar_button_pause.classList.add('hidden')
-        player_play_pause_icon.classList.remove('active')
-    }
-    set_meta_img_rotate(play_status)
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 进度更改 //
+// 工具函数 //
 ////////////
 
-// 秒转时间函数 //
+// 毫秒转时间格式 //
 function second_to_time(time) {
     let min = Math.floor(time / 60000)
     let second = ((time % 60000) / 1000).toFixed(0)
@@ -128,53 +113,7 @@ function second_to_time(time) {
     return `${min}:${second}`
 }
 
-// 更改播放时长 //
-function change_song_range(value = null) {
-
-    // 更新变量
-    if ((value !== null) && !is_adjusting) {
-        song_range.value = value
-        // 如果为0则添加动画
-        if (value === 0) {
-            music_bar_song_range.style.transition = 'all 0.1s ease'
-            player_controller_range.style.transition = 'all 0.1s ease'
-            setTimeout(() => {music_bar_song_range.style.transition = 'top 0.1s ease'}, 100)
-            setTimeout(() => {player_controller_range.style.transition = null}, 100)
-        }
-    }
-
-    // 更新展示器变量
-    bg_song_range_bar.style.width = `${(song_range.value / song_range.max) * 2 * 100}%`
-    bg_song_range_bar.style.left = `-${(song_range.value / song_range.max) * 100}%`
-    music_bar_song_range.style.width = `${(song_range.value / song_range.max) * 2 * 100}%`
-    music_bar_song_range.style.left = `-${(song_range.value / song_range.max) * 100}%`
-    player_controller_range.style.width = `${(song_range.value / song_range.max) * 2 * 100}%`
-    player_controller_range.style.left = `-${(song_range.value / song_range.max) * 100}%`
-    // 更新时间
-    player_song_range_correct_time.innerText = second_to_time(song_range.value)
-    bg_song_range_time.innerText = `${second_to_time(song_range.value)} / ${second_to_time(song_range.max)}`
-
-}
-
-// 更改总时长 //
-function change_song_range_duration(value) {
-    song_range.max = value
-    player_song_range_duration_time.innerText = second_to_time(value)
-    bg_song_range_time.innerText = `${second_to_time(song_range.value)} / ${second_to_time(value)}`
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 元数据传入 //
-/////////////
-
-// 标题 //
-function set_meta(meta) {
-    taskbar_music_name.innerText = meta[0]
-    player_title.innerText = meta[1]
-    player_sub_title.innerText = meta[2]
-    check_title_overflow()
-}
-
+// 检查标题是否需要滚动 //
 function check_title_overflow() {
     player_title_frame.classList.remove('marquee')
     player_sub_title_frame.classList.remove('marquee')
@@ -190,51 +129,49 @@ function check_title_overflow() {
     }
 }
 
-// 封面 //
-function set_meta_img(dataUrl) {
-    // 此时 dataUrl 已经是标准的格式："data:image/jpeg;base64,..."
-    // 浏览器可以直接识别，无需 atob 解码，也无需 Blob 转换
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 色彩更改 //
+/////////////
 
-    const img = new Image();
-
-    // 成功加载：把封面作为背景图
-    img.onload = function() {
-        // 注意：直接使用 Data URL 作为背景，不需要 createObjectURL
-        const url = `url('${dataUrl}')`;
-        try {
-            // 更新背景
-            music_bar_meta_img.style.backgroundImage = url;
-            player_meta_img.style.backgroundImage = url;
-            document.body.style.backgroundImage = url;
-        } catch (e) {
-            console.log('set_meta_img: unable to apply background images', e);
-        }
-        // 清理引用，防止内存泄漏（虽然 Data URL 占用很小，但保持习惯）
-        img.onload = null;
-    };
-
-    // 加载失败：设置默认封面
-    img.onerror = function() {
-        const defaultUrl = "url('taskbar/files/CD.png')";
-        try {
-            music_bar_meta_img.style.backgroundImage = defaultUrl;
-            player_meta_img.style.backgroundImage = defaultUrl;
-            document.body.style.backgroundImage = defaultUrl;
-        } catch (e) {
-            console.log('set_meta_img: unable to apply background images', e);
-        }
-    };
-
-    // 直接将 Data URL 赋值给 src
-    img.src = dataUrl;
-    
+// 主题色修改 //
+function set_active_color(color = null) {
+    play_list.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
+    files.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
+    setting.contentWindow.postMessage({action: 'set_active_color', arg1: color}, '*')
+    if (color !== null) {
+        active_color = color
+        save_theme_config()
+    }
+    document.querySelectorAll('.box_active_color').forEach(element => {
+        element.style.backgroundColor = active_color;
+    })
+    document.querySelectorAll('.svg_active_color').forEach(element => {
+        element.style.fill = active_color;
+    })
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 播放列表操作 //
-///////////////
+// 背景色修改 //
+function set_background_color(color = null) {
+    play_list.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
+    files.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
+    setting.contentWindow.postMessage({action: 'set_background_color', arg1: color}, '*')
+    if (color !== null) {
+        background_color = color
+    }
+    document.querySelectorAll('.svg_color').forEach(element => {
+        element.style.fill = background_color;
+    });
+    document.querySelectorAll('.font_color').forEach(element => {
+        element.style.color = background_color;
+    })
+    set_active_color()
+}
 
-// 传入 //
-
-// 放歌 //
-function play_song() {}
+// 图标高亮设置修改 //
+function set_button_enable_active_color(value) {
+    play_list.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
+    files.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
+    setting.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
+    button_enable_active_color = value
+    save_theme_config()
+}

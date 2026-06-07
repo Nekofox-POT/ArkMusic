@@ -173,7 +173,7 @@ function swapWithElement(el, target, targetIndex) {
     }
 
     swipeState.currentSwapIndex = targetIndex
-    ark.exchange_song(fromIndex, targetIndex)
+    ark.switch_songs(fromIndex, targetIndex)
     ark.vib()
     console.log(`排序: 从${fromIndex}移动到${targetIndex}`)
 

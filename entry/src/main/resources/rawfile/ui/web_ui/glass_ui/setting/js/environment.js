@@ -14,17 +14,14 @@ const setting_icon_frame = document.getElementById('setting_icon_frame')
 // 配置卡片框架
 const setting_config = document.getElementById('setting_config')
 
-// 左半 UI设置
+// UI设置
 const setting_ui_config = document.getElementById('setting_ui_config')
 
-// 右半 音乐设置
-const setting_music_config = document.getElementById('setting_music_config')
+// 快速扫描数据库
+const setting_scan_fast = document.getElementById('setting_scan_fast')
 
-// 重新扫描数据库
-const setting_rescan = document.getElementById('setting_rescan')
-
-// 重置程序
-const setting_reset = document.getElementById('setting_reset')
+// 完整扫描数据库
+const setting_scan_full = document.getElementById('setting_scan_full')
 
 // UI设置页 - 返回按钮
 const ui_setting_back = document.getElementById('ui_setting_back')
@@ -34,12 +31,6 @@ const highlight_toggle = document.getElementById('highlight_toggle')
 
 // UI设置页 - 修改主题色按钮
 const setting_color_btn = document.getElementById('setting_color_btn')
-
-// 音乐设置页 - 返回按钮
-const music_setting_back = document.getElementById('music_setting_back')
-
-// 音乐设置页 - DSD开关
-const dsd_toggle = document.getElementById('dsd_toggle')
 
 // 颜色选择器 - 遮罩
 const color_picker_overlay = document.getElementById('color_picker_overlay')
@@ -90,11 +81,8 @@ let confirm_callback = null
 // 变量配置 //
 /////////////
 
-// 当前设置页索引（0=主设置, 1=UI设置, 2=音乐设置）
+// 当前设置页索引（0=主设置, 1=UI设置）
 let setting_page_index = 0
-
-// DSD开关状态
-let dsd_enabled = false
 
 // 图标高亮状态
 let highlight_enabled = button_enable_active_color

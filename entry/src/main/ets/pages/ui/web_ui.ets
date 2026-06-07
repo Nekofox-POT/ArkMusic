@@ -71,6 +71,7 @@ export default struct web_ui {
     try {fs.statSync(web_ui_path)} catch {fs.mkdirSync(web_ui_path)}
     try {fs.statSync(web_ui_rom_path)} catch {fs.mkdirSync(web_ui_rom_path)}
     try {fs.statSync(web_ui_data_path)} catch {fs.mkdirSync(web_ui_data_path)}
+    try {fs.statSync(web_ui_data_path + 'glass_ui')} catch {fs.mkdirSync(web_ui_data_path + 'glass_ui')}
 
     // 霸占手势 //
     this.backup_occupy = true
@@ -84,6 +85,9 @@ export default struct web_ui {
     // 解锁手势 //
     this.backup_occupy = false
 
+    // 关闭监听 //
+    try {this.switch_emitter(false)} catch {}
+
     // 保存数据 //
 
   }
@@ -95,20 +99,19 @@ export default struct web_ui {
   // 开启 / 关闭 广播监听 //
   switch_emitter(status: boolean) {
 
-    this.web_ui_core.runJavaScript(``)
-
     // 开启 //
     if (status) {
 
       // 元数据 //
-      emitter.on({ eventId: 712 }, (data: emitter.EventData) => {
+      emitter.on({ eventId: 712 }, async (data: emitter.EventData) => {
         this.web_ui_core.runJavaScript(`set_meta(${JSON.stringify(data.data!.meta)})`)
-        this.web_ui_core.runJavaScript(`set_image(${data.data!.image})`)
+        const img_base64: string = await image_to_base64(data.data!.image[1])
+        this.web_ui_core.runJavaScript(`set_image(${JSON.stringify(img_base64)})`)
       })
       // 播放时间 //
       emitter.on({ eventId: 713 }, (data: emitter.EventData) => {
         this.web_ui_core.runJavaScript(`set_current_time(${data.data!.current_time})`)
-        this.web_ui_core.runJavaScript(`set_current_time_format(${data.data!.current_time_format})`)
+        this.web_ui_core.runJavaScript(`set_current_time_format("${data.data!.current_time_format}")`)
       })
       // 列表更新 //
       emitter.on({ eventId: 714 }, (data: emitter.EventData) => {
@@ -120,7 +123,7 @@ export default struct web_ui {
       })
       // 播放状态更新 //
       emitter.on({ eventId: 716 }, (data: emitter.EventData) => {
-        this.web_ui_core.runJavaScript(`set_play_status(${data.data!.status})`)
+        this.web_ui_core.runJavaScript(`set_play_status("${data.data!.status}")`)
       })
       // 播放模式更新 //
       emitter.on({ eventId: 717 }, (data: emitter.EventData) => {
@@ -183,8 +186,9 @@ export default struct web_ui {
       this.audio_volume_manager.on('streamVolumeChange', audio.StreamUsage.STREAM_USAGE_MUSIC, (tmp: audio.StreamVolumeEvent) => {
 
         // 更新 //
-        this.volume_level = tmp.volume
+        // this.volume_level = tmp.volume
         this.web_ui_core.runJavaScript(`set_vol(${tmp.volume})`)
+        vib()
 
       })
 
@@ -229,6 +233,8 @@ export default struct web_ui {
       // ready //
       ready: () => {
         log('页面准备完成.')
+        // 开启监听 //
+        this.switch_emitter(true)
         this.ready = true
       },
       // 震动 //
@@ -246,9 +252,9 @@ export default struct web_ui {
         }
       },
       // 保存数据 //
-      save_data: (data: string[], name: string) => {save_array(data, `${web_ui_path}/glass_ui/${name}.json`)},
+      save_data: (data: string[], name: string) => {save_array(data, `${web_ui_data_path}glass_ui/${name}.json`)},
       // 打开数据 //
-      load_data: (name: string) => {load_array(`${web_ui_path}/glass_ui/${name}.json`)},
+      load_data: (name: string) => {load_array(`${web_ui_data_path}glass_ui/${name}.json`)},
       // 返回桌面 //
       back_desktop: () => {router.back()},
 
@@ -375,6 +381,14 @@ export default struct web_ui {
       del_external_songs: (list: string[]) => {this.files_manager.del_external_songs(list)},
       // 扫描数据库 //
       scan_data: async (fast: boolean = true) => {this.files_manager.scan_data(fast)},
+      // 设置定时 //
+      set_timing: (time: number) => {this.audio_player.set_timing(time)},
+      // 设置定时模式 //
+      set_timed_mode: (status: boolean) => {this.audio_player.timed_mode = status},
+      // 获取定时剩余时间 //
+      get_timing: (): number => {return this.audio_player.get_timing()},
+      // 获取定时模式 //
+      get_timed_mode: (): boolean => {return this.audio_player.timed_mode},
 
       ///////////
       // 工具类 //
@@ -398,6 +412,21 @@ export default struct web_ui {
       /////////////
       // 接口声明 //
       ////////////
+      'ready', 'vib', 'set_vol', 'save_data', 'load_data', 'back_desktop',
+      'set_play_list', 'switch_song', 'playing', 'pause', 'previous', 'next',
+      'seek', 'set_play_mode', 'toggle_like', 'switch_songs', 'delete_song',
+      'get_playing_meta', 'get_playing_time', 'get_playing_play_list',
+      'get_playing_index', 'get_playing_status', 'get_like', 'get_play_mode',
+      'get_meta', 'get_image',
+      'get_all_songs', 'get_external_songs', 'get_like_songs',
+      'get_hr_songs', 'get_dsd_songs',
+      'get_dir_songs', 'get_play_list_songs',
+      'get_artist_songs', 'get_album_songs',
+      'get_album_artist_songs', 'get_genre_songs',
+      'add_external_songs', 'del_external_songs', 'scan_data',
+      'set_timing', 'set_timed_mode', 'get_timing', 'get_timed_mode',
+      'get_pixel_light', 'get_pixel_color', 'get_pixel_dominant',
+      'set_window_color',
 
     ])} catch (e) {log(`注册webview时出现了错误: ${e}.`, 'error')}}
 

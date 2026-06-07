@@ -47,29 +47,29 @@ function song_detail_click(path, index, btnEl) {
     })
 
     // 异步加载元数据
-    ark.get_song_meta(path).then(meta => {
+    ark.get_meta(path).then(meta => {
         if (popup !== detail_active) return
         loading.remove()
 
         const title = document.createElement('p')
         title.className = 'font_color'
-        title.textContent = meta[0][1][0] || extract_filename(path)
+        title.textContent = meta[1][0] || extract_filename(path)
         title.style.cssText = 'font-size:1rem;font-weight:700;margin:0 0 12px 0;text-align:center;'
 
         const musicFields = [
-            ['歌手', meta[0][1][1]],
-            ['专辑', meta[0][1][2]],
-            ['专辑作者', meta[0][1][3]],
-            ['流派', meta[0][1][4]],
+            ['歌手', meta[1][1]],
+            ['专辑', meta[1][2]],
+            ['专辑作者', meta[1][3]],
+            ['流派', meta[1][4]],
         ]
         const techFields = [
-            ['文件名', meta[0][0][0]],
-            ['类型', (meta[0][0][1] || '').toUpperCase()],
-            ['声道', meta[0][0][2]],
-            ['采样率', meta[0][0][3]],
-            ['位深', meta[0][0][4]],
-            ['码率', meta[0][0][5]],
-            ['时长', meta[0][0][6]],
+            ['文件名', meta[0][0]],
+            ['类型', (meta[0][2] || '').toUpperCase()],
+            ['声道', meta[0][3]],
+            ['采样率', meta[0][4]],
+            ['位深', meta[0][5]],
+            ['码率', meta[0][6]],
+            ['时长', meta[0][8]],
         ]
 
         popup.appendChild(title)
@@ -210,10 +210,10 @@ function router_back() {
 
     // 分类定制 //
     if (page === '所有歌曲') {
-        ark.back_to_player()
+        window.parent.postMessage({action: 'back_to_player'}, '*')
     }
     else if (page === '外部歌曲') {
-        ark.back_to_player()
+        window.parent.postMessage({action: 'back_to_player'}, '*')
     }
     else if (page === '文件夹') {
         for (let i of router_list) {
@@ -227,23 +227,23 @@ function router_back() {
             }
             get_folder_songs(tmp)
         } else {
-            ark.back_to_player()
+            window.parent.postMessage({action: 'back_to_player'}, '*')
         }
     }
     else if (page === '播放列表') {
         if (play_list_backup === '') {
-            ark.back_to_player()
+            window.parent.postMessage({action: 'back_to_player'}, '*')
         } else {
             play_list_backup = ''
             get_play_list_songs(play_list_backup)
         }
     }
     else if (page === '我的喜欢') {
-        ark.back_to_player()
+        window.parent.postMessage({action: 'back_to_player'}, '*')
     }
     else if (page === '歌手') {
         if (artist_composer_backup === '') {
-            ark.back_to_player()
+            window.parent.postMessage({action: 'back_to_player'}, '*')
         } else {
             artist_composer_backup = ''
             get_artist_composer_list(artist_composer_backup)
@@ -251,7 +251,7 @@ function router_back() {
     }
     else if (page === '专辑') {
         if (album_backup === '') {
-            ark.back_to_player()
+            window.parent.postMessage({action: 'back_to_player'}, '*')
         } else {
             album_backup = ''
             get_album_list(album_backup)
@@ -259,7 +259,7 @@ function router_back() {
     }
     else if (page === '专辑作者') {
         if (album_artist_backup === '') {
-            ark.back_to_player()
+            window.parent.postMessage({action: 'back_to_player'}, '*')
         } else {
             album_artist_backup = ''
             get_album_artist_list(album_artist_backup)
@@ -267,7 +267,7 @@ function router_back() {
     }
     else if (page === '流派') {
         if (genre_backup === '') {
-            ark.back_to_player()
+            window.parent.postMessage({action: 'back_to_player'}, '*')
         } else {
             genre_backup = ''
             get_genre_list(genre_backup)

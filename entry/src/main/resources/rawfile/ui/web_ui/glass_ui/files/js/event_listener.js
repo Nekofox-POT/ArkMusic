@@ -279,7 +279,7 @@ if (listOptionsTrigger) {
 // "添加外部音频" 按钮点击
 document.querySelectorAll('[data-action="add_external"]').forEach(btn => {
     btn.addEventListener('click', () => {
-        ark.get_external_song()
+        ark.add_external_songs()
     })
     btn.addEventListener('touchstart', () => {
         const hasTranslate = btn.classList.contains('external_add_btn')
@@ -389,9 +389,9 @@ function apply_toggle_visuals() {
 function load_page(type) {
     page = type
     if (type === '所有歌曲') {
-        ark.set_play_list_with_all_songs()
+        get_all_songs()
     } else if (type === '外部歌曲') {
-        ark.set_play_list_with_external_songs()
+        get_external_songs()
     } else if (type === '文件夹') {
         let tmp = ''
         for (const e of router_list) {
@@ -525,7 +525,7 @@ function save_list_options() {
         const visible = item.style.display !== 'none' ? '1' : '0'
         data.push(type + ':' + visible)
     })
-    ark.save_data('list_options', data)
+    ark.save_data(data, 'list_options')
 }
 
 function load_list_options() {

@@ -35,7 +35,7 @@ player_play_pause_button.addEventListener("touchstart", () => {
 player_play_pause_button.addEventListener("touchend", () => {
     player_play_pause_button.style.transform = 'scale(1)'
     player_play_pause_button.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
-    if (play_status) {ark.pause()} else {ark.play()}
+    if (play_status) {ark.pause()} else {ark.playing()}
 })
 player_next_button.addEventListener("touchstart", () => {
     player_next_button.style.transform = 'scale(0.9)'
@@ -150,16 +150,16 @@ sleep_timer_icon.addEventListener("click", () => {
     sleep_timer_overlay.classList.add('active')
     // 同步定时状态
     if (sleep_timer_is_active) {
-        // 如果正在定时，从后端取剩余时间
-        const info = ark.get_sleep_timer()
-        if (info && info.length >= 4 && info[0] + info[1] + info[2] > 0) {
-            timer_hours = info[0]
-            timer_minutes = info[1]
+        // 如果正在定时，从后端取剩余时间（秒）
+        const seconds = ark.get_timing()
+        if (seconds > 0) {
+            timer_hours = Math.floor(seconds / 3600)
+            timer_minutes = Math.floor((seconds % 3600) / 60)
             update_hours_text()
             update_minutes_text()
         }
         // 恢复拨动开关状态
-        if (info && info[3]) {
+        if (ark.get_timed_mode()) {
             sleep_timer_toggle.classList.add('on')
             sleep_timer_toggle.classList.add('box_active_color')
             sleep_timer_toggle.style.backgroundColor = active_color
@@ -186,7 +186,9 @@ sleep_timer_start.addEventListener("touchstart", () => {
 sleep_timer_start.addEventListener("touchend", () => {
     sleep_timer_start.style.transform = 'scale(1)'
     const waitEnd = sleep_timer_toggle.classList.contains('on')
-    ark.start_sleep_timer(timer_hours, timer_minutes, waitEnd)
+    const totalSeconds = timer_hours * 3600 + timer_minutes * 60
+    ark.set_timed_mode(waitEnd)
+    ark.set_timing(totalSeconds)
     sleep_timer_overlay.classList.remove('active')
 })
 
@@ -196,10 +198,8 @@ sleep_timer_cancel.addEventListener("touchstart", () => {
 })
 sleep_timer_cancel.addEventListener("touchend", () => {
     sleep_timer_cancel.style.transform = 'scale(1)'
-    // 如果正在定时则取消
-    if (sleep_timer_is_active) {
-        ark.cancel_sleep_timer()
-    }
+    // 取消定时
+    ark.set_timing(0)
     sleep_timer_overlay.classList.remove('active')
 })
 

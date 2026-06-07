@@ -26,12 +26,12 @@ setting_icon_frame.addEventListener("touchend", () => {
     setting_icon_frame.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
 })
 setting_icon_frame.addEventListener("click", () => {
-    set_head_photo()
+    // 头图功能已移除
 })
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// setting_config / setting_ui_config / setting_music_config 组件监听 //
-///////////////////////////////////////////////////////////////////////
+// setting_config / setting_ui_config 组件监听 //
+////////////////////////////////////////////////
 
 // 整体框架按下
 setting_config.addEventListener("touchstart", () => {
@@ -41,7 +41,7 @@ setting_config.addEventListener("touchend", () => {
     setting_config.classList.remove("active")
 })
 
-// UI设置 左半
+// UI设置
 setting_ui_config.addEventListener("touchstart", () => {
     setting_ui_config.classList.add("active")
     setting_ui_config.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
@@ -54,41 +54,28 @@ setting_ui_config.addEventListener("click", () => {
     open_ui_setting()
 })
 
-// 音乐设置 右半
-setting_music_config.addEventListener("touchstart", () => {
-    setting_music_config.classList.add("active")
-    setting_music_config.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
-})
-setting_music_config.addEventListener("touchend", () => {
-    setting_music_config.classList.remove("active")
-    setting_music_config.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
-})
-setting_music_config.addEventListener("click", () => {
-    open_music_setting()
-})
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// setting_rescan / setting_reset 组件监听 //
-////////////////////////////////////////////
+// setting_scan_fast / setting_scan_full 组件监听 //
+///////////////////////////////////////////////////
 
-setting_rescan.addEventListener("touchstart", () => {
-    setting_rescan.classList.add("active")
+setting_scan_fast.addEventListener("touchstart", () => {
+    setting_scan_fast.classList.add("active")
 })
-setting_rescan.addEventListener("touchend", () => {
-    setting_rescan.classList.remove("active")
+setting_scan_fast.addEventListener("touchend", () => {
+    setting_scan_fast.classList.remove("active")
 })
-setting_rescan.addEventListener("click", () => {
-    rescan_database()
+setting_scan_fast.addEventListener("click", () => {
+    scan_fast()
 })
 
-setting_reset.addEventListener("touchstart", () => {
-    setting_reset.classList.add("active")
+setting_scan_full.addEventListener("touchstart", () => {
+    setting_scan_full.classList.add("active")
 })
-setting_reset.addEventListener("touchend", () => {
-    setting_reset.classList.remove("active")
+setting_scan_full.addEventListener("touchend", () => {
+    setting_scan_full.classList.remove("active")
 })
-setting_reset.addEventListener("click", () => {
-    reset_app()
+setting_scan_full.addEventListener("click", () => {
+    scan_full()
 })
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,31 +130,6 @@ setting_color_reset.addEventListener("touchend", () => {
 setting_color_reset.addEventListener("click", (e) => {
     e.stopPropagation()
     reset_color_default()
-})
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// music_setting_back 返回按钮 //
-////////////////////////////////
-
-const music_setting_back_btn = music_setting_back.querySelector('.setting_sub_back_btn')
-music_setting_back_btn.addEventListener("touchstart", () => {
-    music_setting_back_btn.classList.add("active")
-    music_setting_back_btn.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
-})
-music_setting_back_btn.addEventListener("touchend", () => {
-    music_setting_back_btn.classList.remove("active")
-    music_setting_back_btn.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
-})
-music_setting_back_btn.addEventListener("click", () => {
-    close_music_setting()
-})
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// dsd_toggle DSD开关 //
-///////////////////////
-
-dsd_toggle.addEventListener("click", () => {
-    toggle_dsd()
 })
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -277,8 +239,8 @@ confirm_ok.addEventListener("click", () => {
 })
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 上级监听（back手势） //
-////////////////////////
+// 上级监听（back手势、色彩同步） //
+/////////////////////////////////
 
 window.addEventListener('message', function(event) {
     if (event.data.action === 'back_gesture') {
@@ -296,10 +258,6 @@ window.addEventListener('message', function(event) {
         const val = event.data.arg1 === true || event.data.arg1 === 'true'
         highlight_enabled = val
         set_toggle_visual(highlight_toggle, val)
-    }
-    if (event.data.action === 'set_dsd') {
-        const val = event.data.arg1 === true || event.data.arg1 === 'true'
-        set_dsd(val)
     }
     if (event.data.action === 'set_background_image') {
         set_background_image(event.data.arg1)

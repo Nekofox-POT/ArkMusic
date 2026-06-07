@@ -1,5 +1,6 @@
 //
-// 函数池
+// 函数池（播放器专用，UI交互型）
+// 后端调用的更新函数（set_play_mode, set_like）已移至 update.js
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 音量更改 //
@@ -10,55 +11,6 @@ function set_vol(value = null) {
     }
     vol_range_show.style.left = `${(vol_range.value / vol_range.max * 150) - 150}px`
     vol_value.textContent = vol_range.value
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 播放方式更改 //
-///////////////
-function set_play_mode(value) {
-    if (value === 0) {
-        play_forlist_button.classList.add('hidden')
-        play_order_button.classList.add('hidden')
-        play_disorder_button.classList.add('hidden')
-        play_only_button.classList.remove('hidden')
-    } else if (value === 1) {
-        play_only_button.classList.add('hidden')
-        play_order_button.classList.add('hidden')
-        play_disorder_button.classList.add('hidden')
-        play_forlist_button.classList.remove('hidden')
-    } else if (value === 2) {
-        play_only_button.classList.add('hidden')
-        play_forlist_button.classList.add('hidden')
-        play_disorder_button.classList.add('hidden')
-        play_order_button.classList.remove('hidden')
-    } else if (value === 3) {
-        play_only_button.classList.add('hidden')
-        play_forlist_button.classList.add('hidden')
-        play_order_button.classList.add('hidden')
-        play_disorder_button.classList.remove('hidden')
-    }
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 喜欢的歌的更改 //
-/////////////////
-function set_like(value) {
-    if (value) {
-        player_like_button.querySelectorAll('.svg_color').forEach(tmp => {
-            tmp.classList.add('svg_active_color')
-            tmp.style.fill = active_color
-        })
-        player_like_button.style.transition = 'transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
-        player_like_button.style.transform = 'scale(1.2)'
-    } else {
-        player_like_button.querySelectorAll('.svg_color').forEach(tmp => {
-            tmp.classList.remove('svg_active_color')
-            tmp.style.fill = background_color
-        })
-        player_like_button.style.transition = 'transform 0.15s ease'
-        player_like_button.style.transform = 'scale(0.8)'
-    }
-    setTimeout(() => {player_like_button.style.transform = 'scale(1)'}, 150)
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,6 +105,7 @@ function set_meta_img_rotate_pause() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 睡眠定时状态同步 //
 /////////////////////
+
 function set_sleep_timer_status(is_timed, timed, wait_end) {
     sleep_timer_is_active = is_timed
     sleep_timer_wait_end = wait_end

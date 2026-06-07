@@ -10,9 +10,11 @@ function switch_setting_page(n) {
     setting_page_index = n
     setting_page_container.style.transform = `translateX(-${n * 100}%)`
     if (n === 0) {
-        ark.toggle_taskbar(true)
+        // 回到主设置页，展开taskbar
+        window.parent.postMessage({action: 'taskbar_double', arg1: 'double'}, '*')
     } else {
-        ark.toggle_taskbar(false)
+        // 进入子页面，收起taskbar
+        window.parent.postMessage({action: 'taskbar_double', arg1: 'hidden'}, '*')
     }
 }
 
@@ -20,20 +22,14 @@ function switch_setting_page(n) {
 // 操作型 //
 ///////////
 
-// 重新扫描数据库
-function rescan_database() {
-    ark.rescan_data()
+// 快速扫描数据库
+function scan_fast() {
+    ark.scan_data(true)
 }
 
-// 重置程序（弹出确认框）
-function reset_app() {
-    open_confirm_dialog('确认重置程序？', '此操作将清除所有数据', confirm_reset)
-}
-
-// 确认重置
-function confirm_reset() {
-    ark.reset_app()
-    close_confirm_dialog()
+// 完整扫描数据库
+function scan_full() {
+    ark.scan_data(false)
 }
 
 // 打开UI设置
@@ -46,16 +42,6 @@ function close_ui_setting() {
     switch_setting_page(0)
 }
 
-// 打开音乐设置
-function open_music_setting() {
-    switch_setting_page(2)
-}
-
-// 关闭音乐设置
-function close_music_setting() {
-    switch_setting_page(0)
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 开关型 //
 ///////////
@@ -64,27 +50,7 @@ function close_music_setting() {
 function toggle_highlight() {
     highlight_enabled = !highlight_enabled
     set_toggle_visual(highlight_toggle, highlight_enabled)
-    ark.set_enable_active_color(highlight_enabled)
-}
-
-// 切换DSD状态
-function toggle_dsd() {
-    if (!dsd_enabled) {
-        open_confirm_dialog('开启DSD音频支持', '若开启需要重新扫描数据库', confirm_dsd)
-    } else {
-        dsd_enabled = false
-        set_toggle_visual(dsd_toggle, dsd_enabled)
-        ark.enable_dsd_play(false)
-    }
-}
-
-// 确认开启DSD
-function confirm_dsd() {
-    dsd_enabled = true
-    set_toggle_visual(dsd_toggle, dsd_enabled)
-    ark.enable_dsd_play(true)
-    close_confirm_dialog()
-    rescan_database()
+    window.parent.postMessage({action: 'set_button_enable_active_color', arg1: highlight_enabled}, '*')
 }
 
 // 设置开关视觉效果
@@ -98,12 +64,6 @@ function set_toggle_visual(toggle, on) {
         toggle.classList.remove('box_active_color')
         toggle.style.backgroundColor = 'rgba(255, 255, 255, 0.25)'
     }
-}
-
-// 后端调用：设置DSD
-function set_dsd(status) {
-    dsd_enabled = status
-    set_toggle_visual(dsd_toggle, dsd_enabled)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,10 +95,10 @@ function close_color_picker() {
     color_picker_overlay.classList.remove('show')
 }
 
-// 应用颜色
+// 应用颜色（通过父页面 postMessage 通知全局更新）
 function apply_color() {
     setting_color_preview.style.backgroundColor = selected_color
-    ark.set_active_color(selected_color)
+    window.parent.postMessage({action: 'set_active_color', arg1: selected_color}, '*')
     close_color_picker()
 }
 
@@ -150,7 +110,7 @@ function reset_color_default() {
     picker_hue = hsv[0]
     picker_sv = [hsv[1], hsv[2]]
     setting_color_preview.style.backgroundColor = selected_color
-    ark.set_active_color(selected_color)
+    window.parent.postMessage({action: 'set_active_color', arg1: selected_color}, '*')
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -346,7 +306,7 @@ function open_confirm_dialog(title, message, onConfirm) {
     confirm_message.innerText = message
     confirm_callback = onConfirm
     confirm_overlay.classList.add('show')
-    ark.toggle_taskbar(false)
+    window.parent.postMessage({action: 'taskbar_double', arg1: 'hidden'}, '*')
 }
 
 // 关闭确认对话框
@@ -354,7 +314,7 @@ function close_confirm_dialog() {
     confirm_overlay.classList.remove('show')
     confirm_callback = null
     if (setting_page_index === 0) {
-        ark.toggle_taskbar(true)
+        window.parent.postMessage({action: 'taskbar_double', arg1: 'double'}, '*')
     }
 }
 
@@ -362,13 +322,7 @@ function close_confirm_dialog() {
 // 头像/背景图 //
 ///////////////
 
-// 设置头像
+// 设置头像（已废除，进群聊聊天）
 function set_head_photo() {
-    ark.set_head_photo()
-}
-
-// 修改背景图
-function set_background_image(base64) {
-    document.body.style.backgroundImage = `url('${base64}')`
-    document.body.style.backgroundSize = 'cover'
+    // 功能已移除
 }

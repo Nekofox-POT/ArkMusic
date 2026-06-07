@@ -26,20 +26,17 @@ function genre_init_image_observer() {
                 const rateP = element.querySelector('.song_meta_rate')
 
                 if (path) {
-                    ark.get_song_meta(path).then(meta => {
-                        if (meta[1]) {
-                            imgDiv.style.backgroundImage = `url(${meta[1]})`
+                    ark.get_meta(path).then(meta => {
+                        if (meta[1] && meta[1][0]) {
+                            titleP.textContent = meta[1][0]
                         }
-                        if (meta[0][1] && meta[0][1][0]) {
-                            titleP.textContent = meta[0][1][0]
+                        if (meta[1] && meta[1][1]) {
+                            artistP.textContent = meta[1][1]
                         }
-                        if (meta[0][1] && meta[0][1][1]) {
-                            artistP.textContent = meta[0][1][1]
-                        }
-                        if (meta[0][0]) {
-                            sampleP.textContent = meta[0][0][3]
-                            depthP.textContent = meta[0][0][4]
-                            rateP.textContent = meta[0][0][5]
+                        if (meta[0]) {
+                            sampleP.textContent = meta[0][4]
+                            depthP.textContent = meta[0][5]
+                            rateP.textContent = meta[0][6]
                         }
                         void titleWrap.offsetWidth
                         void artistWrap.offsetWidth
@@ -50,6 +47,11 @@ function genre_init_image_observer() {
                             artistWrap.classList.add('marquee')
                         }
                         element.dataset.path = ''
+                    })
+                    ark.get_image(path).then(img => {
+                        if (img[0]) {
+                            imgDiv.style.backgroundImage = `url(${img[1]})`
+                        }
                     })
                 }
 
@@ -74,11 +76,14 @@ function genre_list_init_image_observer() {
                 const imgDiv = element.querySelector('div')
 
                 if (genreName) {
-                    ark.get_meta_list_image('歌流派', genreName).then(base64 => {
-                        if (base64) {
-                            imgDiv.style.backgroundImage = `url(${base64})`
-                        }
-                    })
+                    const songs = ark.get_genre_songs(genreName)
+                    if (songs && songs.length > 0) {
+                        ark.get_image(songs[0]).then(img => {
+                            if (img[0]) {
+                                imgDiv.style.backgroundImage = `url(${img[1]})`
+                            }
+                        })
+                    }
                     element.dataset.genreName = ''
                 }
 
@@ -142,7 +147,7 @@ function genre_create_song_element(path, index) {
     const mainArea = document.createElement('div')
     mainArea.className = 'song_main'
     mainArea.style.cssText = 'flex:1;display:flex;align-items:center;overflow:hidden;border-radius:12.5px;min-width:0;height:auto;background-image:none;box-shadow:none;margin-left:0;'
-    mainArea.addEventListener('click', () => { ark.play_song(index) })
+    mainArea.addEventListener('click', () => { ark.set_play_list(genre_batchState.list, index) })
 
     const imgDiv = document.createElement('div')
     imgDiv.className = 'song_cover'
@@ -382,7 +387,7 @@ async function get_genre_list(name) {
     container.removeEventListener('scroll', genre_handle_scroll)
     container.removeEventListener('scroll', genre_list_handle_scroll)
 
-    const data = ark.get_genre_list(name)
+    const data = ark.get_genre_songs(name)
 
     // 空状态：检查
     if (data.length === 0) {

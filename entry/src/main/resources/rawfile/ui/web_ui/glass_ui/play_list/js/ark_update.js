@@ -40,20 +40,17 @@ function playList_init_image_observer() {
                 const rateP = element.querySelector('.song_meta_rate')
 
                 if (path) {
-                    ark.get_song_meta(path).then(meta => {
-                        if (meta[1]) {
-                            imgDiv.style.backgroundImage = `url(${meta[1]})`
+                    ark.get_meta(path).then(meta => {
+                        if (meta[1] && meta[1][0]) {
+                            titleP.textContent = meta[1][0]
                         }
-                        if (meta[0][1] && meta[0][1][0]) {
-                            titleP.textContent = meta[0][1][0]
+                        if (meta[1] && meta[1][1]) {
+                            artistP.textContent = meta[1][1]
                         }
-                        if (meta[0][1] && meta[0][1][1]) {
-                            artistP.textContent = meta[0][1][1]
-                        }
-                        if (meta[0][0]) {
-                            sampleP.textContent = meta[0][0][3]
-                            depthP.textContent = meta[0][0][4]
-                            rateP.textContent = meta[0][0][5]
+                        if (meta[0]) {
+                            sampleP.textContent = meta[0][4]
+                            depthP.textContent = meta[0][5]
+                            rateP.textContent = meta[0][6]
                         }
                         void titleWrap.offsetWidth
                         void artistWrap.offsetWidth
@@ -64,6 +61,11 @@ function playList_init_image_observer() {
                             artistWrap.classList.add('marquee')
                         }
                         element.dataset.path = ''
+                    })
+                    ark.get_image(path).then(img => {
+                        if (img[0]) {
+                            imgDiv.style.backgroundImage = `url(${img[1]})`
+                        }
                     })
                 }
 
@@ -89,7 +91,7 @@ function playList_create_song_element(path, index, num) {
 
     const mainArea = document.createElement('div')
     mainArea.style.cssText = 'flex:1;display:flex;align-items:center;overflow:hidden;border-radius:50px;min-width:0;height:auto;background-image:none;box-shadow:none;margin-left:0;padding:0 10px;'
-    mainArea.addEventListener('click', () => { ark.seek_song(index) })
+    mainArea.addEventListener('click', () => { ark.switch_song(index) })
 
     const imgDiv = document.createElement('div')
     imgDiv.className = 'song_cover'

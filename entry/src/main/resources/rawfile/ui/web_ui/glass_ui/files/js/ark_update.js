@@ -11,4 +11,9 @@ window.addEventListener('message', function(event) {
     // 返回手势
     if (func === 'back_gesture') {router_back()}
 
+    // 数据库更新，重新加载当前页面
+    if (func === 'songs_update') {
+        load_page(page)
+    }
+
 });

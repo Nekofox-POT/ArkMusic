@@ -33,8 +33,8 @@ const support_dsd_format: string[] = ['.dff', '.dsf', '.dst']   // dsd格式集
 
 // 毫秒 转化 分:秒
 function ms_to_times(duration: number): string {
-  const minutes = Math.floor(duration / 60)
-  const seconds = Math.floor(duration % 60)
+  const minutes = Math.floor(duration / 60000)
+  const seconds = Math.floor((duration % 60000) / 1000)
   const formattedDuration = `${minutes}:${seconds.toString().padStart(2, '0')}`
   return formattedDuration
 }
@@ -54,6 +54,7 @@ export default class class_audio_player {
   private like_list: string[] = []    // 喜欢列表
   private failed_count: number = 0    // 播放失败计数
   private target_timed: number = 0    // 定时时间戳
+  private writing: boolean = false    // 正在写入标识
 
   // 类 //
   global_config: class_global_config | null = null
@@ -142,6 +143,7 @@ export default class class_audio_player {
 
         this.send_metadata()
         this.send_check_like()
+        this.send_current_time(time)
 
       }
       // 未成功处理 //
@@ -178,6 +180,7 @@ export default class class_audio_player {
   private complete(next: boolean = true) {
 
     // 如果完成了说不放了那就不管 //
+    console.log('播完了！')
     if (!next) {return}
 
     // 计时器处理 //
@@ -364,6 +367,7 @@ export default class class_audio_player {
       this.av_session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
     } else if (status == 'complete') {
       this.av_session?.setAVPlaybackState({ state: avSession.PlaybackState.PLAYBACK_STATE_PAUSE })
+      this.complete()
     }
 
   }
@@ -439,10 +443,7 @@ export default class class_audio_player {
   save_data() {
 
     if (this.global_config!.reset) {return}
-
-    // 暂停音乐 //
-    this.av_player.reset()
-    this.ffmpeg_player.reset()
+    if (this.writing) {return} else {this.writing = true}
 
     // 保存播放列表 //
     save_array(this.play_list, audio_player_path + '/play_list.json')
@@ -455,14 +456,13 @@ export default class class_audio_player {
       `${this.timed_mode}`,       // 计时器模式
     ], audio_player_path + '/audio_player.json')
 
-    log('数据保存完成.')
+    log('audio_player: 数据保存完成！')
+    this.writing = false
 
   }
+
   // 重载配置文件 //
   async reset_data() {
-
-    // 保存数据 //
-    this.save_data()
 
     // 重新加载数据 //
     await this.load_data(true)
@@ -762,7 +762,7 @@ export default class class_audio_player {
   // 设置定时 //
   set_timing(time_ms: number) {this.target_timed = Date.now() + time_ms}
   // 获取剩余时间 //
-  get_timing() {return this.target_timed = Date.now()}
+  get_timing() {return this.target_timed - Date.now()}
 
   // 设置播放器模式（重加载） //
   async set_player_mode(mode: boolean) {

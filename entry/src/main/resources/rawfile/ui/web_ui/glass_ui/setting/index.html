@@ -48,20 +48,15 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M21 3H3C1.9 3 1 3.9 1 5V17C1 18.1 1.9 19 3 19H8V21H16V19H21C22.1 19 23 18.1 23 17V5C23 3.9 22.1 3 21 3ZM21 17H3V5H21V17Z"></path></g></svg>
                     <p class="font_color">UI设置</p>
                 </div>
-                <div class="setting_config_separator"></div>
-                <div class="setting_config_half" id="setting_music_config">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M12 3V12.26C11.5 12.09 11 12 10.5 12C8.01 12 6 14.01 6 16.5C6 18.99 8.01 21 10.5 21C12.99 21 15 18.99 15 16.5V6H19V3H12Z"></path></g></svg>
-                    <p class="font_color">音乐设置</p>
-                </div>
             </div>
 
             <!-- 列表元素 -->
             <div class="setting_list">
-                <div class="setting_list_item box_color" id="setting_rescan">
-                    <p class="font_color">重新扫描数据库</p>
+                <div class="setting_list_item box_color" id="setting_scan_fast">
+                    <p class="font_color">快速扫描数据库</p>
                 </div>
-                <div class="setting_list_item box_color" id="setting_reset">
-                    <p class="font_color">重置程序</p>
+                <div class="setting_list_item box_color" id="setting_scan_full">
+                    <p class="font_color">完整扫描数据库</p>
                 </div>
             </div>
 
@@ -91,27 +86,6 @@
                             <p class="font_color">恢复默认</p>
                         </div>
                         <div class="setting_color_preview box_active_color" id="setting_color_preview"></div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Page 2: 音乐设置页 -->
-        <div class="setting_page" id="setting_page_music">
-
-            <div class="setting_sub_header" id="music_setting_back">
-                <div class="setting_sub_back_btn box_color">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></g></svg>
-                </div>
-                <p class="font_color">音乐设置</p>
-            </div>
-
-            <div class="setting_sub_content">
-                <div class="setting_sub_item box_color">
-                    <p class="font_color">开启DSD音频支持</p>
-                    <div class="setting_toggle" id="dsd_toggle">
-                        <div class="setting_toggle_knob"></div>
                     </div>
                 </div>
             </div>
@@ -180,8 +154,8 @@
     <!-- 确认对话框遮罩 -->
     <div class="confirm_overlay" id="confirm_overlay">
         <div class="confirm_card box_color">
-            <p class="font_color" id="confirm_title" style="font-size:0.95rem;font-weight:700;">确认重置程序？</p>
-            <p class="font_color" id="confirm_message" style="font-size:0.75rem;font-weight:500;margin-top:8px;">此操作将清除所有数据</p>
+            <p class="font_color" id="confirm_title" style="font-size:0.95rem;font-weight:700;">确认完整扫描？</p>
+            <p class="font_color" id="confirm_message" style="font-size:0.75rem;font-weight:500;margin-top:8px;">此操作将重新扫描所有文件</p>
             <div class="confirm_buttons">
                 <div class="confirm_btn box_color" id="confirm_cancel">
                     <p class="font_color">取消</p>

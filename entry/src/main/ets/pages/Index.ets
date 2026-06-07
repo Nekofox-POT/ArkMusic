@@ -82,7 +82,9 @@ struct Index {
   }
 
   // 退出app操作 //
-  aboutToDisappear(): void {}
+  aboutToDisappear(): void {
+    this.audio_player.save_data()
+  }
 
   // 返回信号播控 //
   onBackPress(): boolean {
@@ -134,6 +136,7 @@ struct Index {
           global_config: this.global_config
         })
           .width('100%').height('100%').zIndex(800)
+          .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
       }
 
       // ui页面 //

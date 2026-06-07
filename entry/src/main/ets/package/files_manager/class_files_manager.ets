@@ -136,12 +136,13 @@ export default class class_files_manager {
       if (this.working) {return} else {this.working = true}
 
       // 扫描 //
-      log(`files_manager: 快速扫描`)
       if (fast) {
         // 快速扫描
+        log(`files_manager: 快速扫描`)
         await this.download_manager!.scan_data_fast()
       } else {
         // 完整扫描
+        log(`files_manager: 完整扫描`)
         await this.download_manager!.scan_data()
       }
 
@@ -151,8 +152,11 @@ export default class class_files_manager {
       // 解锁 //
       this.working = false
 
+      log('files_manager: 扫描完成！')
+      notice('扫描完成！')
+
     } catch (e) {
-      log(`扫描出错：${e}`, 'error')
+      log(`files_manager: 扫描出错：${e}`, 'error')
       this.working = false
     }
   }
