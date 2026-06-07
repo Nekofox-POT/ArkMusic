@@ -1,5 +1,7 @@
 export const encodeImageToBase64: (buffer: ArrayBuffer) => string
-export const pixel_light_count: (buffer: ArrayBuffer, width: number, height: number) => number
+export const getPixelLight: (buffer: ArrayBuffer, width: number, height: number) => number
+export const getPixelColor: (buffer: ArrayBuffer, width: number, height: number) => string
+export const getPixelDominant: (buffer: ArrayBuffer, width: number, height: number) => string[]
 export const extractFilename: (path: string) => string
 export const getAudioMetadata: (filePath: string | string[]) => Promise<AudioMetadata | BatchAudioMetadata[]>
 export const base64urlCode: (input: string, isEncode: boolean) => string

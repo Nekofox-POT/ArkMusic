@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD 14)
 add_library(
 entry SHARED napi_init.cpp
 package/buffer_to_base64/buffer_to_base64.cpp
-package/pixel_light_count/pixel_light_count.cpp
+package/pixel_count/pixel_count.cpp
 package/extract_filename/extract_filename.cpp
 package/ffmpeg_manager/get_meta.cpp
 package/ffmpeg_manager/ffmpeg_player.cpp

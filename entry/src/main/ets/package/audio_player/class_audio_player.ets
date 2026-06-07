@@ -341,7 +341,7 @@ export default class class_audio_player {
     emitter.emit({ eventId: 724 }, { data: { play_list: this.play_list } })
   }
 
-  // 7x5 列表指针广播（单指针） //
+  // 7x5 列表指针广播 //
   private send_play_list_index() {
     emitter.emit({ eventId: 715 }, { data: { index: (this.play_list.length == 0) ? 0 : this.play_list_index } })
     emitter.emit({ eventId: 725 }, { data: { index: (this.play_list.length == 0) ? 0 : this.play_list_index } })
@@ -368,45 +368,11 @@ export default class class_audio_player {
 
   }
 
-  // 7x7 喜欢状态广播 //
-  private send_check_like() {
-    try {
-
-      const path = this.play_list[this.play_list_index]
-
-      // 读取检查 //
-      const tmp = this.like_list.includes(`${fs.statSync(path).ino}`)
-
-      // 更新 //
-      this.is_like = tmp
-
-      // 广播 //
-      emitter.emit({ eventId: 717 }, { data: { like: tmp } })
-      emitter.emit({ eventId: 727 }, { data: { like: tmp } })
-
-      // 元音频更新 //
-      this.av_session?.setAVPlaybackState({ isFavorite: tmp })
-
-    } catch {}
-  }
-
-  // 7x8 完整歌词广播 //
-  private send_lyric() {}
-
-  // 7x9 单句歌词广播 //
-  private send_lyric_row() {}
-
-  // 7x0 定时广播 //
-  private send_timing() {
-    if (this.target_timed == 0) {return}
-    emitter.emit({ eventId: 710 }, { data: { time: this.target_timed - Date.now() } })
-  }
-
-  // 7x1 播放模式广播 //
+  // 7x7 播放模式广播 //
   private send_play_mode(mode: number) {
     this.play_mode = mode
-    emitter.emit({ eventId: 711 }, { data: { play_mode: this.play_mode } })
-    emitter.emit({ eventId: 721 }, { data: { play_mode: this.play_mode } })
+    emitter.emit({ eventId: 717 }, { data: { play_mode: this.play_mode } })
+    emitter.emit({ eventId: 727 }, { data: { play_mode: this.play_mode } })
     if (this.play_mode === 0) {
       log('播放模式切换：单曲循环.')
       this.av_session?.setAVPlaybackState({loopMode: avSession.LoopMode.LOOP_MODE_SINGLE})
@@ -428,6 +394,42 @@ export default class class_audio_player {
       if (this.player_ready) {notice('随机')}
     }
   }
+
+  // 7x8 喜欢状态广播 //
+  private send_check_like() {
+    try {
+
+      const path = this.play_list[this.play_list_index]
+
+      // 读取检查 //
+      const tmp = this.like_list.includes(`${fs.statSync(path).ino}`)
+
+      // 更新 //
+      this.is_like = tmp
+
+      // 广播 //
+      emitter.emit({ eventId: 718 }, { data: { like: tmp } })
+      emitter.emit({ eventId: 728 }, { data: { like: tmp } })
+
+      // 元音频更新 //
+      this.av_session?.setAVPlaybackState({ isFavorite: tmp })
+
+    } catch {}
+  }
+
+  // 7x9 定时广播 //
+  private send_timing() {
+    if (this.target_timed == 0) {return}
+    emitter.emit({ eventId: 719 }, { data: { time: this.target_timed - Date.now() } })
+  }
+
+  // 7x0 完整歌词广播 //
+  private send_lyric() {}
+
+  // 7x1 单句歌词广播 //
+  private send_lyric_row() {}
+
+
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 外部函数 //

@@ -17,7 +17,7 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 import nativeModule from 'libentry.so'
 import { log, notice, vib } from '../../package/system_function'
 import { save_array, load_array } from '../../package/data_save_load'
-import { get_image, get_meta, image_to_base64 } from '../../package/meta_manager'
+import { get_image, get_meta, image_to_base64, get_pixel_light, get_pixel_color, get_pixel_dominant } from '../../package/meta_manager'
 
 // 导入类 //
 import class_audio_player from '../../package/audio_player/class_audio_player'
@@ -33,30 +33,6 @@ const web_ui_data_path = web_ui_path + 'data/'  // 皮肤工作目录
 // 函数库 //
 //////////
 
-// web图片色值计算 //
-async function pixel_light_count(metadata: image.PixelMap): Promise<number> {
-
-  // 获取图片尺寸
-  const imageInfo = await metadata.getImageInfo()
-  const width = imageInfo.size.width
-  const height = imageInfo.size.height
-
-  // 从 PixelMap 读取像素数据（RGBA格式，每个像素4字节）
-  const pixelBufferSize = width * height * 4;
-  const pixelBuffer = new ArrayBuffer(pixelBufferSize)
-  const area: image.PositionArea = {
-    pixels: pixelBuffer,
-    offset: 0,
-    stride: width * 4,
-    region: { size: { width: width, height: height }, x: 0, y: 0 }
-  };
-  await metadata.readPixels(area);
-
-  // 调用 C++ 计算亮度值
-  return nativeModule.pixel_light_count(pixelBuffer, width, height)
-
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // web_ui入口 //
 ///////////////
@@ -70,7 +46,8 @@ export default struct web_ui {
   // 继承池 //
   @ObjectLink global_config: class_global_config    // 类 全局管理器
   @ObjectLink files_manager: class_files_manager    // 类 文件管理器
-  @ObjectLink audio_player: class_audio_player  // 类 播放器
+  @ObjectLink audio_player: class_audio_player      // 类 播放器
+  @Link backup_occupy: boolean                      // 手势占用
 
   // 变量池 //
 
@@ -95,12 +72,20 @@ export default struct web_ui {
     try {fs.statSync(web_ui_rom_path)} catch {fs.mkdirSync(web_ui_rom_path)}
     try {fs.statSync(web_ui_data_path)} catch {fs.mkdirSync(web_ui_data_path)}
 
+    // 霸占手势 //
+    this.backup_occupy = true
+
   }
 
   // 退出操作 //
   aboutToDisappear(): void {
-    // 保存数据
     log('web_ui销毁.')
+
+    // 解锁手势 //
+    this.backup_occupy = false
+
+    // 保存数据 //
+
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -110,8 +95,75 @@ export default struct web_ui {
   // 开启 / 关闭 广播监听 //
   switch_emitter(status: boolean) {
 
-    if (status) {}
-    else {}
+    this.web_ui_core.runJavaScript(``)
+
+    // 开启 //
+    if (status) {
+
+      // 元数据 //
+      emitter.on({ eventId: 712 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_meta(${JSON.stringify(data.data!.meta)})`)
+        this.web_ui_core.runJavaScript(`set_image(${data.data!.image})`)
+      })
+      // 播放时间 //
+      emitter.on({ eventId: 713 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_current_time(${data.data!.current_time})`)
+        this.web_ui_core.runJavaScript(`set_current_time_format(${data.data!.current_time_format})`)
+      })
+      // 列表更新 //
+      emitter.on({ eventId: 714 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_playing_list(${JSON.stringify(data.data!.play_list)})`)
+      })
+      // 指针更新 //
+      emitter.on({ eventId: 715 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_playing_index(${data.data!.index})`)
+      })
+      // 播放状态更新 //
+      emitter.on({ eventId: 716 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_play_status(${data.data!.status})`)
+      })
+      // 播放模式更新 //
+      emitter.on({ eventId: 717 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_play_mode(${data.data!.play_mode})`)
+      })
+      // 喜欢状态更新 //
+      emitter.on({ eventId: 718 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_like(${data.data!.like})`)
+      })
+      // 定时剩余 //
+      emitter.on({ eventId: 719 }, (data: emitter.EventData) => {
+        this.web_ui_core.runJavaScript(`set_timing_time(${data.data!.time})`)
+      })
+      // // 完整歌词广播 //
+      // emitter.on({ eventId: 710 }, (data: emitter.EventData) => {})
+      // // 单句歌词广播 //
+      // emitter.on({ eventId: 711 }, (data: emitter.EventData) => {})
+      // 数据库更新 //
+      emitter.on({ eventId: 812 }, () => {
+        this.web_ui_core.runJavaScript(`songs_update()`)
+      })
+      // 手势监听 //
+      emitter.on({ eventId: 912 }, () => {
+        this.web_ui_core.runJavaScript(`back_gesture_signal()`)
+      })
+
+    }
+
+    // 关闭 //
+    else {
+      emitter.off(712)
+      emitter.off(713)
+      emitter.off(714)
+      emitter.off(715)
+      emitter.off(716)
+      emitter.off(717)
+      emitter.off(718)
+      emitter.off(719)
+      // emitter.off(710)
+      // emitter.off(711)
+      emitter.off(812)
+      emitter.off(912)
+    }
 
   }
 
@@ -187,12 +239,18 @@ export default struct web_ui {
           this.show_volume = true
         } else if (level == -2) {
           this.show_volume = false
-        } else {this.volume_level = level}
+        } else {
+          if ((level >= 0) && (level <= 15)) {
+            this.volume_level = level
+          }
+        }
       },
       // 保存数据 //
-      save_data: (data: string[]) => {save_array(data, web_ui_path + 'glass_ui.json')},
+      save_data: (data: string[], name: string) => {save_array(data, `${web_ui_path}/glass_ui/${name}.json`)},
       // 打开数据 //
-      load_data: () => {load_array(web_ui_path + 'glass_ui.json')},
+      load_data: (name: string) => {load_array(`${web_ui_path}/glass_ui/${name}.json`)},
+      // 返回桌面 //
+      back_desktop: () => {router.back()},
 
       //////////////
       // 播控功能类 //
@@ -230,7 +288,13 @@ export default struct web_ui {
       // 获取当前播放列表 //
       get_playing_play_list: (): string[] => {return this.audio_player.play_list},
       // 获取当前播放指针 //
-      get_playing_index: (): number => {return this.audio_player.play_list_index},
+      get_playing_index: (): number => {
+        if (this.audio_player.play_list.length == 0) {
+          return 0
+        } else {
+          return this.audio_player.play_list_index
+        }
+      },
       // 获取当前播放状态 //
       get_playing_status: (): string => {return this.audio_player.play_status},
       // 获取当前喜欢状态 //
@@ -305,7 +369,29 @@ export default struct web_ui {
       ///////////
       // 设置类 //
       //////////
+      // 外部歌曲导入 //
+      add_external_songs: () => {this.files_manager.add_external_songs()},
+      // 删除外部歌曲 //
+      del_external_songs: (list: string[]) => {this.files_manager.del_external_songs(list)},
+      // 扫描数据库 //
+      scan_data: async (fast: boolean = true) => {this.files_manager.scan_data(fast)},
 
+      ///////////
+      // 工具类 //
+      //////////
+      // 获取图片亮度 //
+      get_pixel_light: async (path: string): Promise<number> => {return await get_pixel_light((await get_image(path))[1])},
+      // 获取图片主题色 //
+      get_pixel_color: async (path: string): Promise<string> => {return await get_pixel_color((await get_image(path))[1])},
+      // 获取图片三分主色 //
+      get_pixel_dominant: async (path: string): Promise<string[]> => {return await get_pixel_dominant((await get_image(path))[1])},
+      // 更改沉浸色 //
+      set_window_color: async (value: string) => {
+        // 校验十六进制颜色格式
+        if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+          this.set_window_color(value)
+        }
+      },
 
     },"ark",[
 

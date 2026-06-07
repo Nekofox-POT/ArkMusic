@@ -46,6 +46,7 @@ export default struct ui_index {
   @ObjectLink global_config: class_global_config
   @ObjectLink files_manager: class_files_manager
   @ObjectLink audio_player: class_audio_player
+  @Link backup_occupy: boolean
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 基础函数 //
@@ -104,7 +105,10 @@ export default struct ui_index {
       // 0: 个性 (web) //
       if (this.ui_mode == 0) {
         web_ui({
-
+          global_config: this.global_config,
+          files_manager: this.files_manager,
+          audio_player: this.audio_player,
+          backup_occupy: this.backup_occupy
         })
           .width('100%').height('100%')
       }

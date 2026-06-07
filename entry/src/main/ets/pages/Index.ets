@@ -52,6 +52,7 @@ struct Index {
   @State env_ready: boolean = false                         // 环境准备完成
   @State start_ui: boolean = false                          // 启动界面
   @State controller_ui: boolean = false                     // 控制器界面
+  @State backup_occupy: boolean = false                     // 返回键占用指示
 
 
   // 类 //
@@ -85,8 +86,8 @@ struct Index {
 
   // 返回信号播控 //
   onBackPress(): boolean {
-    emitter.emit({ eventId: 912 })
-    return true
+    if (this.backup_occupy) {emitter.emit({ eventId: 912 })}
+    return this.backup_occupy
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +141,8 @@ struct Index {
         ui_index({
           global_config: this.global_config,
           files_manager: this.files_manager,
-          audio_player: this.audio_player
+          audio_player: this.audio_player,
+          backup_occupy: this.backup_occupy
         })
           .width('100%').height('100%').zIndex(500)
       }

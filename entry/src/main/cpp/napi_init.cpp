@@ -1,7 +1,7 @@
 #include <napi/native_api.h>
 
 #include "package/buffer_to_base64/buffer_to_base64.h" // 引用我们的头文件
-#include "package/pixel_light_count/pixel_light_count.h"
+#include "package/pixel_count/pixel_count.h"
 #include "package/extract_filename/extract_filename.h"
 #include "package/ffmpeg_manager/ffmpeg_manager.h"
 #include "package/base64url_code/base64url_code.h"
@@ -44,7 +44,7 @@ static napi_value encode_image_to_base64(napi_env env, napi_callback_info info) 
 }
 
 // ---- 功能2：像素亮度计算 ----
-static napi_value napi_pixel_light_count(napi_env env, napi_callback_info info) {
+static napi_value napi_get_pixel_light(napi_env env, napi_callback_info info) {
     // 1. 获取参数
     size_t argc = 3;
     napi_value args[3];
@@ -68,11 +68,84 @@ static napi_value napi_pixel_light_count(napi_env env, napi_callback_info info) 
     napi_get_value_int32(env, args[2], &height);
 
     // 3. 调用 C++ 业务逻辑，得到亮度值 (0-255)
-    uint32_t color_value = pixel_light_count(env, args[0], width, height);
+    uint32_t color_value = get_pixel_light(env, args[0], width, height);
 
     // 4. 将整数转换为 napi_value 返回
     napi_value result;
     napi_create_uint32(env, color_value, &result);
+
+    return result;
+}
+
+// ---- 功能3：图片主色调提取 ----
+static napi_value napi_get_pixel_color(napi_env env, napi_callback_info info) {
+    // 1. 获取参数
+    size_t argc = 3;
+    napi_value args[3];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc < 3) {
+        napi_throw_error(env, nullptr, "参数数量错误");
+        return nullptr;
+    }
+
+    // 2. 校验与解析
+    bool is_array_buffer = false;
+    napi_is_arraybuffer(env, args[0], &is_array_buffer);
+    if (!is_array_buffer) {
+        napi_throw_error(env, nullptr, "参数必须是 ArrayBuffer");
+        return nullptr;
+    }
+
+    int width = 0, height = 0;
+    napi_get_value_int32(env, args[1], &width);
+    napi_get_value_int32(env, args[2], &height);
+
+    // 3. 调用 C++ 业务逻辑
+    std::string hex_color = get_pixel_color(env, args[0], width, height);
+
+    // 4. 返回十六进制字符串
+    napi_value result;
+    napi_create_string_utf8(env, hex_color.c_str(), hex_color.length(), &result);
+
+    return result;
+}
+
+// ---- 功能4：图片三分主色提取 ----
+static napi_value napi_get_pixel_dominant(napi_env env, napi_callback_info info) {
+    // 1. 获取参数
+    size_t argc = 3;
+    napi_value args[3];
+    napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+    if (argc < 3) {
+        napi_throw_error(env, nullptr, "参数数量错误");
+        return nullptr;
+    }
+
+    // 2. 校验与解析
+    bool is_array_buffer = false;
+    napi_is_arraybuffer(env, args[0], &is_array_buffer);
+    if (!is_array_buffer) {
+        napi_throw_error(env, nullptr, "参数必须是 ArrayBuffer");
+        return nullptr;
+    }
+
+    int width = 0, height = 0;
+    napi_get_value_int32(env, args[1], &width);
+    napi_get_value_int32(env, args[2], &height);
+
+    // 3. 调用 C++ 业务逻辑
+    std::vector<std::string> colors = get_pixel_dominant(env, args[0], width, height);
+
+    // 4. 转换为 napi 数组返回
+    napi_value result;
+    napi_create_array_with_length(env, colors.size(), &result);
+    for (size_t i = 0; i < colors.size(); i++) {
+        napi_value elem;
+        napi_create_string_utf8(env, colors[i].c_str(), colors[i].length(), &elem);
+        napi_set_element(env, result, i, elem);
+    }
 
     return result;
 }
@@ -233,7 +306,9 @@ static napi_value Init(napi_env env, napi_value exports) {
     napi_property_descriptor desc[] = {
         // 原有函数
         {"encodeImageToBase64", nullptr, encode_image_to_base64, nullptr, nullptr, nullptr, napi_default, nullptr},
-        {"pixel_light_count", nullptr, napi_pixel_light_count, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"getPixelLight", nullptr, napi_get_pixel_light, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"getPixelColor", nullptr, napi_get_pixel_color, nullptr, nullptr, nullptr, napi_default, nullptr},
+        {"getPixelDominant", nullptr, napi_get_pixel_dominant, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"extractFilename", nullptr, extract_filename, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"getAudioMetadata", nullptr, get_audio_metadata, nullptr, nullptr, nullptr, napi_default, nullptr},
         {"base64urlCode", nullptr, base64url_code, nullptr, nullptr, nullptr, napi_default, nullptr},
