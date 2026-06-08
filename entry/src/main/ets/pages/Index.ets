@@ -65,7 +65,7 @@ struct Index {
   ////////////
 
   // 进入app操作 //
-  aboutToAppear(): void {
+  aboutToAppear() {
 
     // 注册后台任务 //
     reg_bg_run()
@@ -82,8 +82,11 @@ struct Index {
   }
 
   // 退出app操作 //
-  aboutToDisappear(): void {
+  aboutToDisappear() {
+    // this.audio_player.power_off = true
+    // await new Promise<void>(resolve => setTimeout(resolve, 1000))
     this.audio_player.save_data()
+    log('关机')
   }
 
   // 返回信号播控 //

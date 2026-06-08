@@ -49,33 +49,34 @@ player_next_button.addEventListener("touchend", () => {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 音量监听 //
 ////////////
+
+// 点击图标 → 展开；已展开时仅缩放反馈；点击其他地方关闭
 vol_control.addEventListener("touchstart", () => {
     vol_control.style.transform = 'scale(0.9)'
     vol_control.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
 })
 vol_control.addEventListener("touchend", () => {
     vol_control.style.transform = 'scale(1)'
-    if (vol_control.classList.contains('focus')) {
-        vol_control.classList.remove('focus')
-        vol_control_frame.classList.remove('active')
-        vol_control.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
-    } else {
+    vol_control.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+    if (!vol_control.classList.contains('focus')) {
         vol_control.classList.add('focus')
         vol_control_frame.classList.add('active')
         ark.set_vol(-1)
     }
 })
-vol_range.addEventListener("input", (e) => {console.log(e.target.value); ark.set_vol(e.target.value)})
-// 点击页面其他地方关闭音量控制面板
+
+// 音量滑块
+vol_range.addEventListener("input", (e) => {ark.set_vol(e.target.value)})
+
+// 点击面板外关闭
 document.addEventListener('click', function(e) {
-    // 检查点击的目标是否在音量控制区域内
     if (!vol_control.contains(e.target)) {
         vol_control.classList.remove('focus')
         vol_control_frame.classList.remove('active')
         vol_control.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
         ark.set_vol(-2)
     }
-});
+})
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 标题监听 //
 ////////////

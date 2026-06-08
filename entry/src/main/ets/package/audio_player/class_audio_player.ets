@@ -239,7 +239,7 @@ export default class class_audio_player {
     }, 1)
   }
   // 自动保存数据 //
-  private async auto_save() {setInterval(() => {this.save_data()}, 30000)}
+  private async auto_save() {setInterval(async () => {this.save_data()}, 30000)}
 
   // 打开配置文件 //
   private async load_data(auto_start: boolean = false) {
@@ -477,6 +477,9 @@ export default class class_audio_player {
 
   // 重载配置文件 //
   async reset_data() {
+
+    // 保存 //
+    this.save_data()
 
     // 重新加载数据 //
     await this.load_data(true)

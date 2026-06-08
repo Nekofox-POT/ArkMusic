@@ -2,18 +2,18 @@ import { fileIo as fs } from '@kit.CoreFileKit'
 import { log } from './system_function'
 
 // string[]储存（覆盖） //
-export async function save_array(data: string[], path: string): Promise<boolean> {
+export function save_array(data: string[], path: string): boolean {
 
-  try {await fs.rmdir(path)} catch {}
+  try {fs.rmdirSync(path)} catch {}
 
   // 转换
   const packData = JSON.stringify(data)
 
   // 保存
   try {
-    const file = await fs.open(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-    await fs.write(file.fd, packData)
-    await fs.close(file)
+    const file = fs.openSync(path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
+    fs.writeSync(file.fd, packData)
+    fs.closeSync(file)
   } catch (e) {
     log(`保存${path}失败: ${e}`, 'error')
     return false
