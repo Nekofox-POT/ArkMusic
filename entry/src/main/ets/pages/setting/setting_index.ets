@@ -62,7 +62,7 @@ export default struct setting_index {
   // UI构建 //
   ///////////
   build() {
-    Stack() {
+    Column() {
 
     }
   }

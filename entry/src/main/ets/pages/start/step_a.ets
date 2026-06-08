@@ -233,7 +233,7 @@ export default struct step_a {
           ))
           // 点击确定后的退出：向上渐变消失（由 exiting 状态驱动） //
           .opacity(this.exiting ? 0 : 1)
-          .translate({ y: this.exiting ? -16 : 0 })
+          .translate({ y: this.exiting ? -60 : 0 })
           .animation(this.exiting ? { duration: 400, curve: Curve.FastOutSlowIn } : { duration: 0 })
 
         }
