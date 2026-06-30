@@ -17,6 +17,9 @@ const setting_config = document.getElementById('setting_config')
 // UI设置
 const setting_ui_config = document.getElementById('setting_ui_config')
 
+// 更多设置
+const setting_more_config = document.getElementById('setting_more_config')
+
 // 快速扫描数据库
 const setting_scan_fast = document.getElementById('setting_scan_fast')
 

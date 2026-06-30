@@ -98,7 +98,7 @@ export default struct step_a {
 
           // 圆形底罩 + 图标 //
           Column() {
-            Image($rawfile('start/官方.svg'))
+            Image($rawfile('start/official_player.svg'))
               .width('48vp').height('48vp')
           }
           .width('80vp').height('80vp')
@@ -142,7 +142,7 @@ export default struct step_a {
 
           // 圆形底罩 + 图标 //
           Column() {
-            Image($rawfile('start/风铃.svg'))
+            Image($rawfile('start/lin_player.svg'))
               .width('48vp').height('48vp')
           }
           .width('80vp').height('80vp')
@@ -209,7 +209,7 @@ export default struct step_a {
             Text('').width('4vp')
 
             // 详细信息按钮 //
-            Image($rawfile('start/详细信息按钮.svg'))
+            Image($rawfile('start/detail.svg'))
               .width('18vp').height('18vp')
               .scale({ x: this.showDsaChildren ? 1 : 0, y: this.showDsaChildren ? 1 : 0 })
               .animation({ duration: 250, curve: Curve.FastOutSlowIn })

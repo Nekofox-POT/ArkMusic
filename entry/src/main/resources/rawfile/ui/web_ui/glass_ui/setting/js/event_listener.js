@@ -54,6 +54,19 @@ setting_ui_config.addEventListener("click", () => {
     open_ui_setting()
 })
 
+// 更多设置
+setting_more_config.addEventListener("touchstart", () => {
+    setting_more_config.classList.add("active")
+    setting_more_config.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
+})
+setting_more_config.addEventListener("touchend", () => {
+    setting_more_config.classList.remove("active")
+    setting_more_config.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+})
+setting_more_config.addEventListener("click", () => {
+    ark.open_setting()
+})
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // setting_scan_fast / setting_scan_full 组件监听 //
 ///////////////////////////////////////////////////

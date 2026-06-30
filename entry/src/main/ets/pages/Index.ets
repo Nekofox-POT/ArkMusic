@@ -23,6 +23,7 @@ import class_audio_player from '../package/audio_player/class_audio_player'
 import version_update from './version_update'
 import start_index from './start/start'
 import ui_index from './ui/ui'
+import setting_index from './setting/setting_index'
 
 // 变量池 //
 const version_path = getContext().filesDir + '/version.cfg'   // 配置文件
@@ -53,6 +54,7 @@ struct Index {
   @State start_ui: boolean = false                          // 启动界面
   @State controller_ui: boolean = false                     // 控制器界面
   @State backup_occupy: boolean = false                     // 返回键占用指示
+  @State setting_on: boolean = false                        // 设置页指示
 
 
   // 类 //
@@ -91,6 +93,11 @@ struct Index {
 
   // 返回信号播控 //
   onBackPress(): boolean {
+    // 设置页打开时优先关闭设置页
+    if (this.setting_on) {
+      this.setting_on = false
+      return true
+    }
     if (this.backup_occupy) {emitter.emit({ eventId: 912 })}
     return this.backup_occupy
   }
@@ -142,13 +149,25 @@ struct Index {
           .transition(TransitionEffect.opacity(0).animation({ duration: 500 }))
       }
 
+      // 设置页面 //
+      if (this.setting_on) {
+        setting_index({
+          global_config: this.global_config,
+          files_manager: this.files_manager,
+          audio_player: this.audio_player,
+          setting_on: this.setting_on
+        })
+          .width('100%').height('100%').zIndex(600)
+      }
+
       // ui页面 //
       if (this.env_ready) {
         ui_index({
           global_config: this.global_config,
           files_manager: this.files_manager,
           audio_player: this.audio_player,
-          backup_occupy: this.backup_occupy
+          backup_occupy: this.backup_occupy,
+          setting_on: this.setting_on
         })
           .width('100%').height('100%').zIndex(500)
       }

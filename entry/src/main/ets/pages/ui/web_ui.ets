@@ -48,6 +48,7 @@ export default struct web_ui {
   @ObjectLink files_manager: class_files_manager    // 类 文件管理器
   @ObjectLink audio_player: class_audio_player      // 类 播放器
   @Link backup_occupy: boolean                      // 手势占用
+  @Link setting_on: boolean                       // 设置页
 
   // 变量池 //
 
@@ -375,6 +376,8 @@ export default struct web_ui {
       ///////////
       // 设置类 //
       //////////
+      // 打开更多设置页 //
+      open_setting: () => {this.setting_on = true},
       // 外部歌曲导入 //
       add_external_songs: () => {this.files_manager.add_external_songs()},
       // 删除外部歌曲 //
@@ -423,7 +426,7 @@ export default struct web_ui {
       'get_dir_songs', 'get_play_list_songs',
       'get_artist_songs', 'get_album_songs',
       'get_album_artist_songs', 'get_genre_songs',
-      'add_external_songs', 'del_external_songs', 'scan_data',
+      'open_setting', 'add_external_songs', 'del_external_songs', 'scan_data',
       'set_timing', 'set_timed_mode', 'get_timing', 'get_timed_mode',
       'get_pixel_light', 'get_pixel_color', 'get_pixel_dominant',
       'set_window_color',
