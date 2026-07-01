@@ -69,7 +69,7 @@ export default struct version_update {
       } catch {} // 真没有版本号，那就不管
 
       // 注册版本号 //
-      this.global_config.version = '0.8'
+      this.global_config.version = '0.8'      //--!--// 这里填版本号 //--!--//
       this.global_config.save_data()
 
     }
