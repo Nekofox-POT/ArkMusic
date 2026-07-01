@@ -6,6 +6,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 导入第三方库 //
+import { common } from '@kit.AbilityKit'
 
 // 导入自创建模块 //
 import { log } from '../../package/system_function'
@@ -16,6 +17,8 @@ import class_files_manager from "../../package/files_manager/class_files_manager
 import class_audio_player from '../../package/audio_player/class_audio_player'
 
 // 导入页 //
+import setting_about from './setting_about'
+import setting_more from './setting_more'
 
 // 变量池 //
 
@@ -36,7 +39,8 @@ export default struct setting_index {
   @State show_sheet: boolean = false   // 半模态显隐
   @State item_count: number = 0        // 选项逐出计数
   @State press_idx: number = -1        // 按压项索引
-  @State set_page: number = 1          // 内部页码（1=主页, 2=音频设置, 3=播放器切换）
+  @State set_page: number = 1          // 内部页码（1=主页, 2=音频设置, 3=播放器切换, 4=关于, 5=更多设置）
+  @State about_emoji: boolean = false   // 关于页颜文字模式
   @State player_selected: number = -1    // 播放器选中（0=系统, 1=风铃, -1=未选）
   @State player_show_title: boolean = false
   @State player_show_options: boolean = false
@@ -60,7 +64,7 @@ export default struct setting_index {
     // 等待宿主节点挂载完成后拉取半模态 //
     setTimeout(() => { this.show_sheet = true }, 50)
     // 选项逐出动画 //
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       setTimeout(() => { this.item_count = i + 1 }, 200 + i * 80)
     }
   }
@@ -165,7 +169,7 @@ export default struct setting_index {
             Column() {
               this.build_menu_item('setting/more.svg', '更多设置', () => {
                 this.trigger_press(1)
-                log('setting：更多设置')
+                this.set_page = 5
               })
             }
             .width('100%')
@@ -185,9 +189,10 @@ export default struct setting_index {
           // 关于 //
           if (this.item_count >= 3) {
             Column() {
-              this.build_menu_item('setting/about.svg', '关于', () => {
+              this.build_menu_item('setting/about.svg', this.about_emoji ? 'ヽ(=^･ω･^=)丿' : '关于', () => {
                 this.trigger_press(2)
-                log('setting：关于')
+                this.about_emoji = true
+                this.set_page = 4
               })
             }
             .width('100%')
@@ -209,13 +214,47 @@ export default struct setting_index {
             Column() {
               this.build_menu_item('setting/join.svg', '加入唠嗑组织', () => {
                 this.trigger_press(3)
-                log('setting：加入唠嗑组织')
+                try {
+                  let context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
+                  context.startAbility({
+                    uri: 'mqqapi://card/show_pslcard?src_type=internal&version=1&uin=1062329769&card_type=group'
+                  })
+                } catch (err) {
+                  log('打开QQ群失败', 'error')
+                }
               })
             }
             .width('100%')
             .backgroundColor('#FFFFFF')
             .borderRadius('16vp')
             .scale({ x: this.press_idx == 3 ? 0.96 : 1, y: this.press_idx == 3 ? 0.96 : 1 })
+            .animation({ duration: 300, curve: Curve.Friction })
+            .transition(TransitionEffect.asymmetric(
+              TransitionEffect.OPACITY
+                .combine(TransitionEffect.translate({ y: '24vp' }))
+                .animation({ duration: 350, curve: Curve.EaseOut }),
+              TransitionEffect.OPACITY
+                .animation({ duration: 150 })
+            ))
+          }
+
+          // 访问项目github //
+          if (this.item_count >= 5) {
+            Column() {
+              this.build_menu_item('setting/github.gif', '访问项目Github', () => {
+                this.trigger_press(4)
+                try {
+                  let context: common.UIAbilityContext = getContext(this) as common.UIAbilityContext
+                  context.startAbility({ uri: 'https://github.com/Nekofox-POT/LinMusic' })
+                } catch (err) {
+                  log('打开GitHub链接失败', 'error')
+                }
+              })
+            }
+            .width('100%')
+            .backgroundColor('#FFFFFF')
+            .borderRadius('16vp')
+            .scale({ x: this.press_idx == 4 ? 0.96 : 1, y: this.press_idx == 4 ? 0.96 : 1 })
             .animation({ duration: 300, curve: Curve.Friction })
             .transition(TransitionEffect.asymmetric(
               TransitionEffect.OPACITY
@@ -309,7 +348,17 @@ export default struct setting_index {
   @Builder
   sheet_title() {
     Row() {
-      if (this.set_page == 3) {
+      if (this.set_page == 5) {
+        Text('更多设置')
+          .fontSize('22fp')
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1A1A1A')
+      } else if (this.set_page == 4) {
+        Text('关于')
+          .fontSize('22fp')
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1A1A1A')
+      } else if (this.set_page == 3) {
         Text('音频播放器切换')
           .fontSize('22fp')
           .fontWeight(FontWeight.Bold)
@@ -456,7 +505,33 @@ export default struct setting_index {
   @Builder
   setting_content() {
 
-    if (this.set_page == 3) {
+    if (this.set_page == 5) {
+      Column() {
+        setting_more()
+      }
+      .width('100%').height('100%')
+      .transition(TransitionEffect.asymmetric(
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.94, y: 0.94 }))
+          .animation({ duration: 420, curve: Curve.FastOutSlowIn }),
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
+          .animation({ duration: 200, curve: Curve.Linear })
+      ))
+    } else if (this.set_page == 4) {
+      Column() {
+        setting_about({ global_config: this.global_config })
+      }
+      .width('100%').height('100%')
+      .transition(TransitionEffect.asymmetric(
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.94, y: 0.94 }))
+          .animation({ duration: 420, curve: Curve.FastOutSlowIn }),
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
+          .animation({ duration: 200, curve: Curve.Linear })
+      ))
+    } else if (this.set_page == 3) {
       Column() {
         this.player_switch_page()
       }
@@ -515,8 +590,10 @@ export default struct setting_index {
       backgroundColor: '#F1F3F5',
       title: this.sheet_title(),
       onWillDismiss: ((action: DismissSheetAction) => {
-        // 逐级回退 //
-        if (this.set_page > 1) {
+        // 逐级回退：关于页/更多设置→主页，其他逐级递减 //
+        if (this.set_page == 4 || this.set_page == 5) {
+          this.set_page = 1
+        } else if (this.set_page > 1) {
           this.set_page = this.set_page - 1
         } else {
           action.dismiss()
@@ -526,6 +603,7 @@ export default struct setting_index {
         // 半模态关闭后卸载自身页面 //
         this.set_page = 1
         this.setting_page = 0
+        this.about_emoji = false
       }
     })
   }

@@ -5,6 +5,7 @@
 let iframe_ready_count = 0
 
 function init() {
+    console.log('[init] 开始')
 
     // 加载主题配置
     load_theme_config()
@@ -23,11 +24,15 @@ function init() {
     // 暂停
     set_play_status(false)
 
+    console.log('[init] 等待 iframe_ready...')
+
     // 等待所有iframe加载完毕再ready
     window.addEventListener('message', function(e) {
         if (e.data.action === 'iframe_ready') {
             iframe_ready_count++
+            console.log('[init] iframe_ready 收到, count:', iframe_ready_count, 'source:', e.source === play_list.contentWindow ? 'play_list' : e.source === files.contentWindow ? 'files' : e.source === setting.contentWindow ? 'setting' : 'unknown')
             if (iframe_ready_count >= 3) {
+                console.log('[init] 全部就绪，调用 ark.ready()')
                 ark.ready()
                 // 重新广播当前主题色给已就绪的iframe
                 set_active_color(active_color)
@@ -38,6 +43,7 @@ function init() {
         }
     })
 
+    console.log('[init] 结束')
 }
 
 // 从后端拉取初始播放状态

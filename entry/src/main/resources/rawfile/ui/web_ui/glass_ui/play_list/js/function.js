@@ -173,9 +173,18 @@ function swapWithElement(el, target, targetIndex) {
     }
 
     swipeState.currentSwapIndex = targetIndex
+    // 标记跳过后续 2 次刷新（list + index），避免交换动画被打断
+    window._skip_next_render = 2
+    // 如果正在播放的歌曲被移动，更新指针
+    if (fromIndex === playing_index) {
+        playing_index = targetIndex
+    } else if (targetIndex === playing_index) {
+        playing_index = fromIndex
+    }
+    // 更新头显
+    play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
     ark.switch_songs(fromIndex, targetIndex)
     ark.vib()
-    console.log(`排序: 从${fromIndex}移动到${targetIndex}`)
 
     setTimeout(() => {
         swipeState.swapCooldown = false
@@ -214,8 +223,17 @@ function endSwipe() {
         el.style.height = '0'
         el.style.marginBottom = '0'
         el.style.overflow = 'hidden'
+        el.dataset.deleting = '1'
 
         const deleteIndex = swipeState.originalIndex
+        // 标记跳过后续 2 次刷新（list + index）
+        window._skip_next_render = 2
+        // 更新指针（如果删除的歌在播放歌曲之前）
+        if (deleteIndex < playing_index) {
+            playing_index--
+        }
+        all_songs--
+        play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
         ark.delete_song(deleteIndex)
         setTimeout(() => {
             if (el.parentNode) {

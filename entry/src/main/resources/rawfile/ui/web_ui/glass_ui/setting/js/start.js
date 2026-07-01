@@ -8,6 +8,7 @@ function init() {
     // 父页面会在 iframe 就绪后广播当前值覆盖
     highlight_enabled = button_enable_active_color
     set_toggle_visual(highlight_toggle, highlight_enabled)
+    console.log('[setting iframe] post iframe_ready')
     window.parent.postMessage({action: 'iframe_ready'}, '*')
 }
 

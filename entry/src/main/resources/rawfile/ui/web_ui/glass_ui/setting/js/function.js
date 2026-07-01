@@ -24,11 +24,15 @@ function switch_setting_page(n) {
 
 // 快速扫描数据库
 function scan_fast() {
+    document.querySelector('.setting_list').classList.add('scanning')
+    setting_scan_fast.querySelector('.scan_spinner').classList.add('active')
     ark.scan_data(true)
 }
 
 // 完整扫描数据库
 function scan_full() {
+    document.querySelector('.setting_list').classList.add('scanning')
+    setting_scan_full.querySelector('.scan_spinner').classList.add('active')
     ark.scan_data(false)
 }
 

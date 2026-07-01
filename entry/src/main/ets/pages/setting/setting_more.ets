@@ -1,5 +1,5 @@
 //
-// 关于页面
+// 更多设置页面
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -8,34 +8,14 @@
 // 导入自创建模块 //
 
 // 导入类 //
-import class_global_config from '../../package/class_global_config'
 
 // 变量池 //
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 关于页入口 //
+// 更多设置入口 //
 //////////////
 @Component
-export default struct setting_about {
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // 环境准备 //
-  ////////////
-
-  // 变量池 //
-
-  // 更新池 //
-
-  // 类 //
-  @ObjectLink global_config: class_global_config
-
-  // 继承池 //
-
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // 基础函数 //
-  ////////////
-
-
+export default struct setting_more {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // UI构建 //
@@ -45,41 +25,17 @@ export default struct setting_about {
       Scroll() {
         Column() {
 
-          // ---- 间隔 ----
           Blank('56vp')
 
-          // ---- 应用图标 ----
-          Image($r('app.media.icon_round'))
-            .width('80vp').height('80vp')
-            .borderRadius('18vp')
-
-          Blank('16vp')
-
-          // ---- 应用名称 ----
-          Text('铃音')
-            .fontSize('24fp')
-            .fontWeight(FontWeight.Bold)
-            .fontColor('#1A1A1A')
-
-          Blank('6vp')
-
-          // ---- 版本号 ----
-          Text(`版本 ${this.global_config.version}`)
-            .fontSize('14fp')
+          // ---- 提示文字 ----
+          Text('还没想好设置什么')
+            .fontSize('18fp')
+            .fontWeight(FontWeight.Medium)
             .fontColor('#999999')
 
           Blank('24vp')
 
-          // ---- 标语 ----
-          Text('一个播放器，没什么好说的。')
-            .fontSize('14fp')
-            .fontColor('#999999')
-            .textAlign(TextAlign.Center)
-            .lineHeight('20fp')
-
-          Blank('32vp')
-
-          // ---- ASCII art ----
+          // ---- ASCII art 框 ----
           Column() {
             Text('╱|、')
               .fontSize('14fp')
@@ -100,10 +56,9 @@ export default struct setting_about {
           }
           .alignItems(HorizontalAlign.Start)
 
-          Blank('48vp')
-
         }
         .width('100%')
+        .alignItems(HorizontalAlign.Center)
       }
       .width('100%')
       .layoutWeight(1)

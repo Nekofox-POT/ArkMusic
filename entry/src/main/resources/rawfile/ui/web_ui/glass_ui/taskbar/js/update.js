@@ -150,15 +150,15 @@ function set_play_status(status) {
 /////////////////////////
 
 function set_play_mode(value) {
-    // 0=列表循环  1=单曲  2=顺序  3=随机
+    // 0=单曲  1=列表循环  2=顺序  3=随机
     play_only_button.classList.add('hidden')
     play_forlist_button.classList.add('hidden')
     play_order_button.classList.add('hidden')
     play_disorder_button.classList.add('hidden')
     if (value === 0) {
-        play_forlist_button.classList.remove('hidden')
-    } else if (value === 1) {
         play_only_button.classList.remove('hidden')
+    } else if (value === 1) {
+        play_forlist_button.classList.remove('hidden')
     } else if (value === 2) {
         play_order_button.classList.remove('hidden')
     } else if (value === 3) {
@@ -229,8 +229,9 @@ function save_theme_config() {
 ///////////////////////////
 
 function songs_update() {
-    // 通知 files 子页面重新加载数据
+    // 通知子页面
     files.contentWindow.postMessage({action: 'songs_update'}, '*')
+    setting.contentWindow.postMessage({action: 'songs_update'}, '*')
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

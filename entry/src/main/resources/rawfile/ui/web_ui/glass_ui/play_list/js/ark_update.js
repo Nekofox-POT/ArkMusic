@@ -91,7 +91,12 @@ function playList_create_song_element(path, index, num) {
 
     const mainArea = document.createElement('div')
     mainArea.style.cssText = 'flex:1;display:flex;align-items:center;overflow:hidden;border-radius:50px;min-width:0;height:auto;background-image:none;box-shadow:none;margin-left:0;padding:0 10px;'
-    mainArea.addEventListener('click', () => { ark.switch_song(index) })
+    mainArea.addEventListener('click', function() {
+        // 从当前 DOM 位置实时计算索引，排除正在删除的元素
+        const items = Array.from(slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator):not([data-deleting])'))
+        const idx = items.indexOf(wrapper)
+        if (idx >= 0) ark.switch_song(idx)
+    })
 
     const imgDiv = document.createElement('div')
     imgDiv.className = 'song_cover'
@@ -230,7 +235,7 @@ function playList_handle_scroll() {
 
 // 更新高亮色（独立函数）
 function update_highlight(num) {
-    const items = slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator)')
+    const items = slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator):not([data-deleting])')
     items.forEach((item, index) => {
         const titleP = item.querySelector('.song_item_title')
         if (titleP) {
@@ -248,7 +253,7 @@ function update_highlight(num) {
 // 滚动到指定歌曲位置
 function scroll_to_song(index) {
     const container = document.querySelector('.slide_frame')
-    const items = slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator)')
+    const items = slide.querySelectorAll('div.box_color:not(.swipe-delete-indicator):not([data-deleting])')
     const targetElement = items[index]
     
     if (targetElement) {
@@ -295,6 +300,19 @@ function scroll_to_song(index) {
 
 // 更新所有歌曲（优化版）
 function update_playing_songs(data, num) {
+
+    // 交换/删除触发的刷新：跳过重渲染，只更新数据
+    if (window._skip_next_render > 0) {
+        window._skip_next_render--
+        if (data && data.length !== 0) {
+            all_songs = data.length
+            playList_batchState.list = data
+        }
+        // 使用本地维护的 index（已在操作时更新），忽略后端传来的旧值
+        play_index_screen.innerText = `${playing_index + 1} / ${all_songs}`
+        update_highlight(playing_index)
+        return
+    }
 
     // 载入缓存
     playing_index = num

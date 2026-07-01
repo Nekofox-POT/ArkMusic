@@ -28,6 +28,7 @@ function init() {
     }
     // 颜色更新
     set_background_color()
+    console.log('[files iframe] post iframe_ready')
     window.parent.postMessage({action: 'iframe_ready'}, '*')
 }
 

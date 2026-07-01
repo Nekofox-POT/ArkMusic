@@ -24,6 +24,37 @@
         body * {
             /* border: 1px solid palevioletred; */
         }
+
+        /* 扫描按钮行 */
+        .setting_list_item .scan_row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* 扫描中两个都置灰 */
+        .setting_list.scanning .setting_list_item {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        /* 转圈动画 SVG */
+        .scan_spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .setting_list_item .scan_spinner.active {
+            display: block;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -58,10 +89,22 @@
             <!-- 列表元素 -->
             <div class="setting_list">
                 <div class="setting_list_item box_color" id="setting_scan_fast">
-                    <p class="font_color">快速扫描数据库</p>
+                    <div class="scan_row">
+                        <p class="font_color">快速扫描数据库</p>
+                        <svg class="scan_spinner" viewBox="0 0 24 24">
+                            <rect width="24" height="24" opacity="0"></rect>
+                            <path class="svg_color" d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"></path>
+                        </svg>
+                    </div>
                 </div>
                 <div class="setting_list_item box_color" id="setting_scan_full">
-                    <p class="font_color">完整扫描数据库</p>
+                    <div class="scan_row">
+                        <p class="font_color">完整扫描数据库</p>
+                        <svg class="scan_spinner" viewBox="0 0 24 24">
+                            <rect width="24" height="24" opacity="0"></rect>
+                            <path class="svg_color" d="M12 4V2A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Z"></path>
+                        </svg>
+                    </div>
                 </div>
             </div>
 

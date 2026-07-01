@@ -268,7 +268,11 @@ export default class class_audio_player {
       this.timed_mode = (tmp[3] == 'true') ? true : false
 
       // 载入歌曲 //
-      this.set_start_audio(tmp_play_list, Number.parseInt(tmp[0]), auto_start, Number.parseInt(tmp[1]))
+      if (tmp[4] == 'complete') {
+        this.set_start_audio(tmp_play_list, Number.parseInt(tmp[0]), auto_start, 0)
+      } else {
+        this.set_start_audio(tmp_play_list, Number.parseInt(tmp[0]), auto_start, Number.parseInt(tmp[1]))
+      }
       // 等待完成/超时1s强制结束
       let tmp_count = 0
       while ((!this.player_ready) && (tmp_count <= 1000)) {
@@ -366,6 +370,7 @@ export default class class_audio_player {
 
     // 更新数据 //
     this.play_status = status
+    log(status)
 
     // 广播状态 //
     emitter.emit({ eventId: 716 }, { data: { status: status } })
@@ -447,8 +452,6 @@ export default class class_audio_player {
   // 7x1 单句歌词广播 //
   private send_lyric_row() {}
 
-
-
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 外部函数 //
   ////////////
@@ -468,6 +471,7 @@ export default class class_audio_player {
       `${this.current_time}`,     // 已播放时间
       `${this.play_mode}`,        // 播放模式
       `${this.timed_mode}`,       // 计时器模式
+      `${this.play_status}`,      // 播放模式
     ], audio_player_path + '/audio_player.json')
 
     log('audio_player: 数据保存完成！')
@@ -478,6 +482,9 @@ export default class class_audio_player {
   // 重载配置文件 //
   async reset_data() {
 
+    // 记录当前状态 //
+    let tmp: boolean = (this.play_status == 'playing') ? true : false
+
     // 暂停 //
     this.pause(true)
 
@@ -485,7 +492,7 @@ export default class class_audio_player {
     this.save_data()
 
     // 重新加载数据 //
-    await this.load_data(true)
+    await this.load_data(tmp)
 
   }
 
@@ -721,6 +728,7 @@ export default class class_audio_player {
 
     // 广播 //
     this.send_play_list()
+    this.send_play_list_index()
 
   }
   // 歌曲删除 //
@@ -751,6 +759,7 @@ export default class class_audio_player {
 
     // 广播 //
     this.send_play_list()
+    this.send_play_list_index()
 
   }
   // 设置播放模式 //

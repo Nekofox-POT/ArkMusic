@@ -275,4 +275,9 @@ window.addEventListener('message', function(event) {
     if (event.data.action === 'set_background_image') {
         set_background_image(event.data.arg1)
     }
+    // 扫描完成 → 恢复按钮
+    if (event.data.action === 'songs_update') {
+        document.querySelector('.setting_list').classList.remove('scanning')
+        document.querySelectorAll('.scan_spinner.active').forEach(s => s.classList.remove('active'))
+    }
 })

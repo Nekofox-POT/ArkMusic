@@ -72,15 +72,14 @@ struct Index {
     reg_bg_run()
 
     // 版本号检查 //
-    if (this.global_config.version == '0') {this.start_ui = true}
+    if (this.global_config.version == '0') {this.start_ui = true} else {this.start_ready = true}
 
   }
 
   // 退出app操作 //
   aboutToDisappear() {
-    // this.audio_player.power_off = true
-    // await new Promise<void>(resolve => setTimeout(resolve, 1000))
     this.audio_player.save_data()
+    this.global_config.save_data()
     log('关机')
   }
 
@@ -102,6 +101,8 @@ struct Index {
 
   // 环境构建 //
   async env_load() {
+
+    log(`${this.start_ready} ${this.version_ready} ${this.download_ready}`)
 
     // 如果还没准备好就退出 //
     if (!(this.start_ready && this.version_ready && this.download_ready)) {return}
