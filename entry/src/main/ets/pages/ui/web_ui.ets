@@ -47,8 +47,8 @@ export default struct web_ui {
   @ObjectLink global_config: class_global_config    // 类 全局管理器
   @ObjectLink files_manager: class_files_manager    // 类 文件管理器
   @ObjectLink audio_player: class_audio_player      // 类 播放器
-  @Link backup_occupy: boolean                      // 手势占用
-  @Link setting_on: boolean                       // 设置页
+  @Link back_gesture: number[]                      // 手势占用
+  @Link setting_page: number                        // 设置页
 
   // 变量池 //
 
@@ -75,7 +75,7 @@ export default struct web_ui {
     try {fs.statSync(web_ui_data_path + 'glass_ui')} catch {fs.mkdirSync(web_ui_data_path + 'glass_ui')}
 
     // 霸占手势 //
-    this.backup_occupy = true
+    this.back_gesture.push(912)
 
   }
 
@@ -84,7 +84,7 @@ export default struct web_ui {
     log('web_ui销毁.')
 
     // 解锁手势 //
-    this.backup_occupy = false
+    this.back_gesture.pop()
 
     // 关闭监听 //
     try {this.switch_emitter(false)} catch {}
@@ -148,6 +148,7 @@ export default struct web_ui {
       })
       // 手势监听 //
       emitter.on({ eventId: 912 }, () => {
+        log('收到手势信号')
         this.web_ui_core.runJavaScript(`back_gesture_signal()`)
       })
 
@@ -377,7 +378,7 @@ export default struct web_ui {
       // 设置类 //
       //////////
       // 打开更多设置页 //
-      open_setting: () => {this.setting_on = true},
+      open_setting: () => {this.setting_page = 1},
       // 外部歌曲导入 //
       add_external_songs: () => {this.files_manager.add_external_songs()},
       // 删除外部歌曲 //

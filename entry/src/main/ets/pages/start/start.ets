@@ -53,7 +53,8 @@ export default struct start_index {
       if (this.page == 999) {
         step_x({
           start_ready: this.start_ready,
-          start_ui: this.start_ui
+          start_ui: this.start_ui,
+          global_config: this.global_config
         })
           .width('100%').height('100%')
       }

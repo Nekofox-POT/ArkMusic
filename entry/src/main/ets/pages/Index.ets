@@ -52,9 +52,8 @@ struct Index {
   @State @Watch('env_load') download_ready: boolean = false // 目录检测完成
   @State env_ready: boolean = false                         // 环境准备完成
   @State start_ui: boolean = false                          // 启动界面
-  @State controller_ui: boolean = false                     // 控制器界面
-  @State backup_occupy: boolean = false                     // 返回键占用指示
-  @State setting_on: boolean = false                        // 设置页指示
+  @State back_gesture: number[] = []                        // 手势占用表
+  @State setting_page: number = 0                           // 设置页指示
 
 
   // 类 //
@@ -73,13 +72,7 @@ struct Index {
     reg_bg_run()
 
     // 版本号检查 //
-    try {
-      fs.openSync(version_path)
-      this.start_ready = true
-    } catch {
-      // 版本号不存在，进入开始界面
-      this.start_ui = true
-    }
+    if (this.global_config.version == '0') {this.start_ui = true}
 
   }
 
@@ -93,13 +86,14 @@ struct Index {
 
   // 返回信号播控 //
   onBackPress(): boolean {
-    // 设置页打开时优先关闭设置页
-    if (this.setting_on) {
-      this.setting_on = false
+    // 末尾广播发送
+    try {
+      log(`当前占用表[${this.back_gesture}]`)
+      emitter.emit({ eventId: this.back_gesture[this.back_gesture.length - 1] })
       return true
+    } catch {
+      return false
     }
-    if (this.backup_occupy) {emitter.emit({ eventId: 912 })}
-    return this.backup_occupy
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -150,12 +144,12 @@ struct Index {
       }
 
       // 设置页面 //
-      if (this.setting_on) {
+      if (this.setting_page > 0) {
         setting_index({
           global_config: this.global_config,
           files_manager: this.files_manager,
           audio_player: this.audio_player,
-          setting_on: this.setting_on
+          setting_page: this.setting_page,
         })
           .width('100%').height('100%').zIndex(600)
       }
@@ -166,8 +160,8 @@ struct Index {
           global_config: this.global_config,
           files_manager: this.files_manager,
           audio_player: this.audio_player,
-          backup_occupy: this.backup_occupy,
-          setting_on: this.setting_on
+          back_gesture: this.back_gesture,
+          setting_page: this.setting_page
         })
           .width('100%').height('100%').zIndex(500)
       }

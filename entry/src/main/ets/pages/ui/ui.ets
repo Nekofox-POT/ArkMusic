@@ -46,8 +46,8 @@ export default struct ui_index {
   @ObjectLink global_config: class_global_config
   @ObjectLink files_manager: class_files_manager
   @ObjectLink audio_player: class_audio_player
-  @Link backup_occupy: boolean
-  @Link setting_on: boolean                       // 设置页
+  @Link back_gesture: number[]
+  @Link setting_page: number
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 基础函数 //
@@ -109,8 +109,8 @@ export default struct ui_index {
           global_config: this.global_config,
           files_manager: this.files_manager,
           audio_player: this.audio_player,
-          backup_occupy: this.backup_occupy,
-          setting_on: this.setting_on
+          back_gesture: this.back_gesture,
+          setting_page: this.setting_page,
         })
           .width('100%').height('100%')
       }

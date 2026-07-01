@@ -478,6 +478,9 @@ export default class class_audio_player {
   // 重载配置文件 //
   async reset_data() {
 
+    // 暂停 //
+    this.pause(true)
+
     // 保存 //
     this.save_data()
 
@@ -607,8 +610,12 @@ export default class class_audio_player {
     if (this.global_config!.player_mode) {this.ffmpeg_player.playing()} else {this.av_player.set_play_status(true)}
   }
   // 暂停 //
-  pause() {
+  pause(all: boolean = false) {
     if (this.play_list.length == 0) {return}
+    if (all) {
+      this.ffmpeg_player.pause()
+      this.av_player.set_play_status(false)
+    }
     if (this.global_config!.player_mode) {this.ffmpeg_player.pause()} else {this.av_player.set_play_status(false)}
   }
   // 上一首 //
@@ -794,6 +801,7 @@ export default class class_audio_player {
 
     // 更改模式 //
     this.global_config!.player_mode = mode
+    this.global_config?.save_data()
 
     // 重加载 //
     this.reset_data()
@@ -804,6 +812,7 @@ export default class class_audio_player {
 
     // 设置 //
     this.global_config!.dsd_support = mode
+    this.global_config?.save_data()
 
     // 重加载 //
     this.reset_data()
@@ -855,6 +864,7 @@ export default class class_audio_player {
 
     // 检测工作目录 //
     try {fs.statSync(audio_player_path)} catch {fs.mkdirSync(audio_player_path)}
+    try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
 
     // 注册回调 //
     this.player_callback()
@@ -875,9 +885,6 @@ export default class class_audio_player {
 
     // 导入全局配置文件 //
     this.global_config = global_config
-
-    // 目录检查 //
-    try {fs.statSync(dsd_cache_path)} catch {fs.mkdirSync(dsd_cache_path)}
 
   }
 

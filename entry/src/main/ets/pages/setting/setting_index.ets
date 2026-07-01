@@ -1,15 +1,14 @@
 //
-// 设置页
+// 设置页（半模态面板）
 // 广播频段：10
+// 1012：ui_mode状态切换
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // 导入第三方库 //
-import { HdsNavigation, HdsNavigationTitleMode, ScrollEffectType, hdsMaterial } from '@kit.UIDesignKit'
-import { LengthMetrics } from '@kit.ArkUI'
-import { window } from '@kit.ArkUI'
 
 // 导入自创建模块 //
+import { log } from '../../package/system_function'
 
 // 导入类 //
 import class_global_config from '../../package/class_global_config'
@@ -22,11 +21,7 @@ import class_audio_player from '../../package/audio_player/class_audio_player'
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 函数库 //
-//////////
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// 主页面入口 //
+// 设置页入口 //
 //////////////
 @Component
 export default struct setting_index {
@@ -38,266 +33,500 @@ export default struct setting_index {
   // 变量池 //
 
   // 更新池 //
+  @State show_sheet: boolean = false   // 半模态显隐
+  @State item_count: number = 0        // 选项逐出计数
+  @State press_idx: number = -1        // 按压项索引
+  @State set_page: number = 1          // 内部页码（1=主页, 2=音频设置, 3=播放器切换）
+  @State player_selected: number = -1    // 播放器选中（0=系统, 1=风铃, -1=未选）
+  @State player_show_title: boolean = false
+  @State player_show_options: boolean = false
+  @State player_show_button: boolean = false
+  @State player_exiting: boolean = false
 
   // 类 //
   @ObjectLink global_config: class_global_config  // 全局变量管理
   @ObjectLink audio_player: class_audio_player    // 播放器核心
   @ObjectLink files_manager: class_files_manager  // 文件管理器核心
-  @Link setting_on: boolean                       // 设置页
 
-  // 继承类 //
-
+  // 继承池 //
+  @Link setting_page: number                       // 自身页面开关
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 基础函数 //
   ////////////
 
-  // 页面启动操作 //
+  // 页面挂载操作 //
   aboutToAppear(): void {
-    this.setImmersiveBarStyle()
+    // 等待宿主节点挂载完成后拉取半模态 //
+    setTimeout(() => { this.show_sheet = true }, 50)
+    // 选项逐出动画 //
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => { this.item_count = i + 1 }, 200 + i * 80)
+    }
   }
 
-  // 页面退出操作 //
+  // 页面卸载操作 //
   aboutToDisappear(): void {}
-
-  // 沉浸式系统栏样式 //
-  setImmersiveBarStyle(): void {
-    try {
-      window.getLastWindow(getContext(this), (err, win) => {
-        if (!err) {
-          const props: window.SystemBarProperties = {
-            statusBarContentColor: '#333333',   // 状态栏图标深色
-            navigationBarContentColor: '#333333' // 导航栏图标深色
-          }
-          win.setWindowSystemBarProperties(props)
-        }
-      })
-    } catch {}
-  }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // 扩展函数 //
   ////////////
 
+  // 按压回弹 //
+  trigger_press(idx: number) {
+    this.press_idx = idx
+    setTimeout(() => { this.press_idx = -1 }, 150)
+  }
+
+  // 播放器模式名称 //
+  player_mode_name(): string {
+    return this.global_config.player_mode ? '星铃播放器' : '官方播放器'
+  }
+
   // 菜单项构建器 //
   @Builder
-  buildMenuItem(icon: string, label: string, callback: () => void) {
+  build_menu_item(icon: string, label: string, callback: () => void) {
     Row() {
       Image($rawfile(icon))
-        .width(24).height(24)
+        .width('24vp').height('24vp')
 
-      Blank(12)
+      Blank('12vp')
 
       Text(label)
-        .fontSize(16)
-        .fontColor('#333333')
-        .fontWeight(400)
+        .fontSize('16fp').fontColor('#1A1A1A')
         .layoutWeight(1)
 
-      Text('〉')
-        .fontSize(16)
-        .fontColor('#CCCCCC')
+      Image($rawfile('setting/chevron_right.svg'))
+        .width('16vp').height('16vp')
     }
-    .width('100%')
-    .height(52)
-    .padding({ left: 16, right: 16 })
+    .width('100%').height('64vp')
+    .padding({ left: '16vp', right: '16vp' })
     .alignItems(VerticalAlign.Center)
     .onClick(callback)
   }
 
-  // 内容区构建器 //
+  // 标签+值行 //
   @Builder
-  buildContent() {
-    List({ space: 12 }) {
+  build_value_row(label: string, value: string, callback: () => void) {
+    Row() {
+      Text(label)
+        .fontSize('16fp').fontColor('#1A1A1A')
+        .layoutWeight(1)
 
-      ////////////////////////////
-      // 第一组：音频设置、更多设置 //
-      ////////////////////////////
-      ListItem() {
-        Column() {
-          this.buildMenuItem('setting/play.svg', '音频设置', () => {
-            // 进入音频设置子页 //
-          })
+      Text(value)
+        .fontSize('14fp').fontColor('#999999')
 
-          Divider()
-            .width('calc(100% - 52vp)')
-            .color('#F5F5F5')
-            .strokeWidth(0.5)
+      Blank('8vp')
 
-          this.buildMenuItem('setting/more.svg', '更多设置', () => {
-            // 进入更多设置子页 //
-          })
+      Image($rawfile('setting/chevron_right.svg'))
+        .width('12vp').height('12vp')
+    }
+    .width('100%').height('64vp')
+    .padding({ left: '16vp', right: '16vp' })
+    .alignItems(VerticalAlign.Center)
+    .onClick(callback)
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 页面内容 //
+  ////////////
+
+  // 主页 //
+  @Builder
+  main_page() {
+    Column() {
+      Scroll() {
+        Column({ space: '12vp' }) {
+
+          // 音频设置 //
+          if (this.item_count >= 1) {
+            Column() {
+              this.build_menu_item('setting/play.svg', '音频设置', () => {
+                this.trigger_press(0)
+                this.set_page = 2
+              })
+            }
+            .width('100%')
+            .backgroundColor('#FFFFFF')
+            .borderRadius('16vp')
+            .scale({ x: this.press_idx == 0 ? 0.96 : 1, y: this.press_idx == 0 ? 0.96 : 1 })
+            .animation({ duration: 300, curve: Curve.Friction })
+            .transition(TransitionEffect.asymmetric(
+              TransitionEffect.OPACITY
+                .combine(TransitionEffect.translate({ y: '24vp' }))
+                .animation({ duration: 350, curve: Curve.EaseOut }),
+              TransitionEffect.OPACITY
+                .animation({ duration: 150 })
+            ))
+          }
+
+          // 更多设置 //
+          if (this.item_count >= 2) {
+            Column() {
+              this.build_menu_item('setting/more.svg', '更多设置', () => {
+                this.trigger_press(1)
+                log('setting：更多设置')
+              })
+            }
+            .width('100%')
+            .backgroundColor('#FFFFFF')
+            .borderRadius('16vp')
+            .scale({ x: this.press_idx == 1 ? 0.96 : 1, y: this.press_idx == 1 ? 0.96 : 1 })
+            .animation({ duration: 300, curve: Curve.Friction })
+            .transition(TransitionEffect.asymmetric(
+              TransitionEffect.OPACITY
+                .combine(TransitionEffect.translate({ y: '24vp' }))
+                .animation({ duration: 350, curve: Curve.EaseOut }),
+              TransitionEffect.OPACITY
+                .animation({ duration: 150 })
+            ))
+          }
+
+          // 关于 //
+          if (this.item_count >= 3) {
+            Column() {
+              this.build_menu_item('setting/about.svg', '关于', () => {
+                this.trigger_press(2)
+                log('setting：关于')
+              })
+            }
+            .width('100%')
+            .backgroundColor('#FFFFFF')
+            .borderRadius('16vp')
+            .scale({ x: this.press_idx == 2 ? 0.96 : 1, y: this.press_idx == 2 ? 0.96 : 1 })
+            .animation({ duration: 300, curve: Curve.Friction })
+            .transition(TransitionEffect.asymmetric(
+              TransitionEffect.OPACITY
+                .combine(TransitionEffect.translate({ y: '24vp' }))
+                .animation({ duration: 350, curve: Curve.EaseOut }),
+              TransitionEffect.OPACITY
+                .animation({ duration: 150 })
+            ))
+          }
+
+          // 加入唠嗑组织 //
+          if (this.item_count >= 4) {
+            Column() {
+              this.build_menu_item('setting/join.svg', '加入唠嗑组织', () => {
+                this.trigger_press(3)
+                log('setting：加入唠嗑组织')
+              })
+            }
+            .width('100%')
+            .backgroundColor('#FFFFFF')
+            .borderRadius('16vp')
+            .scale({ x: this.press_idx == 3 ? 0.96 : 1, y: this.press_idx == 3 ? 0.96 : 1 })
+            .animation({ duration: 300, curve: Curve.Friction })
+            .transition(TransitionEffect.asymmetric(
+              TransitionEffect.OPACITY
+                .combine(TransitionEffect.translate({ y: '24vp' }))
+                .animation({ duration: 350, curve: Curve.EaseOut }),
+              TransitionEffect.OPACITY
+                .animation({ duration: 150 })
+            ))
+          }
+
         }
         .width('100%')
-        .borderRadius(12)
-        .backgroundColor(Color.White)
+        .padding({ left: '16vp', right: '16vp', top: '24vp', bottom: '24vp' })
       }
+      .width('100%')
+      .layoutWeight(1)
+      .scrollBar(BarState.Off)
+      .align(Alignment.Top)
+    }
+    .width('100%').height('100%')
+    .backgroundColor('#F1F3F5')
+  }
 
-      //////////////////////////////
-      // 第二组：关于、加入唠嗑组织 //
-      //////////////////////////////
-      ListItem() {
+  // 音频设置子页 //
+  @Builder
+  audio_settings_page() {
+    Scroll() {
+      Column({ space: '12vp' }) {
+
+        // 音频播放器切换 //
         Column() {
-          this.buildMenuItem('setting/about.svg', '关于', () => {
-            // 进入关于页 //
-          })
-
-          Divider()
-            .width('calc(100% - 52vp)')
-            .color('#F5F5F5')
-            .strokeWidth(0.5)
-
-          this.buildMenuItem('setting/join.svg', '加入唠嗑组织', () => {
-            // 加入唠嗑组织 //
+          this.build_value_row('音频播放器切换', this.player_mode_name(), () => {
+            this.player_selected = this.global_config.player_mode ? 1 : 0
+            this.player_show_title = false
+            this.player_show_options = false
+            this.player_show_button = false
+            this.player_exiting = false
+            this.set_page = 3
+            setTimeout(() => { this.player_show_title = true }, 80)
+            setTimeout(() => { this.player_show_options = true }, 360)
+            setTimeout(() => { this.player_show_button = true }, 640)
           })
         }
         .width('100%')
-        .borderRadius(12)
-        .backgroundColor(Color.White)
+        .backgroundColor('#FFFFFF')
+        .borderRadius('16vp')
+
+        // DSD 支持（仅官方播放器模式下显示） //
+        if (!this.global_config.player_mode) {
+          Column() {
+            Row() {
+              Text('开启 DSD 支持')
+                .fontSize('16fp').fontColor('#1A1A1A')
+                .layoutWeight(1)
+
+              Toggle({ type: ToggleType.Switch, isOn: this.global_config.dsd_support })
+                .selectedColor('rgba(244, 198, 206, 1.0)')
+                .onChange((value: boolean) => {
+                  this.audio_player.set_dsd(value)
+                })
+            }
+            .width('100%').height('64vp')
+            .padding({ left: '16vp', right: '16vp' })
+            .alignItems(VerticalAlign.Center)
+          }
+          .width('100%')
+          .backgroundColor('#FFFFFF')
+          .borderRadius('16vp')
+          .transition(TransitionEffect.asymmetric(
+            TransitionEffect.OPACITY
+              .combine(TransitionEffect.scale({ x: 0, y: 1 }))
+              .animation({ duration: 300, curve: Curve.FastOutSlowIn }),
+            TransitionEffect.OPACITY
+              .combine(TransitionEffect.scale({ x: 0, y: 1 }))
+              .animation({ duration: 300, curve: Curve.FastOutSlowIn })
+          ))
+        }
+
+      }
+      .width('100%')
+      .padding({ left: '16vp', right: '16vp', top: '24vp', bottom: '24vp' })
+    }
+    .width('100%')
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
+    .align(Alignment.Top)
+    .backgroundColor('#F1F3F5')
+  }
+
+  // 自定义标题（随页码切换） //
+  @Builder
+  sheet_title() {
+    Row() {
+      if (this.set_page == 3) {
+        Text('音频播放器切换')
+          .fontSize('22fp')
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1A1A1A')
+      } else if (this.set_page == 2) {
+        Text('音频设置')
+          .fontSize('22fp')
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1A1A1A')
+      } else {
+        Text('设置')
+          .fontSize('22fp')
+          .fontWeight(FontWeight.Bold)
+          .fontColor('#1A1A1A')
       }
     }
     .width('100%')
-    .padding({ left: 16, right: 16, top: 12, bottom: 48 })
-    .divider(null)
-    .scrollBar(BarState.Off)
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // 半模态内容 //
+  //////////////
+  // 三级页面：播放器切换（照抄 step_a） //
+  @Builder
+  player_switch_page() {
+    Column() {
+
+      // 标题 //
+      Text('请选择播放器内核：')
+        .fontSize('22fp')
+        .fontWeight(FontWeight.Bold)
+        .fontColor('#333')
+        .opacity(this.player_show_title ? 1 : 0)
+        .translate({ y: this.player_show_title ? 0 : (this.player_exiting ? -60 : 60) })
+        .animation({ duration: 500, curve: Curve.FastOutSlowIn })
+
+      // 内核选项区 //
+      Row() {
+
+        // 系统内核 //
+        Column() {
+          Column() {
+            Image($rawfile('setting/official_player.svg'))
+              .width('48vp').height('48vp')
+          }
+          .width('80vp').height('80vp')
+          .borderRadius('40vp')
+          .backgroundColor('#f5f5f5')
+          .justifyContent(FlexAlign.Center)
+
+          Text('').height('8vp')
+
+          Text('系统')
+            .fontSize('18fp')
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333')
+
+          Text('').height('4vp')
+
+          Text('官方出品，更稳定')
+            .fontSize('12fp')
+            .fontColor('#999')
+        }
+        .width('40%')
+        .padding('12vp')
+        .borderRadius('12vp')
+        .backgroundColor(this.player_selected === 0 ? 'rgba(244, 198, 206, 0.12)' : '#00000000')
+        .border({ width: this.player_selected === 0 ? '1.5vp' : '0', color: 'rgba(244, 198, 206, 1.0)' })
+        .scale({ x: this.player_selected === 0 ? 1.08 : 1.0, y: this.player_selected === 0 ? 1.08 : 1.0 })
+        .animation({ duration: 300, curve: Curve.FastOutSlowIn })
+        .onClick(() => { this.player_selected = 0 })
+
+        Text('').width('24vp')
+
+        // 风铃内核 //
+        Column() {
+          Column() {
+            Image($rawfile('setting/lin_player.svg'))
+              .width('48vp').height('48vp')
+          }
+          .width('80vp').height('80vp')
+          .borderRadius('40vp')
+          .backgroundColor('#f5f5f5')
+          .justifyContent(FlexAlign.Center)
+
+          Text('').height('8vp')
+
+          Text('风铃')
+            .fontSize('18fp')
+            .fontWeight(FontWeight.Bold)
+            .fontColor('#333')
+
+          Text('').height('4vp')
+
+          Text('自研内核，支持更多格式。')
+            .fontSize('12fp')
+            .fontColor('#999')
+        }
+        .width('40%')
+        .padding('12vp')
+        .borderRadius('12vp')
+        .backgroundColor(this.player_selected === 1 ? 'rgba(244, 198, 206, 0.12)' : '#00000000')
+        .border({ width: this.player_selected === 1 ? '1.5vp' : '0', color: 'rgba(244, 198, 206, 1.0)' })
+        .scale({ x: this.player_selected === 1 ? 1.08 : 1.0, y: this.player_selected === 1 ? 1.08 : 1.0 })
+        .animation({ duration: 300, curve: Curve.FastOutSlowIn })
+        .onClick(() => { this.player_selected = 1 })
+
+      }
+      .width('100%')
+      .opacity(this.player_show_options ? 1 : 0)
+      .translate({ y: this.player_show_options ? 0 : (this.player_exiting ? -60 : 60) })
+      .animation({ duration: 500, curve: Curve.FastOutSlowIn })
+      .justifyContent(FlexAlign.Center)
+
+      // 确定按钮 //
+      Button('确定')
+        .width('144vp')
+        .height('72vp')
+        .backgroundColor(this.player_selected !== -1 ? 'rgba(244, 198, 206, 1.0)' : '#eee')
+        .borderRadius('36vp')
+        .fontSize('20fp')
+        .fontColor(this.player_selected !== -1 ? '#ffffff' : '#999')
+        .opacity(this.player_show_button ? 1 : 0)
+        .translate({ y: this.player_show_button ? 0 : (this.player_exiting ? -60 : 60) })
+        .animation({ duration: 500, curve: Curve.FastOutSlowIn })
+        .onClick(() => {
+          if (this.player_selected === -1) {return}
+          this.global_config.player_mode = (this.player_selected === 1)
+          this.audio_player.set_player_mode(this.player_selected === 1)
+          this.player_exiting = true
+          this.player_show_title = false
+          this.player_show_options = false
+          this.player_show_button = false
+          setTimeout(() => { this.set_page = 2 }, 500)
+        })
+
+    }
+    .width('100%').height('100%')
+    .padding({ left: '32vp', right: '32vp', top: '56vp', bottom: '24vp' })
+    .backgroundColor('#F1F3F5')
+    .justifyContent(FlexAlign.SpaceAround)
+  }
+
+  @Builder
+  setting_content() {
+
+    if (this.set_page == 3) {
+      Column() {
+        this.player_switch_page()
+      }
+      .width('100%').height('100%')
+      .transition(TransitionEffect.asymmetric(
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.94, y: 0.94 }))
+          .animation({ duration: 420, curve: Curve.FastOutSlowIn }),
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
+          .animation({ duration: 200, curve: Curve.Linear })
+      ))
+    } else if (this.set_page == 2) {
+      Column() {
+        this.audio_settings_page()
+      }
+      .width('100%').height('100%')
+      .transition(TransitionEffect.asymmetric(
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.94, y: 0.94 }))
+          .animation({ duration: 420, curve: Curve.FastOutSlowIn }),
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
+          .animation({ duration: 200, curve: Curve.Linear })
+      ))
+    } else {
+      Column() {
+        this.main_page()
+      }
+      .width('100%').height('100%')
+      .transition(TransitionEffect.asymmetric(
+        TransitionEffect.OPACITY
+          .combine(TransitionEffect.scale({ x: 0.96, y: 0.96 }))
+          .animation({ duration: 280, curve: Curve.FastOutSlowIn }),
+        TransitionEffect.OPACITY
+          .animation({ duration: 180, curve: Curve.Linear })
+      ))
+    }
+
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // UI构建 //
   ///////////
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
-
-      //////////////////////////////////////////////
-      // 主内容区                               //
-      //////////////////////////////////////////////
-      Column() {
-
-        // ---- 状态栏避让（36vp）：玻璃背景，与标题栏视觉一体 ----
-        Row()
-          .width('100%')
-          .height(36)
-          .backgroundColor('rgba(255, 255, 255, 0.76)')
-          .backdropBlur(12)
-
-        // ---- 顶部渐变模糊条：标题栏 → 内容区平滑过渡 ----
-        Row()
-          .width('100%')
-          .height(16)
-          .linearGradient({
-            direction: GradientDirection.Bottom,
-            colors: [
-              ['rgba(255, 255, 255, 0.76)', 0],
-              ['rgba(255, 255, 255, 0.00)', 1]
-            ]
-          })
-          .backdropBlur(8)
-
-        // ---- HdsNavigation 导航 + 自定义模糊返回按钮 ----
-        Stack({ alignContent: Alignment.TopStart }) {
-          HdsNavigation() {
-            this.buildContent()
-          }
-          .titleBar({
-            content: {
-              title: { mainTitle: '设置' }
-            },
-            style: {
-              scrollEffectOpts: {
-                enableScrollEffect: true,
-                scrollEffectType: ScrollEffectType.GRADIENT_BLUR,
-                blurEffectiveStartOffset: LengthMetrics.vp(0),
-                blurEffectiveEndOffset: LengthMetrics.vp(40)
-              },
-              systemMaterialEffect: {
-                materialType: hdsMaterial.MaterialType.ADAPTIVE,
-                materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-              },
-              originalStyle: {
-                backgroundStyle: {
-                  backgroundColor: 'rgba(255, 255, 255, 0.76)'
-                },
-                contentStyle: {
-                  titleStyle: {
-                    mainTitleColor: '#333333'
-                  },
-                  backIconStyle: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                    iconColor: '#333333'
-                  }
-                }
-              },
-              scrollEffectStyle: {
-                backgroundStyle: {
-                  backgroundColor: 'rgba(255, 255, 255, 0.94)'
-                },
-                contentStyle: {
-                  titleStyle: {
-                    mainTitleColor: '#333333'
-                  },
-                  backIconStyle: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                    iconColor: '#333333'
-                  }
-                }
-              }
-            }
-          })
-          .titleMode(HdsNavigationTitleMode.MINI)
-          .hideBackButton(true)
-          .width('100%')
-          .layoutWeight(1)
-          .backgroundColor('#f5f5f5')
-
-          // ---- 自定义模糊返回按钮（覆盖在标题栏左上角） ----
-          Row()
-            .width(36).height(36)
-            .borderRadius(18)
-            .backgroundColor('rgba(255, 255, 255, 0.30)')
-            .backdropBlur(24)
-            .shadow({
-              radius: 4,
-              color: 'rgba(0, 0, 0, 0.06)',
-              offsetY: 1
-            })
-            .justifyContent(FlexAlign.Center)
-            .position({ x: 16, y: 10 })
-            .onClick(() => { this.setting_on = false })
-            .zIndex(10)
-
-          Image($r('sys.symbol.chevron_left'))
-            .width(24).height(24)
-            .fillColor('#333333')
-            .position({ x: 22, y: 16 })
-            .zIndex(11)
-            .onClick(() => { this.setting_on = false })
-
-        }
-        .width('100%')
-        .layoutWeight(1)
-
-      }
-      .width('100%').height('100%')
-
-      //////////////////////////////////////
-      // 底部渐变模糊条（沉浸式底部过渡） //
-      //////////////////////////////////////
-      Column()
-        .width('100%')
-        .height(32)
-        .linearGradient({
-          direction: GradientDirection.Bottom,
-          colors: [
-            ['rgba(245, 245, 245, 0.00)', 0],
-            ['rgba(245, 245, 245, 0.55)', 0.35],
-            ['rgba(245, 245, 245, 0.88)', 1]
-          ]
-        })
-        .backdropBlur(12)
-        .hitTestBehavior(HitTestMode.None)
-
+    Column() {
+      // 透明空页面——半模态宿主 //
     }
     .width('100%').height('100%')
-    .backgroundColor('#f5f5f5')
+    .backgroundColor(Color.Transparent)
+    .bindSheet($$this.show_sheet, this.setting_content(), {
+      detents: ['87%', SheetSize.LARGE],
+      showClose: true,
+      dragBar: true,
+      preferType: SheetType.BOTTOM,
+      backgroundColor: '#F1F3F5',
+      title: this.sheet_title(),
+      onWillDismiss: ((action: DismissSheetAction) => {
+        // 逐级回退 //
+        if (this.set_page > 1) {
+          this.set_page = this.set_page - 1
+        } else {
+          action.dismiss()
+        }
+      }),
+      onDisappear: () => {
+        // 半模态关闭后卸载自身页面 //
+        this.set_page = 1
+        this.setting_page = 0
+      }
+    })
   }
 }

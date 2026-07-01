@@ -1,6 +1,10 @@
 //
 // start界面 开始使用
 //
+
+// 导入类 //
+import class_global_config from '../../package/class_global_config'
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 界面入口 //
 ////////////
@@ -12,6 +16,7 @@ export default struct step_x {
   //////////
   @Link start_ready: boolean   // 就绪指示
   @Link start_ui: boolean
+  @ObjectLink global_config: class_global_config  // 全局配置管理器
 
   // 动画状态 //
   @State showIcon: boolean = false
@@ -62,6 +67,7 @@ export default struct step_x {
         .translate({ y: this.showButton ? 0 : (this.exiting ? -60 : 60) })
         .animation({ duration: 560, curve: Curve.FastOutSlowIn })
         .onClick(() => {
+          this.global_config.save_data()
           this.exiting = true
           this.showIcon = false
           this.showButton = false

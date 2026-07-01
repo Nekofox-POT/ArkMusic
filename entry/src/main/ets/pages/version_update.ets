@@ -1,5 +1,6 @@
 //
 // 版本更新页
+// 当前版本号：0.8
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -14,8 +15,7 @@ import class_global_config from '../package/class_global_config'
 // 导入页 //
 
 // 变量池 //
-const version_path = getContext().filesDir + '/version.cfg'   // 配置文件
-const old_version_path = getContext().filesDir + '/version.json'   // 配置文件
+const old_version_path = getContext().filesDir + '/version.json'   // 旧版本配置文件
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 函数库 //
@@ -58,14 +58,8 @@ export default struct version_update {
   // 版本号检查 //
   async version_check() {
 
-    // 检查文件是否存在 //
-    try {let tmp = fs.readTextSync(version_path)
-      // 文件存在
-
-      // 检查版本号 //（下一次施工）
-
-    } catch {
-      // 文件不存在
+    // 第一次启动 //
+    if (this.global_config!.version == '0') {
 
       // 0.7版本修复(正式版该移除了) //
       try {
@@ -74,10 +68,9 @@ export default struct version_update {
         this.ok_code++
       } catch {} // 真没有版本号，那就不管
 
-      // 创建配置文件 //
-      const file = fs.openSync(version_path, fs.OpenMode.CREATE | fs.OpenMode.WRITE_ONLY)
-      fs.writeSync(file.fd, '0.8')
-      fs.closeSync(file)
+      // 注册版本号 //
+      this.global_config.version = '0.8'
+      this.global_config.save_data()
 
     }
 
@@ -85,6 +78,7 @@ export default struct version_update {
     while (this.ok_code != 0) {
       await new Promise<void>(resolve => setTimeout(resolve, 1))
     }
+    console.log('版本检测完成！')
     this.version_ready = true
 
   }
