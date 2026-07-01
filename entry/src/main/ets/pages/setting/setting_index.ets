@@ -333,6 +333,39 @@ export default struct setting_index {
           ))
         }
 
+        // 清除所有数据 //
+        Column() {
+          Row() {
+            Text('清除所有数据')
+              .fontSize('16fp').fontColor('#E85C5C')
+              .layoutWeight(1)
+          }
+          .width('100%').height('64vp')
+          .padding({ left: '16vp', right: '16vp' })
+          .alignItems(VerticalAlign.Center)
+          .onClick(() => {
+            AlertDialog.show({
+              title: '确认清除',
+              message: '清除后所有数据将被删除，\n应用将自动关闭。',
+              primaryButton: {
+                value: '取消',
+                action: () => {}
+              },
+              secondaryButton: {
+                value: '确认清除',
+                fontColor: '#E85C5C',
+                action: () => {
+                  this.global_config.reset_app()
+                }
+              },
+              cancel: () => {}
+            })
+          })
+        }
+        .width('100%')
+        .backgroundColor('#FFFFFF')
+        .borderRadius('16vp')
+
       }
       .width('100%')
       .padding({ left: '16vp', right: '16vp', top: '24vp', bottom: '24vp' })

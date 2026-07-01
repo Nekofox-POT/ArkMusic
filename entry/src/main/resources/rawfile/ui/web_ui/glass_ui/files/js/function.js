@@ -177,12 +177,14 @@ function show_frame_empty(frameId, isEmpty) {
 
         const p = document.createElement('p')
         p.className = 'font_color frame_empty_text'
-        p.style.cssText = `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:200;margin:0;font-size:0.85rem;font-weight:600;white-space:pre-line;color:${background_color};`
+        p.style.cssText = `position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:200;margin:0;width:80%;font-size:0.85rem;font-weight:600;white-space:pre-line;color:${background_color};`
 
-        if (frameId === 'all_song_frame' || frameId === 'folder_frame' || frameId === 'external_song_frame') {
-            p.textContent = '空'
+        if (frameId === 'all_song_frame') {
+            p.textContent = '暂无歌曲\n\n请将歌曲文件放在\n"内部储存/Download/铃音"\n后再进行一次数据库扫描\n\n或者点击右上角 ↗\n"添加外部音频"\n添加歌曲'
+        } else if (frameId === 'folder_frame' || frameId === 'external_song_frame') {
+            p.textContent = '无文件'
         } else {
-            p.textContent = '暂无歌曲，请检查Download是否有歌曲存在\n(外部导入的歌曲暂不支持分类操作)'
+            p.textContent = '暂无歌曲，请检查\n"内部储存/Download/铃音"\n目录是否有歌曲存在\n(外部导入的歌曲暂不支持分类操作)'
         }
 
         frame.appendChild(p)

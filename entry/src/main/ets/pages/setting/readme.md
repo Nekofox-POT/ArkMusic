@@ -7,3 +7,6 @@
 
 设置dsd支持：
 this.audio_player.set_dsd(boolean)
+
+清除所有数据：
+this.global_config.reset_app()
