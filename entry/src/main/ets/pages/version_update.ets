@@ -58,15 +58,15 @@ export default struct version_update {
   // 版本号检查 //
   async version_check() {
 
+    // 0.7版本修复(正式版该移除了) //
+    try {
+      fs.readTextSync(old_version_path)
+      this.update_0p8 = true
+      this.ok_code++
+    } catch {} // 真没有版本号，那就不管
+
     // 第一次启动 //
     if (this.global_config!.version == '0') {
-
-      // 0.7版本修复(正式版该移除了) //
-      try {
-        fs.readTextSync(old_version_path)
-        this.update_0p8 = true
-        this.ok_code++
-      } catch {} // 真没有版本号，那就不管
 
       // 注册版本号 //
       this.global_config.version = '0.8'      //--!--// 这里填版本号 //--!--//
