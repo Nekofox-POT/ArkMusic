@@ -220,6 +220,44 @@ color_picker_confirm.addEventListener("click", () => {
 })
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 模糊度调节页 监听 //
+//////////////////////
+
+setting_blur_btn.addEventListener("touchstart", () => {
+    setting_blur_btn.classList.add("active")
+})
+setting_blur_btn.addEventListener("touchend", () => {
+    setting_blur_btn.classList.remove("active")
+})
+setting_blur_btn.addEventListener("click", () => {
+    open_blur_setting()
+})
+
+blur_setting_back_btn.addEventListener("touchstart", () => {
+    blur_setting_back_btn.classList.add("active")
+    blur_setting_back_btn.querySelectorAll('.svg_color').forEach(tmp => {if (button_enable_active_color) {tmp.style.fill = active_color}})
+})
+blur_setting_back_btn.addEventListener("touchend", () => {
+    blur_setting_back_btn.classList.remove("active")
+    blur_setting_back_btn.querySelectorAll('.svg_color').forEach(tmp => {tmp.style.fill = background_color})
+})
+blur_setting_back_btn.addEventListener("click", () => {
+    close_blur_setting()
+})
+
+blur_picker_slider.addEventListener("input", () => {
+    update_blur_picker_visual()
+    sync_blur_to_parent()
+})
+
+blur_picker_range_frame.addEventListener("touchstart", () => {
+    blur_picker_range_frame.classList.add("active")
+})
+blur_picker_range_frame.addEventListener("touchend", () => {
+    blur_picker_range_frame.classList.remove("active")
+})
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // 确认对话框 监听 //
 ////////////////////
 
@@ -259,6 +297,8 @@ window.addEventListener('message', function(event) {
     if (event.data.action === 'back_gesture') {
         if (confirm_overlay.classList.contains('show')) {
             close_confirm_dialog()
+        } else if (setting_page_index === 2) {
+            close_blur_setting()
         } else if (color_picker_overlay.classList.contains('show')) {
             close_color_picker()
         } else if (setting_page_index !== 0) {
@@ -271,6 +311,15 @@ window.addEventListener('message', function(event) {
         const val = event.data.arg1 === true || event.data.arg1 === 'true'
         highlight_enabled = val
         set_toggle_visual(highlight_toggle, val)
+    }
+    if (event.data.action === 'set_blur_intensity') {
+        const val = Number(event.data.arg1)
+        if (!isNaN(val)) {
+            blur_intensity = val
+            blur_picker_slider.value = val
+            setting_blur_value.textContent = `${val}px`
+            update_blur_picker_visual()
+        }
     }
     if (event.data.action === 'set_background_image') {
         set_background_image(event.data.arg1)

@@ -96,3 +96,13 @@ let selected_color = active_color
 // 调色板状态
 let picker_hue = 0     // 0-360
 let picker_sv = [0, 1] // [saturation, value] 0-1
+
+// 背景模糊度
+const setting_blur_btn = document.getElementById('setting_blur_btn')
+const setting_blur_value = document.getElementById('setting_blur_value')
+const blur_setting_back = document.getElementById('blur_setting_back')
+const blur_setting_back_btn = document.getElementById('blur_setting_back_btn')
+const blur_picker_slider = document.getElementById('blur_picker_slider')
+const blur_picker_range = document.getElementById('blur_picker_range')
+const blur_picker_range_frame = document.getElementById('blur_picker_range_frame')
+const blur_picker_value = document.getElementById('blur_picker_value')

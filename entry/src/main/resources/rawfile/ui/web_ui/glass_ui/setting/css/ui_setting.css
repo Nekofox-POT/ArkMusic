@@ -15,7 +15,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(10px);
     flex-shrink: 0;
 
     -webkit-tap-highlight-color: transparent;
@@ -54,7 +53,6 @@
     justify-content: space-between;
     padding: 0 25px;
     box-sizing: border-box;
-    backdrop-filter: blur(10px);
 
     -webkit-tap-highlight-color: transparent;
 }
@@ -84,7 +82,6 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
 
     -webkit-tap-highlight-color: transparent;
@@ -144,4 +141,50 @@
 
 .setting_toggle.on .setting_toggle_knob {
     left: 26px;
+}
+
+/* 背景模糊度调节条 */
+.blur_picker_range_frame {
+    width: 100%;
+    height: 42px;
+    border-radius: 21px;
+    position: relative;
+    overflow: hidden;
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.blur_picker_range {
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 200%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.blur_picker_slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    z-index: 10;
+    margin: 0;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+.blur_picker_slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }

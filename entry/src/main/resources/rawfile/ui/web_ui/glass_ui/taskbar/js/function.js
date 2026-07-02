@@ -164,6 +164,7 @@ function set_background_color(color = null) {
         element.style.color = background_color;
     })
     set_active_color()
+    update_box_color_advance()
 }
 
 // 图标高亮设置修改（仅更新UI和广播，不自动保存）
@@ -172,4 +173,33 @@ function set_button_enable_active_color(value) {
     files.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     setting.contentWindow.postMessage({action: 'set_button_enable_active_color', arg1: value}, '*')
     button_enable_active_color = value
+}
+
+// 背景模糊度修改（仅更新UI和广播，不自动保存。保存由调用方决定）
+function set_blur_intensity(value = null) {
+    play_list.contentWindow.postMessage({action: 'set_blur_intensity', arg1: value}, '*')
+    files.contentWindow.postMessage({action: 'set_blur_intensity', arg1: value}, '*')
+    setting.contentWindow.postMessage({action: 'set_blur_intensity', arg1: value}, '*')
+    if (value !== null) {
+        blur_intensity = value
+    }
+    const overlay = document.getElementById('bg_blur_overlay')
+    if (overlay) {
+        overlay.style.backdropFilter = `blur(${blur_intensity}px)`
+    }
+    // 高级模糊材质切换
+    update_box_color_advance()
+}
+
+// 根据 blur_intensity 自动切换高级模糊材质
+function update_box_color_advance() {
+    if (blur_intensity <= 10) {
+        document.querySelectorAll('.box_color').forEach(el => {
+            el.classList.add('box_color_advance')
+        })
+    } else {
+        document.querySelectorAll('.box_color_advance').forEach(el => {
+            el.classList.remove('box_color_advance')
+        })
+    }
 }

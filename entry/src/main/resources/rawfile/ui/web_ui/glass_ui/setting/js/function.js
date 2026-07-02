@@ -330,3 +330,35 @@ function close_confirm_dialog() {
 function set_head_photo() {
     // 功能已移除
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 背景模糊度 //
+///////////////
+
+// 打开模糊度调节页
+function open_blur_setting() {
+    blur_picker_slider.value = blur_intensity
+    update_blur_picker_visual()
+    switch_setting_page(2)
+}
+
+// 关闭模糊度调节页
+function close_blur_setting() {
+    switch_setting_page(1)
+}
+
+// 更新模糊度视觉
+function update_blur_picker_visual() {
+    const ratio = blur_picker_slider.value / blur_picker_slider.max
+    blur_picker_range.style.width = `${ratio * 2 * 100}%`
+    blur_picker_range.style.left = `-${ratio * 100}%`
+    blur_picker_value.textContent = `${blur_picker_slider.value}px`
+}
+
+// 同步模糊度到父页面
+function sync_blur_to_parent() {
+    const value = Number(blur_picker_slider.value)
+    blur_intensity = value
+    setting_blur_value.textContent = `${value}px`
+    window.parent.postMessage({action: 'set_blur_intensity', arg1: value}, '*')
+}

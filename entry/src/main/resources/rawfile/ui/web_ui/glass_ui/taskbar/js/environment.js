@@ -41,5 +41,28 @@ let page_backup = 1    //当前页码
 let is_adjusting = false    // 进度条调节指示器
 let play_status = false     // 播放状态
 let button_enable_active_color = true   // 允许图标高亮
+let blur_intensity = 50   // 背景模糊度 (px)
 let playing_list = []   // 播放列表
 let playing_list_index = 0  // 播放计数器
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// iframe 就绪追踪（最早注册，避免漏收消息） //
+/////////////////////////////////////////////
+const iframe_ready_set = {}
+let _init_all_done = false
+
+window.addEventListener('message', function(e) {
+    if (e.data.action === 'iframe_ready') {
+        let key = null
+        if (e.source === play_list.contentWindow) key = 'play_list'
+        else if (e.source === files.contentWindow) key = 'files'
+        else if (e.source === setting.contentWindow) key = 'setting'
+        if (key && !iframe_ready_set[key]) {
+            iframe_ready_set[key] = true
+            console.log('[iframe_ready] 收到:', key, '总计:', Object.keys(iframe_ready_set).length + '/3')
+            if (typeof try_finish_init === 'function') {
+                try_finish_init()
+            }
+        }
+    }
+})

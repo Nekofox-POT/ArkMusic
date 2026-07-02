@@ -214,13 +214,16 @@ function load_theme_config() {
             set_active_color(data[0])
             set_button_enable_active_color(data[1] === '1')
         }
+        if (data && data.length >= 3) {
+            set_blur_intensity(Number(data[2]))
+        }
     } catch(e) {}
 }
 
 // 保存主题配置到后端
 function save_theme_config() {
     try {
-        ark.save_data([active_color, button_enable_active_color ? '1' : '0'], 'web_ui')
+        ark.save_data([active_color, button_enable_active_color ? '1' : '0', String(blur_intensity)], 'web_ui')
     } catch(e) {}
 }
 

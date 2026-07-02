@@ -37,8 +37,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(10px);
-
     -webkit-tap-highlight-color: transparent;
     transition: transform 0.2s ease;
 }
@@ -66,7 +64,6 @@
     display: flex;
     align-items: center;
     overflow: hidden;
-    backdrop-filter: blur(10px);
 
     transition: transform 0.15s ease;
     -webkit-tap-highlight-color: transparent;
@@ -128,7 +125,6 @@
     align-items: center;
     padding: 0 25px;
     box-sizing: border-box;
-    backdrop-filter: blur(10px);
 
     -webkit-tap-highlight-color: transparent;
     transition: transform 0.15s ease;

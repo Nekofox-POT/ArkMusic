@@ -16,6 +16,10 @@
         inset 0 0 15px rgba(255, 255, 255, 0.3);
 
 }
+.box_color_advance {
+    /* 模糊 */
+    backdrop-filter: blur(10px);
+}
 .box_active_color {
     background-color: rgba(0, 0, 0, 0);
     transition: background-color 0.3s ease;

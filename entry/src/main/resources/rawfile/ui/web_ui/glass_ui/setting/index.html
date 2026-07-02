@@ -136,6 +136,34 @@
                         <div class="setting_color_preview box_active_color" id="setting_color_preview"></div>
                     </div>
                 </div>
+                <div class="setting_sub_item box_color setting_sub_item_clickable" id="setting_blur_btn">
+                    <p class="font_color">背景模糊度</p>
+                    <p class="font_color" id="setting_blur_value" style="margin:0;font-size:0.8rem;font-weight:600;">50px</p>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Page 2: 背景模糊度调节页 -->
+        <div class="setting_page" id="setting_page_blur">
+
+            <div class="setting_sub_header" id="blur_setting_back">
+                <div class="setting_sub_back_btn box_color" id="blur_setting_back_btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><rect width="24" height="24" opacity="0"></rect><g><path class="svg_color" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path></g></svg>
+                </div>
+                <p class="font_color">背景模糊度</p>
+            </div>
+
+            <div class="setting_sub_content">
+                <!-- 提示文字 -->
+                <p class="font_color" style="text-align:center;font-size:0.95rem;font-weight:700;margin:0;">拖动滑块调节模糊程度</p>
+                <p class="font_color" id="blur_picker_value" style="text-align:center;font-size:2rem;font-weight:700;margin:0;">50px</p>
+
+                <!-- 调节条 -->
+                <div class="blur_picker_range_frame box_color" id="blur_picker_range_frame">
+                    <div class="blur_picker_range box_active_color" id="blur_picker_range"></div>
+                    <input type="range" id="blur_picker_slider" class="blur_picker_slider" min="0" max="50" value="50">
+                </div>
             </div>
 
         </div>

@@ -2,7 +2,6 @@
 // 初始化
 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-let iframe_ready_count = 0
 
 function init() {
     console.log('[init] 开始')
@@ -12,6 +11,8 @@ function init() {
 
     // 颜色更新
     set_background_color()
+    // 模糊度更新
+    set_blur_intensity()
     // 页面归位
     taskbar_page_update(1)
     // 音量归0
@@ -24,27 +25,35 @@ function init() {
     // 暂停
     set_play_status(false)
 
-    console.log('[init] 等待 iframe_ready...')
+    console.log('[init] ping 所有 iframe...')
 
-    // 等待所有iframe加载完毕再ready
-    window.addEventListener('message', function(e) {
-        if (e.data.action === 'iframe_ready') {
-            iframe_ready_count++
-            console.log('[init] iframe_ready 收到, count:', iframe_ready_count, 'source:', e.source === play_list.contentWindow ? 'play_list' : e.source === files.contentWindow ? 'files' : e.source === setting.contentWindow ? 'setting' : 'unknown')
-            if (iframe_ready_count >= 3) {
-                console.log('[init] 全部就绪，调用 ark.ready()')
-                ark.ready()
-                // 重新广播当前主题色给已就绪的iframe
-                set_active_color(active_color)
-                set_button_enable_active_color(button_enable_active_color)
-                // 页面准备完成后，拉取初始播放状态
-                fetch_initial_state()
-            }
-        }
-    })
+    // 主动 ping 所有 iframe，补偿可能在监听器注册前已发送的消息
+    play_list.contentWindow.postMessage({action: 'ping'}, '*')
+    files.contentWindow.postMessage({action: 'ping'}, '*')
+    setting.contentWindow.postMessage({action: 'ping'}, '*')
 
-    console.log('[init] 结束')
+    console.log('[init] 结束，当前就绪:', Object.keys(iframe_ready_set).length + '/3')
+    // 如果 ping 之前就已经全部就绪了（消息在 environment.js 阶段已收全），直接完成
+    try_finish_init()
 }
+
+// 检查是否全部就绪，是则完成初始化
+function try_finish_init() {
+    if (_init_all_done) return
+    if (Object.keys(iframe_ready_set).length >= 3) {
+        _init_all_done = true
+        console.log('[init] 全部就绪，调用 ark.ready()')
+        ark.ready()
+        // 重新广播当前主题色给已就绪的iframe
+        set_active_color(active_color)
+        set_button_enable_active_color(button_enable_active_color)
+        set_blur_intensity(blur_intensity)
+        // 页面准备完成后，拉取初始播放状态
+        fetch_initial_state()
+    }
+}
+
+// environment.js 的监听器收到消息后会调用 try_finish_init（如果已定义）
 
 // 从后端拉取初始播放状态
 async function fetch_initial_state() {

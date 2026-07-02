@@ -4,7 +4,7 @@
     height: 50px;
     width: calc(100% - 25px);   /* 减去左右内边距 */
     border-radius: 25px;
-    backdrop-filter: blur(10px);
+    /* backdrop-filter: blur(10px); */
     box-shadow: 1px 1px 10px rgba(0, 0, 0, 0.1);
     padding: 0 12.5px;   /* 内边距限位 */
 

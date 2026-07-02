@@ -33,4 +33,10 @@ window.addEventListener('message', function(event) {
         save_theme_config()
     }
 
+    // 设置页修改模糊度（用户触发 → 更新UI + 持久化）
+    if (event.data.action === 'set_blur_intensity') {
+        set_blur_intensity(event.data.arg1)
+        save_theme_config()
+    }
+
 })
